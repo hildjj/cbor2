@@ -16,7 +16,7 @@
     "test": "c8 node --test",
     "build": "tsup",
     "watch": "tsup --watch src/ --watch test/ --onSuccess 'npm run test'",
-    "ci": "npm run lint && npm run build && npm run test"
+    "ci": "npm run build && npm run lint && npm run test"
   },
   "keywords": [
     "coap",
