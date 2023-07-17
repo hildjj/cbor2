@@ -17,46 +17,47 @@ statement](https://github.com/avajs/ava/blob/main/docs/support-statement.md)
 is what we will be using as well. Since the first release will not be soon,
 that means Node `18`+ is required.
 
-## Installation:
+## Installation
 
 ```bash
-$ npm install --save cbor2
+npm install --save cbor2
 ```
 
-## Documentation:
+## Documentation
 
 See the full API [documentation](http://hildjj.github.io/cbor2/).
 
 Example:
+
 ```js
 import {decode, encode} from 'cbor';
 
-const encoded = cbor.encode(true); // Uint8Array(1) [ 245 ]
-decode(encoded) // true
+const encoded = cbor.encode(true); // Returns Uint8Array(1) [ 245 ]
+decode(encoded); // Returns true
 
 // Use integers as keys:
 const m = new Map();
 m.set(1, 2);
-cbor.encode(m); // Uint8Array(3) [ 161, 1, 2 ]
+cbor.encode(m); // Returns Uint8Array(3) [ 161, 1, 2 ]
 ```
 
 ## Supported types
 
 The following types are supported for encoding:
 
-* boolean
-* number (including -0, NaN, and ±Infinity)
-* string
-* Array, Set (encoded as Array)
-* Object (including null), Map
-* undefined
-* Buffer
-* Date,
-* RegExp
-* URL
-* TypedArrays, ArrayBuffer, DataView
-* Map, Set
-* BigInt
+- boolean
+- number (including -0, NaN, and ±Infinity)
+- string
+- Array, Set (encoded as Array)
+- Object (including null), Map
+- undefined
+- Buffer
+- Date,
+- RegExp
+- URL
+- TypedArrays, ArrayBuffer, DataView
+- Map, Set
+- BigInt
 
 Decoding supports the above types, including the following CBOR tag numbers:
 
@@ -165,7 +166,7 @@ const d = new Decoder({
       return foo;
     },
   },
-})
+});
 ```
 
 You can also replace the default decoders by passing in an appropriate tag
@@ -182,14 +183,13 @@ cbor.decodeFirstSync(input, {
 });
 ```
 
-Developers
-----------
+## Developers
 
 The tests for this package use a set of test vectors from RFC 8949 appendix A
 by importing a machine readable version of them from
-https://github.com/cbor/test-vectors. For these tests to work, you will need
+[https://github.com/cbor/test-vectors](https://github.com/cbor/test-vectors). For these tests to work, you will need
 to use the command `git submodule update --init` after cloning or pulling this
-code.   See https://gist.github.com/gitaarik/8735255#file-git_submodules-md
+code.   See the [git docs](https://gist.github.com/gitaarik/8735255#file-git_submodules-md)
 for more information.
 
 ---
