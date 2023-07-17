@@ -13,10 +13,13 @@
     "clean": "rimraf lib coverage docs",
     "docs": "typedoc",
     "lint": "eslint . --ext ts,js,cjs",
-    "test": "c8 node --test",
+    "pretest": "npm run build",
+    "test": "npm run test:noBuild",
+    "test:noBuild": "c8 node --test",
     "build": "tsup",
-    "watch": "tsup --watch src/ --watch test/ --onSuccess 'npm run test'",
-    "ci": "npm run lint && npm run build && npm run test"
+    "build:sourcemap": "npm run build -- --sourcemap",
+    "watch": "tsup --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
+    "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild"
   },
   "keywords": [
     "coap",
@@ -38,7 +41,7 @@
     "Jakub Arbet <hi@jakubarbet.me> (https://jakubarbet.me/)",
     "Rouzbeh Karimi <rouzweltt@gmail.com> (https://github.com/rouzwelt)"
   ],
-  "types": "./types/lib/cbor.d.ts",
+  "packageManager": "pnpm@8.6.8",
   "devDependencies": {
     "@cto.af/eslint-config": "3.0.1",
     "@typescript-eslint/eslint-plugin": "6.1.0",

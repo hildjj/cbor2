@@ -29,15 +29,15 @@ See the full API [documentation](http://hildjj.github.io/cbor2/).
 
 Example:
 ```js
-import {decode, encode} from 'cbor'
+import {decode, encode} from 'cbor';
 
-let encoded = cbor.encode(true) // Uint8Array(1) [ 245 ]
+const encoded = cbor.encode(true); // Uint8Array(1) [ 245 ]
 decode(encoded) // true
 
 // Use integers as keys:
-const m = new Map()
-m.set(1, 2)
-encoded = cbor.encode(m) // Uint8Array(3) [ 161, 1, 2 ]
+const m = new Map();
+m.set(1, 2);
+cbor.encode(m); // Uint8Array(3) [ 161, 1, 2 ]
 ```
 
 ## Supported types
@@ -112,13 +112,13 @@ For example:
 ```js
 class Foo {
   constructor() {
-    this.one = 1
-    this.two = 2
+    this.one = 1;
+    this.two = 2;
   }
 
   encodeCBOR(encoder) {
-    const tagged = new Tagged(64000, [this.one, this.two])
-    return encoder.pushAny(tagged)
+    const tagged = new Tagged(64000, [this.one, this.two]);
+    return encoder.pushAny(tagged);
   }
 }
 ```
@@ -136,13 +136,13 @@ encode, for example:
 ```js
 class Bar {
   constructor() {
-    this.three = 3
+    this.three = 3;
   }
 }
-const enc = new Encoder()
+const enc = new Encoder();
 enc.addSemanticType(Bar, (encoder, b) => {
-  encoder.pushAny(b.three)
-})
+  encoder.pushAny(b.three);
+});
 ```
 
 ## Adding new decoders
@@ -160,9 +160,9 @@ const d = new Decoder({
   tags: {
     64000: val => {
       // Check val to make sure it's an Array as expected, etc.
-      const foo = new Foo()
-      ;[foo.one, foo.two] = val
-      return foo
+      const foo = new Foo();
+      [foo.one, foo.two] = val;
+      return foo;
     },
   },
 })
@@ -179,7 +179,7 @@ cbor.decodeFirstSync(input, {
     // Temporal built-in, which supports nanosecond time:
     0: x => Temporal.Instant.from(x),
   },
-})
+});
 ```
 
 Developers
@@ -194,3 +194,4 @@ for more information.
 
 ---
 [![Build Status](https://github.com/hildjj/cbor2/workflows/Tests/badge.svg)](https://github.com/hildjj/cbor2/actions?query=workflow%3ATests)
+[![codecov](https://codecov.io/gh/hildjj/cbor2/branch/main/graph/badge.svg?token=N7B7YLIDM4)](https://codecov.io/gh/hildjj/cbor2)
