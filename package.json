@@ -1,0 +1,58 @@
+{
+  "name": "cbor2",
+  "version": "0.0.0",
+  "description": "Encode and parse data in the Concise Binary Object Representation (CBOR) data format (RFC8949).",
+  "main": "./lib/index.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/hildjj/cbor2.git"
+  },
+  "homepage": "https://github.com/hildjj/cbor2",
+  "scripts": {
+    "clean": "rimraf lib coverage docs",
+    "docs": "typedoc",
+    "lint": "eslint . --ext ts,js,cjs",
+    "test": "c8 node --test",
+    "build": "tsup",
+    "watch": "tsup --watch src/ --watch test/ --onSuccess 'npm run test'",
+    "ci": "npm run lint && npm run build && npm run test"
+  },
+  "keywords": [
+    "coap",
+    "cbor",
+    "json",
+    "rfc7049",
+    "rfc8949"
+  ],
+  "author": {
+    "name": "Joe Hildebrand",
+    "email": "joe-github@cursive.net"
+  },
+  "contributors": [
+    "Patrick Gansterer <paroga@paroga.com> (http://paroga.com/)",
+    "Artyom Yagilev <github@scorpi.org> (http://scorpi.org/)",
+    "Denis Lapaev <den@lapaev.me> (http://lapaev.me/)",
+    "Ruben Bridgewater <ruben@bridgewater.de>",
+    "Burt Harris <Burt_Harris_cbor@azxs.33mail.com>",
+    "Jakub Arbet <hi@jakubarbet.me> (https://jakubarbet.me/)",
+    "Rouzbeh Karimi <rouzweltt@gmail.com> (https://github.com/rouzwelt)"
+  ],
+  "types": "./types/lib/cbor.d.ts",
+  "devDependencies": {
+    "@cto.af/eslint-config": "3.0.1",
+    "@typescript-eslint/eslint-plugin": "6.1.0",
+    "@typescript-eslint/parser": "6.1.0",
+    "c8": "8.0.0",
+    "eslint": "8.45.0",
+    "eslint-plugin-jsdoc": "46.4.4",
+    "eslint-plugin-markdown": "3.0.0",
+    "rimraf": "^5.0.1",
+    "tsup": "7.1.0",
+    "typedoc": "0.24.8"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

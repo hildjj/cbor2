@@ -1,0 +1,15 @@
+.c8rc
+.c8rc
+.editorconfig
+.eslintrc.cjs
+.github/
+.gitmodules
+coverage/
+docs/
+pnpm-lock.yaml
+src/
+test-vectors/
+test/
+tsconfig.json
+tsup.config.js
+typedoc.config.cjs
