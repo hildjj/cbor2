@@ -35,3 +35,6 @@ jobs:
         run: pnpm install
       - name: Test ${{ matrix.node-version }} ${{ matrix.platform }}
         run: npm run ci
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+
