@@ -17,8 +17,9 @@
     "test": "npm run test:noBuild",
     "test:noBuild": "c8 node --test",
     "build": "tsup",
+    "build:sourcemap": "npm run build -- --sourcemap",
     "watch": "tsup --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
-    "ci": "npm run clean && npm run build && npm run lint && npm run test:noBuild"
+    "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild"
   },
   "keywords": [
     "coap",
