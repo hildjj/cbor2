@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import assert from 'node:assert/strict';
+import {decode} from '../lib/index.js';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readFile} from 'node:fs/promises';
@@ -12,9 +14,9 @@ let vecStr = null;
 const vectorDir = path.resolve(
   __dirname, '..', 'test-vectors'
 );
-const appendix_a = path.join(vectorDir, 'appendix_a.json')
+const appendix_a = path.join(vectorDir, 'appendix_a.json');
 try {
-  vecStr = await readFile(appendix_a, {encoding: 'utf8'})
+  vecStr = await readFile(appendix_a, {encoding: 'utf8'});
 } catch (ignored) {
   throw new Error(`"${appendix_a}" not found.
 use command \`git submodule update --init\` to load test-vectors`);
@@ -27,153 +29,108 @@ vecStr = vecStr.replace(
     "___TYPE___": "number",
     "___VALUE___": "$<num>"
   }`
-)
+);
 const vectors = JSON.parse(vecStr, (key, value) => {
   if (!value) {
-    return value
+    return value;
   }
   if (value.___TYPE___ === 'number') {
-    const v = value.___VALUE___
-    const f = Number.parseFloat(v)
+    const v = value.___VALUE___;
+    const f = Number.parseFloat(v);
     try {
-      const bi = BigInt(v)
+      const bi = BigInt(v);
       if ((bi > Number.MAX_SAFE_INTEGER) || (bi < Number.MIN_SAFE_INTEGER)) {
-        return bi
+        return bi;
       }
-    } catch (ignored) {}
-    return f
+    } catch (_) {
+      // Ingore
+    }
+    return f;
   }
-  return value
-})
+  return value;
+});
 
-// const {cbor, Buffer} = getMangled()
+let failStr = null;
+const fail = path.join(vectorDir, 'fail.json');
+try {
+  failStr = await readFile(fail, {encoding: 'utf8'});
+} catch (ignored) {
+  throw new Error(`"${fail}" not found.
+use command \`git submodule update --init\` to load test-vectors`);
+}
+const failures = JSON.parse(failStr);
 
-// let vectors = null
-// let failures = null
+test('vectors', () => {
+  assert(Array.isArray(vectors));
+  for (const v of vectors) {
+    let _decoded = null;
+    try {
+      _decoded = decode(v.hex);
+    } catch (e) {
+      console.log('DECODE ERROR', v.hex);
+      throw e;
+    }
+    //
+    // const encoded = cbor.encodeCanonical(decoded)
+    // const redecoded = cbor.decode(encoded)
+    //
+    //   t.truthy(Object.prototype.hasOwnProperty.call(v, 'cbor'))
+    //   t.deepEqual(
+    //     Buffer.from(v.cbor, 'base64'),
+    //     buffer,
+    //     'base64 and hex encoded bytes mismatched '
+    //   )
 
-// test.before(async t => {
-//   // Read tests in.  Edit them to make the big integers come out correctly.
-//   let vecStr = null
-//   const vectorDir = path.resolve(
-//     __dirname, '..', '..', '..', 'test-vectors'
-//   )
-//   const appendix_a = path.join(vectorDir, 'appendix_a.json')
-//   try {
-//     vecStr = await readFile(appendix_a, {encoding: 'utf8'})
-//   } catch (ignored) {
-//     t.fail(`"${appendix_a}" not found.
-// use command \`git submodule update --init\` to load test-vectors`)
-//     return
-//   }
+    //   if (decoded && (typeof decoded === 'object')) {
+    //     delete decoded[cbor.Tagged.INTERNAL_JSON]
+    //     delete redecoded[cbor.Tagged.INTERNAL_JSON]
+    //   }
+    //   t.deepEqual(
+    //     decoded,
+    //     redecoded,
+    //     `round trip error: ${v.hex} -> ${encoded.toString('hex')}`
+    //   )
 
-//   // HACK: don't lose data when JSON parsing
-//   vecStr = vecStr.replace(
-//     /"decoded":\s*(?<num>-?\d+(?:\.\d+)?(?:e[+-]\d+)?)\r?\n/g,
-//     `"decoded": {
-//       "___TYPE___": "number",
-//       "___VALUE___": "$<num>"
-//     }`
-//   )
-//   vectors = JSON.parse(vecStr, (key, value) => {
-//     if (!value) {
-//       return value
-//     }
-//     if (value.___TYPE___ === 'number') {
-//       const v = value.___VALUE___
-//       const f = Number.parseFloat(v)
-//       try {
-//         const bi = BigInt(v)
-//         if ((bi > Number.MAX_SAFE_INTEGER) || (bi < Number.MIN_SAFE_INTEGER)) {
-//           return bi
-//         }
-//       } catch (ignored) {}
-//       return f
-//     }
-//     return value
-//   })
+    //   if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
+    //     cbor.diagnose(buffer)
+    //       .then(d => t.deepEqual(
+    //         d.trim().replace(/_\d+(?<end>$|\))/, '$<end>'),
+    //         v.diagnostic
+    //       ))
+    //   }
 
-//   let failStr = null
-//   const fail = path.join(vectorDir, 'fail.json')
-//   try {
-//     failStr = await readFile(fail, {encoding: 'utf8'})
-//   } catch (ignored) {
-//     t.fail(`"${fail}" not found.
-// use command \`git submodule update --init\` to load test-vectors`)
-//     return
-//   }
-//   failures = JSON.parse(failStr)
-// })
+    //   if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {
+    //     t.deepEqual(decoded, v.decoded, `Hex: "${v.hex}"`)
 
-// test('vectors', t => {
-//   t.truthy(Array.isArray(vectors))
-//   for (const v of vectors) {
-//     t.truthy(v.hex)
-//     const buffer = Buffer.from(v.hex, 'hex')
+    //     if (v.roundtrip) {
+    //       // TODO: Don't know how to make these round-trip.  See:
+    //       // https://github.com/cbor/test-vectors/issues/3
+    //       if ([
+    //         'f90000',
+    //         'f93c00',
+    //         'f97bff',
+    //         'fa47c35000',
+    //         'f9c400',
+    //       ].indexOf(v.hex) === -1) {
+    //         t.deepEqual(encoded.toString('hex'), v.hex)
+    //       } else {
+    //         // Trigger if assumptions change
+    //         t.notDeepEqual(encoded, buffer)
+    //       }
+    //     }
+    //   }
+  }
+});
 
-//     let decoded = null
-//     try {
-//       decoded = cbor.decode(buffer)
-//     } catch (e) {
-//       console.log('DECODE ERROR', buffer.toString('hex'))
-//       throw e
-//     }
-//     const encoded = cbor.encodeCanonical(decoded)
-//     const redecoded = cbor.decode(encoded)
+test('errors', () => {
+  let count = 0;
+  for (const f of failures) {
+    assert.throws(() => {
+      const s = decode(f.hex, {encoding: 'hex'});
+      console.log('SHOULD THROW', f.hex, [...s]);
+    });
 
-//     t.truthy(Object.prototype.hasOwnProperty.call(v, 'cbor'))
-//     t.deepEqual(
-//       Buffer.from(v.cbor, 'base64'),
-//       buffer,
-//       'base64 and hex encoded bytes mismatched '
-//     )
-
-//     if (decoded && (typeof decoded === 'object')) {
-//       delete decoded[cbor.Tagged.INTERNAL_JSON]
-//       delete redecoded[cbor.Tagged.INTERNAL_JSON]
-//     }
-//     t.deepEqual(
-//       decoded,
-//       redecoded,
-//       `round trip error: ${v.hex} -> ${encoded.toString('hex')}`
-//     )
-
-//     if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
-//       cbor.diagnose(buffer)
-//         .then(d => t.deepEqual(
-//           d.trim().replace(/_\d+(?<end>$|\))/, '$<end>'),
-//           v.diagnostic
-//         ))
-//     }
-
-//     if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {
-//       t.deepEqual(decoded, v.decoded, `Hex: "${v.hex}"`)
-
-//       if (v.roundtrip) {
-//         // TODO: Don't know how to make these round-trip.  See:
-//         // https://github.com/cbor/test-vectors/issues/3
-//         if ([
-//           'f90000',
-//           'f93c00',
-//           'f97bff',
-//           'fa47c35000',
-//           'f9c400',
-//         ].indexOf(v.hex) === -1) {
-//           t.deepEqual(encoded.toString('hex'), v.hex)
-//         } else {
-//           // Trigger if assumptions change
-//           t.notDeepEqual(encoded, buffer)
-//         }
-//       }
-//     }
-//   }
-// })
-
-// test('errors', async t => {
-//   t.plan(failures.length)
-//   for (const f of failures) {
-//     await t.throwsAsync(async _ => {
-//       await cbor.decodeAll(f.hex, 'hex')
-//       console.log('NO THROW', f)
-//     })
-//   }
-// })
+    count++;
+  }
+  assert.equal(count, failures.length);
+});

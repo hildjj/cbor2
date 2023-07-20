@@ -3,8 +3,9 @@ import {
   NUMBYTES,
   SYMS,
 } from './constants.js';
+import {Simple} from './simple.js';
+import {hexToU8} from './utils.js';
 import {parseHalf} from './float.js';
-import {Simple} from './simple.js'
 
 const TD = new TextDecoder('utf8', {fatal: true});
 
@@ -16,14 +17,16 @@ export interface DecodeOptions {
    * @default 1024
    */
   max_depth?: number;
+  encoding?: 'base64' | 'hex' | null;
 }
 
 export type DecodeValue =
-  Simple | Symbol | Uint8Array | bigint | boolean | number | number | string |
+  Simple | Symbol | Uint8Array | bigint | boolean | number | string |
   null | undefined;
 
-type ValueGenerator =
-  Generator<[number, number, DecodeValue], undefined, undefined>;
+type MtAiValue = [number, number, DecodeValue];
+
+type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
 
 export class DecodeStream {
   #src;
@@ -31,17 +34,42 @@ export class DecodeStream {
   #offset = 0;
   #opts: Required<DecodeOptions>;
 
-  public constructor(src: Uint8Array, opts?: DecodeOptions) {
-    this.#src = src;
-    this.#view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+  public constructor(src: Uint8Array, opts?: DecodeOptions);
+  public constructor(
+    src: string,
+    opts: Omit<DecodeOptions, 'encoding'> & Required<Pick<DecodeOptions, 'encoding'>>
+  );
+
+  public constructor(src: Uint8Array | string, opts?: DecodeOptions) {
+    if (typeof src === 'string') {
+      switch (opts?.encoding) {
+        case 'hex':
+          this.#src = hexToU8(src);
+          break;
+        default:
+          throw new TypeError(`Encoding not implemented: "${opts?.encoding}"`);
+      }
+    } else {
+      this.#src = src;
+    }
+
+    this.#view = new DataView(
+      this.#src.buffer,
+      this.#src.byteOffset,
+      this.#src.byteLength
+    );
     this.#opts = {
       max_depth: 1024,
+      encoding: null,
       ...opts,
     };
   }
 
-  public [Symbol.iterator](): ValueGenerator {
-    return this.#nextVal(0);
+  public *[Symbol.iterator](): ValueGenerator {
+    yield *this.#nextVal(0);
+    if (this.#offset !== this.#src.length) {
+      throw new Error('Extra data in input');
+    }
   }
 
   *#nextVal(depth: number): ValueGenerator {
@@ -59,7 +87,16 @@ export class DecodeStream {
     switch (ai) {
       case NUMBYTES.ONE:
         val = this.#view.getUint8(this.#offset++);
-        simple = true;
+        if (mt === MT.SIMPLE_FLOAT) {
+          // An encoder MUST NOT issue two-byte sequences that start with 0xf8
+          // (major type 7, additional information 24) and continue with a
+          // byte less than 0x20 (32 decimal). Such sequences are not
+          // well-formed.
+          if (val < 0x20) {
+            throw new Error(`Invalid simple encoding in extra byte: ${val}`);
+          }
+          simple = true;
+        }
         break;
       case NUMBYTES.TWO:
         if (mt === MT.SIMPLE_FLOAT) {
@@ -103,7 +140,7 @@ export class DecodeStream {
             yield [mt, ai, SYMS.BREAK];
             return;
         }
-        val = -1;
+        val = Infinity;
         break;
       default:
         simple = true;
@@ -117,21 +154,21 @@ export class DecodeStream {
         yield [mt, ai, (typeof val === 'bigint') ? -1n - val : -1 - Number(val)];
         break;
       case MT.BYTE_STRING:
-        if (val === -1) {
+        if (val === Infinity) {
           yield *this.#stream(mt, depth);
         } else {
           yield [mt, ai, this.#read(val as number)];
         }
         break;
       case MT.UTF8_STRING:
-        if (val === -1) {
+        if (val === Infinity) {
           yield *this.#stream(mt, depth);
         } else {
           yield [mt, ai, TD.decode(this.#read(val as number))];
         }
         break;
       case MT.ARRAY:
-        if (val === -1) {
+        if (val === Infinity) {
           yield *this.#stream(mt, depth, false);
         } else {
           const nval = Number(val);
@@ -142,7 +179,7 @@ export class DecodeStream {
         }
         break;
       case MT.MAP:
-        if (val === -1) {
+        if (val === Infinity) {
           yield *this.#stream(mt, depth, false);
         } else {
           const nval = Number(val);
@@ -173,25 +210,37 @@ export class DecodeStream {
   }
 
   #read(size: number): Uint8Array {
-    return this.#src.subarray(this.#offset, (this.#offset += size));
+    const a = this.#src.subarray(this.#offset, (this.#offset += size));
+    if (a.length !== size) {
+      throw new Error('Unexpected nd of stream');
+    }
+    return a;
   }
 
   *#stream(mt: number, depth: number, check = true): ValueGenerator {
-    yield [mt, NUMBYTES.INDEFINITE, SYMS.STREAM];
+    yield [mt, Infinity, SYMS.STREAM];
 
-    let streaming = true;
-    while (streaming) {
-      const nextVal = this.#nextVal(depth).next();
-      if (nextVal.done) {
-        throw new Error('End of input when streaming');
-      }
-      const [nmt, ai, val] = nextVal.value;
+    while (true) {
+      const child = this.#nextVal(depth);
+      const first = child.next();
+
+      // Assert: first.done is always true here, or nextVal would have
+      // thrown an exception on insufficient data.
+      const [nmt, ai, val] = first.value as MtAiValue;
       if (val === SYMS.BREAK) {
-        streaming = false;
-      } else if (check && (nmt !== mt)) {
-        throw new Error(`Unmatched major type.  Expected ${mt}, got ${nmt}.`);
+        yield first.value as MtAiValue;
+        return;
       }
-      yield [nmt, ai, val];
+      if (check) {
+        if (nmt !== mt) {
+          throw new Error(`Unmatched major type.  Expected ${mt}, got ${nmt}.`);
+        }
+        if (!isFinite(ai)) {
+          throw new Error('New stream started in typed stream');
+        }
+      }
+      yield first.value as MtAiValue;
+      yield *child;
     }
   }
 }

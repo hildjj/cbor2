@@ -7,5 +7,5 @@ test('encode', () => {
 });
 
 test('decode', () => {
-  assert.deepEqual(decode(new Uint8Array([0])), null);
+  assert.deepEqual(decode(new Uint8Array([0])), 0);
 });
