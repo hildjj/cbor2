@@ -3,6 +3,7 @@ import {
   SYMS,
 } from './constants.js';
 import {DecodeStream} from './decodeStream.js';
+import {Tag} from './tag.js';
 
 const NOT_FOUND = Symbol('NOT_FOUND');
 
@@ -17,6 +18,8 @@ function *pairs(a: any[]): Generator<[any, any], undefined, undefined> {
   }
 }
 
+type Parent = any[] | Tag;
+
 /**
  * Decode CBOR bytes to a JS value.
  *
@@ -28,11 +31,11 @@ export function decode<T = any>(src: Uint8Array | string): T {
   const stream = (typeof src === 'string') ?
     new DecodeStream(src, {encoding: 'hex'}) :
     new DecodeStream(src);
-  let parent: any[] | undefined = undefined;
+  let parent: Parent | undefined = undefined;
   let ret: any = NOT_FOUND;
-  const parentMap = new WeakMap<any[], any[] | undefined>();
-  const countMap = new WeakMap<any[], number>();
-  const typeMap = new WeakMap<any[], number>();
+  const parentMap = new WeakMap<Parent, Parent | undefined>();
+  const countMap = new WeakMap<Parent, number>();
+  const typeMap = new WeakMap<Parent, number>();
 
   for (const [mt, ai, val] of stream) {
     switch (mt) {
@@ -64,6 +67,12 @@ export function decode<T = any>(src: Uint8Array | string): T {
         countMap.set(ret, ai * 2);
         typeMap.set(ret, mt);
         break;
+      case MT.TAG:
+        ret = new Tag(val as number);
+        parentMap.set(ret, parent);
+        countMap.set(ret, 1);
+        typeMap.set(ret, mt);
+        break;
     }
     if (parent) {
       let count = countMap.get(parent);
@@ -82,7 +91,7 @@ export function decode<T = any>(src: Uint8Array | string): T {
         countMap.set(parent, --count);
       }
     }
-    if (Array.isArray(ret)) {
+    if (Array.isArray(ret) || ret instanceof Tag) {
       parent = ret;
     }
     while (parent && (countMap.get(parent) === 0)) {
@@ -92,9 +101,9 @@ export function decode<T = any>(src: Uint8Array | string): T {
           break;
         case MT.MAP:
           // Are all of the keys strings?
-          ret = parent.every((v, i) => (i % 2) || (typeof v === 'string')) ?
-            Object.fromEntries(pairs(parent)) :
-            new Map<any, any>(pairs(parent));
+          ret = (parent as any[]).every((v, i) => (i % 2) || (typeof v === 'string')) ?
+            Object.fromEntries(pairs(parent as any[])) :
+            new Map<any, any>(pairs(parent as any[]));
           break;
         case MT.BYTE_STRING: {
           const sz = (parent as Uint8Array[]).reduce((t, v) => t + v.length, 0);
@@ -108,6 +117,9 @@ export function decode<T = any>(src: Uint8Array | string): T {
         }
         case MT.UTF8_STRING:
           ret = (parent as string[]).join('');
+          break;
+        case MT.TAG:
+          ret = (parent as Tag).convert();
           break;
       }
       const p = parentMap.get(parent);

@@ -14,6 +14,6 @@ export class Simple {
     inspectOptions: object,
     inspect: (val: any, opts: object) => any
   ): string {
-    return `Symbol(${inspect(this.value, inspectOptions)})`;
+    return `Simple(${inspect(this.value, inspectOptions)})`;
   }
 }
