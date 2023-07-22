@@ -49,6 +49,7 @@ module.exports = {
             varsIgnorePattern: '^_',
           },
         ],
+        'jsdoc/require-yields': 'off',
       },
     },
     {

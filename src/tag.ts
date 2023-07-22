@@ -2,8 +2,11 @@
 // eslint-disable-next-line no-use-before-define
 export type TagConverter = (tag: Tag) => unknown;
 
+/**
+ * A CBOR tagged value.
+ */
 export class Tag {
-  static #tags = new Map<number, TagConverter>();
+  static #tags = new Map<bigint | number, TagConverter>();
   public readonly tag: number;
   public contents: unknown;
 
@@ -13,7 +16,7 @@ export class Tag {
   }
 
   public static registerType(
-    tag: number, converter: TagConverter
+    tag: bigint | number, converter: TagConverter
   ): TagConverter | undefined {
     const old = this.#tags.get(tag);
     this.#tags.set(tag, converter);

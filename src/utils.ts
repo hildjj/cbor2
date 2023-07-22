@@ -30,6 +30,24 @@ export function base64ToBytes(base64: string): Uint8Array {
   );
 }
 
+const urlToNotUrl: {
+  [key: string]: string;
+} = {
+  '-': '+',
+  '_': '/',
+};
+
+/**
+ * Decode Base64url string to bytes.
+ *
+ * @param base64url Base64url-encoded string.
+ * @returns Bytes.
+ */
+export function base64UrlToBytes(base64url: string): Uint8Array {
+  const s = base64url.replace(/[_-]/g, (m: string) => urlToNotUrl[m]);
+  return base64ToBytes(s.padEnd(Math.ceil(s.length / 4) * 4, '='));
+}
+
 //
 // function bytesToBase64(bytes: Uint8Array): string {
 //   const binString = Array.from(bytes, (x: number) => String.fromCodePoint(x))

@@ -122,7 +122,7 @@ export class Writer {
   // Always push a new chunk right after trimming.
   #trim(): void {
     if (this.#offset === 0) {
-      this.#chunks.pop();
+      this.#chunks.pop(); // TODO: save until next #alloc?
       return;
     }
     const last = this.#chunks.length - 1;

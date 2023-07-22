@@ -1,3 +1,6 @@
+/**
+ * A CBOR "Simple" value that is not one of the pre-standardized set.
+ */
 export class Simple {
   public value: number;
 

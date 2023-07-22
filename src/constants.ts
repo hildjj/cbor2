@@ -1,4 +1,6 @@
 /**
+ * Major Types.
+ *
  * @enum {number}
  */
 export const MT = {
@@ -13,6 +15,10 @@ export const MT = {
 };
 
 /**
+ * Known tag numbers.
+ * See https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
+ * for more information.
+ *
  * @enum {number}
  */
 export const TAG = {
@@ -33,9 +39,17 @@ export const TAG = {
   MIME: 36,
   // https://github.com/input-output-hk/cbor-sets-spec/blob/master/CBOR_SETS.md
   SET: 258,
+  JSON: 262,
+  SELF_DESCRIBED: 55799,
+  // Always invalid: https://www.ietf.org/archive/id/draft-bormann-cbor-notable-tags-07.html#name-invalid-tag
+  INVALID_16: 0xffff,
+  INVALID_32: 0xffffffff,
+  INVALID_64: 0xffffffffffffffffn,
 };
 
 /**
+ * Additional information markers for how many extra bytes to read.
+ *
  * @enum {number}
  */
 export const NUMBYTES = {
@@ -48,6 +62,8 @@ export const NUMBYTES = {
 };
 
 /**
+ * Defined Simple numbers.
+ *
  * @enum {number}
  */
 export const SIMPLE = {
@@ -57,20 +73,10 @@ export const SIMPLE = {
   UNDEFINED: 23,
 };
 
+/**
+ * Symbols.  Made globally findable for testing.
+ */
 export const SYMS = {
-  NULL: Symbol.for('github.com/hildjj/cbor2/null'),
-  UNDEFINED: Symbol.for('github.com/hildjj/cbor2/undef'),
-  PARENT: Symbol.for('github.com/hildjj/cbor2/parent'),
   BREAK: Symbol.for('github.com/hildjj/cbor2/break'),
   STREAM: Symbol.for('github.com/hildjj/cbor2/stream'),
-};
-
-export const SHIFT32 = 0x100000000;
-
-export const BI = {
-  MINUS_ONE: BigInt(-1),
-  NEG_MAX: BigInt(-1) - BigInt(Number.MAX_SAFE_INTEGER),
-  MAXINT32: BigInt('0xffffffff'),
-  MAXINT64: BigInt('0xffffffffffffffff'),
-  SHIFT32: BigInt(SHIFT32),
 };

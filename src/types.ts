@@ -1,6 +1,10 @@
+import {base64ToBytes, base64UrlToBytes} from './utils.js';
+import {TAG} from './constants.js';
 import {Tag} from './tag.js';
-import {base64ToBytes} from './utils.js';
 import {decode} from './decoder.js';
+
+// Register all of the implemented tag types.  Import this file
+// for side effects only.
 
 function assertNumber(contents: any): asserts contents is number {
   if (typeof contents !== 'number') {
@@ -20,12 +24,18 @@ function assertU8(contents: any): asserts contents is Uint8Array {
   }
 }
 
-Tag.registerType(0, tag => {
+function assertArray(contents: any): asserts contents is any[] {
+  if (!Array.isArray(contents)) {
+    throw new Error('Expected Array');
+  }
+}
+
+Tag.registerType(TAG.DATE_STRING, tag => {
   assertString(tag.contents);
   return new Date(tag.contents);
 });
 
-Tag.registerType(1, tag => {
+Tag.registerType(TAG.DATE_EPOCH, tag => {
   assertNumber(tag.contents);
   return new Date(tag.contents * 1000);
 });
@@ -34,26 +44,31 @@ function u8toBigInt(tag: Tag): bigint {
   assertU8(tag.contents);
   return tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
 }
-Tag.registerType(2, u8toBigInt);
-Tag.registerType(3, (tag: Tag): bigint => -1n - u8toBigInt(tag));
+Tag.registerType(TAG.POS_BIGINT, u8toBigInt);
+Tag.registerType(TAG.NEG_BIGINT, (tag: Tag): bigint => -1n - u8toBigInt(tag));
 
 // 24: Encoded CBOR data item; see Section 3.4.5.1
-Tag.registerType(24, (tag: Tag): any => {
+Tag.registerType(TAG.CBOR, (tag: Tag): any => {
   assertU8(tag.contents);
   return decode(tag.contents);
 });
 
-Tag.registerType(32, (tag: Tag): URL => {
+Tag.registerType(TAG.URI, (tag: Tag): URL => {
   assertString(tag.contents);
   return new URL(tag.contents);
 });
 
-Tag.registerType(34, (tag: Tag): Uint8Array => {
+Tag.registerType(TAG.BASE64URL, (tag: Tag): Uint8Array => {
+  assertString(tag.contents);
+  return base64UrlToBytes(tag.contents);
+});
+
+Tag.registerType(TAG.BASE64, (tag: Tag): Uint8Array => {
   assertString(tag.contents);
   return base64ToBytes(tag.contents);
 });
 
-Tag.registerType(35, (tag: Tag): RegExp => {
+Tag.registerType(TAG.REGEXP, (tag: Tag): RegExp => {
   assertString(tag.contents);
   return new RegExp(tag.contents);
 });
@@ -182,4 +197,26 @@ Tag.registerType(85,
 Tag.registerType(86,
   (tag: Tag): Float64Array => convertToTyped(tag, Float64Array, true));
 
-Tag.registerType(55799, (tag: Tag): any => tag.contents);
+Tag.registerType(TAG.SET, (tag: Tag) => {
+  assertArray(tag.contents);
+  return new Set(tag.contents);
+});
+
+Tag.registerType(TAG.JSON, (tag: Tag) => {
+  assertString(tag.contents);
+  return JSON.parse(tag.contents);
+});
+
+Tag.registerType(TAG.SELF_DESCRIBED, (tag: Tag): any => tag.contents);
+
+Tag.registerType(TAG.INVALID_16, (tag: Tag) => {
+  throw new Error(`Tag always invalid: ${TAG.INVALID_16}`);
+});
+
+Tag.registerType(TAG.INVALID_32, (tag: Tag) => {
+  throw new Error(`Tag always invalid: ${TAG.INVALID_32}`);
+});
+
+Tag.registerType(TAG.INVALID_64, (tag: Tag) => {
+  throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
+});

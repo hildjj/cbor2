@@ -1,6 +1,7 @@
 import {
   MT,
   NUMBYTES,
+  SIMPLE,
   SYMS,
 } from './constants.js';
 import {base64ToBytes, hexToU8} from './utils.js';
@@ -17,6 +18,10 @@ export interface DecodeOptions {
    * @default 1024
    */
   max_depth?: number;
+
+  /**
+   * If the input is a string, how should it be decoded into a byte stream?
+   */
   encoding?: 'base64' | 'hex' | null;
 }
 
@@ -28,6 +33,11 @@ type MtAiValue = [number, number, DecodeValue];
 
 type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
 
+/**
+ * Decode bytes into a stream of events describing the CBOR read from the
+ * bytes.  Currently requires a full single CBOR value, with no extra bytes in
+ * the input.
+ */
 export class DecodeStream {
   #src;
   #view;
@@ -68,6 +78,16 @@ export class DecodeStream {
     };
   }
 
+  /**
+   * Get the stream of events describing the CBOR item.
+   *
+   * @throws On invalid input or extra data in input.
+   * @example
+   * const s = new DecodeStream(buffer);
+   * for (const [major_type, additional_info, value] of s) {
+   *  ...
+   * }
+   */
   public *[Symbol.iterator](): ValueGenerator {
     yield *this.#nextVal(0);
     if (this.#offset !== this.#src.length) {
@@ -200,10 +220,10 @@ export class DecodeStream {
       case MT.SIMPLE_FLOAT:
         if (simple) {
           switch (val) {
-            case 20: val = false; break;
-            case 21: val = true; break;
-            case 22: val = null; break;
-            case 23: val = undefined; break;
+            case SIMPLE.FALSE: val = false; break;
+            case SIMPLE.TRUE: val = true; break;
+            case SIMPLE.NULL: val = null; break;
+            case SIMPLE.UNDEFINED: val = undefined; break;
             default: val = new Simple(Number(val));
           }
         }
