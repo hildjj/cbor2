@@ -1,8 +1,8 @@
+import {type DecodeOptions, DecodeStream} from './decodeStream.js';
 import {
   MT,
   SYMS,
 } from './constants.js';
-import {DecodeStream} from './decodeStream.js';
 import {Tag} from './tag.js';
 
 const NOT_FOUND = Symbol('NOT_FOUND');
@@ -24,20 +24,24 @@ type Parent = any[] | Tag;
  * Decode CBOR bytes to a JS value.
  *
  * @param src CBOR bytes to decode.
+ * @param opts Options for decoding.
  * @returns JS value decoded from cbor.
  * @throws {Error} No value found, decoding errors.
  */
-export function decode<T = any>(src: Uint8Array | string): T {
+export function decode<T = any>(
+  src: Uint8Array | string,
+  opts?: DecodeOptions
+): T {
   const stream = (typeof src === 'string') ?
-    new DecodeStream(src, {encoding: 'hex'}) :
-    new DecodeStream(src);
+    new DecodeStream(src, {encoding: 'hex', ...opts}) :
+    new DecodeStream(src, opts);
   let parent: Parent | undefined = undefined;
   let ret: any = NOT_FOUND;
   const parentMap = new WeakMap<Parent, Parent | undefined>();
   const countMap = new WeakMap<Parent, number>();
   const typeMap = new WeakMap<Parent, number>();
 
-  for (const [mt, ai, val] of stream) {
+  for (const [mt, _ai, val] of stream) {
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
@@ -46,25 +50,25 @@ export function decode<T = any>(src: Uint8Array | string): T {
         break;
       case MT.BYTE_STRING:
       case MT.UTF8_STRING:
-        if (isFinite(ai)) {
-          ret = val;
-        } else {
+        if (val === Infinity) {
           ret = [];
           parentMap.set(ret, parent);
-          countMap.set(ret, ai);
+          countMap.set(ret, Infinity);
           typeMap.set(ret, mt);
+        } else {
+          ret = val;
         }
         break;
       case MT.ARRAY:
         ret = [];
         parentMap.set(ret, parent);
-        countMap.set(ret, ai);
+        countMap.set(ret, val as number);
         typeMap.set(ret, mt);
         break;
       case MT.MAP:
         ret = [];
         parentMap.set(ret, parent);
-        countMap.set(ret, ai * 2);
+        countMap.set(ret, (val as number) * 2);
         typeMap.set(ret, mt);
         break;
       case MT.TAG:
@@ -75,16 +79,14 @@ export function decode<T = any>(src: Uint8Array | string): T {
         break;
     }
     if (parent) {
-      let count = countMap.get(parent);
-      if (count === undefined) {
-        throw new Error('Assert: count not found');
-      }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      let count = countMap.get(parent)!;
       if (ret === SYMS.BREAK) {
-        if (isFinite(count)) {
-          throw new Error('Unexpected BREAK');
-        } else {
+        if (count === Infinity) {
           count = 0;
           countMap.set(parent, 0);
+        } else {
+          throw new Error('Unexpected BREAK');
         }
       } else {
         parent.push(ret);
@@ -101,6 +103,8 @@ export function decode<T = any>(src: Uint8Array | string): T {
           break;
         case MT.MAP:
           // Are all of the keys strings?
+          // Note that __proto__ gets special handling as a key in fromEntries,
+          // since it's doing DefineOwnProperty down inside.
           ret = (parent as any[]).every((v, i) => (i % 2) || (typeof v === 'string')) ?
             Object.fromEntries(pairs(parent as any[])) :
             new Map<any, any>(pairs(parent as any[]));
@@ -123,6 +127,8 @@ export function decode<T = any>(src: Uint8Array | string): T {
           break;
       }
       const p = parentMap.get(parent);
+      p?.pop();
+      p?.push(ret);
       parentMap.delete(parent);
       countMap.delete(parent);
       typeMap.delete(parent);

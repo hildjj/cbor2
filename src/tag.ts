@@ -20,9 +20,24 @@ export class Tag {
     return old;
   }
 
+  public static clearType(tag: number): TagConverter | undefined {
+    const old = this.#tags.get(tag);
+    this.#tags.delete(tag);
+    return old;
+  }
+
   public push(contents: unknown): number {
     this.contents = contents;
     return 1;
+  }
+
+  /**
+   * Here to make Tag look more like an Array for TS.  Not useful.
+   *
+   * @returns Contents.
+   */
+  public pop(): unknown {
+    return this.contents;
   }
 
   public convert(): unknown {

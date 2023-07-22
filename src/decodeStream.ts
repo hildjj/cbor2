@@ -3,11 +3,11 @@ import {
   NUMBYTES,
   SYMS,
 } from './constants.js';
+import {base64ToBytes, hexToU8} from './utils.js';
 import {Simple} from './simple.js';
-import {hexToU8} from './utils.js';
 import {parseHalf} from './float.js';
 
-const TD = new TextDecoder('utf8', {fatal: true});
+const TD = new TextDecoder('utf8', {fatal: true, ignoreBOM: true});
 
 export interface DecodeOptions {
   /**
@@ -45,6 +45,9 @@ export class DecodeStream {
       switch (opts?.encoding) {
         case 'hex':
           this.#src = hexToU8(src);
+          break;
+        case 'base64':
+          this.#src = base64ToBytes(src);
           break;
         default:
           throw new TypeError(`Encoding not implemented: "${opts?.encoding}"`);
@@ -218,7 +221,7 @@ export class DecodeStream {
   }
 
   *#stream(mt: number, depth: number, check = true): ValueGenerator {
-    yield [mt, Infinity, SYMS.STREAM];
+    yield [mt, NUMBYTES.INDEFINITE, Infinity];
 
     while (true) {
       const child = this.#nextVal(depth);
@@ -235,7 +238,7 @@ export class DecodeStream {
         if (nmt !== mt) {
           throw new Error(`Unmatched major type.  Expected ${mt}, got ${nmt}.`);
         }
-        if (!isFinite(ai)) {
+        if (ai === NUMBYTES.INDEFINITE) {
           throw new Error('New stream started in typed stream');
         }
       }
