@@ -24,6 +24,36 @@ module.exports = {
   },
   overrides: [
     {
+      files: ['*.ts'],
+      rules: {
+        'lines-around-comment': 'off',
+        '@typescript-eslint/lines-around-comment': ['error', {
+          allowBlockStart: true,
+          allowClassStart: true,
+          allowEnumStart: true,
+          allowInterfaceStart: true,
+          allowModuleStart: true,
+          allowTypeStart: true,
+        }],
+        '@typescript-eslint/lines-between-class-members': ['error', 'always', {
+          exceptAfterSingleLine: true,
+        }],
+        'object-curly-spacing': 'off',
+        '@typescript-eslint/object-curly-spacing': ['error', 'never'],
+        '@typescript-eslint/no-unused-vars': [
+          'error', {
+            args: 'none',
+            argsIgnorePattern: '^_',
+            caughtErrors: 'all',
+            caughtErrorsIgnorePattern: '^(_|ignore)',
+            varsIgnorePattern: '^_',
+          },
+        ],
+        'jsdoc/require-yields': 'off',
+        'no-use-before-define': 'off',
+      },
+    },
+    {
       files: ['**/*.md/*.js'],
       rules: {
         'no-console': 'off',

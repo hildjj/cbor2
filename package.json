@@ -15,10 +15,10 @@
     "lint": "eslint . --ext ts,js,cjs",
     "pretest": "npm run build",
     "test": "npm run test:noBuild",
-    "test:noBuild": "c8 node --test",
+    "test:noBuild": "c8 node --test test/*.test.js",
     "build": "tsup",
     "build:sourcemap": "npm run build -- --sourcemap",
-    "watch": "tsup --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
+    "watch": "tsup  --sourcemap --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
     "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild"
   },
   "keywords": [
