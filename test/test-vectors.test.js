@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
 
+import '../lib/types.js';
+import {base64ToBytes, hexToU8, u8toHex} from '../lib/utils.js';
+import {decode, encode} from '../lib/index.js';
 import assert from 'node:assert/strict';
-import {decode} from '../lib/index.js';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readFile} from 'node:fs/promises';
@@ -63,34 +65,28 @@ const failures = JSON.parse(failStr);
 test('vectors', () => {
   assert(Array.isArray(vectors));
   for (const v of vectors) {
-    let _decoded = null;
+    const buffer = hexToU8(v.hex);
+
+    let decoded = null;
     try {
-      _decoded = decode(v.hex);
+      decoded = decode(buffer);
     } catch (e) {
       console.log('DECODE ERROR', v.hex);
       throw e;
     }
-    //
-    // const encoded = cbor.encodeCanonical(decoded)
-    // const redecoded = cbor.decode(encoded)
-    //
-    //   t.truthy(Object.prototype.hasOwnProperty.call(v, 'cbor'))
-    //   t.deepEqual(
-    //     Buffer.from(v.cbor, 'base64'),
-    //     buffer,
-    //     'base64 and hex encoded bytes mismatched '
-    //   )
 
-    //   if (decoded && (typeof decoded === 'object')) {
-    //     delete decoded[cbor.Tagged.INTERNAL_JSON]
-    //     delete redecoded[cbor.Tagged.INTERNAL_JSON]
-    //   }
-    //   t.deepEqual(
-    //     decoded,
-    //     redecoded,
-    //     `round trip error: ${v.hex} -> ${encoded.toString('hex')}`
-    //   )
+    const encoded = encode(decoded);
+    const redecoded = decode(encoded);
 
+    assert.deepEqual(base64ToBytes(v.cbor), buffer, 'mismatch');
+
+    assert.deepEqual(
+      decoded,
+      redecoded,
+      `round trip error: ${v.hex} -> ${u8toHex(encoded)}`
+    );
+
+    //
     //   if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
     //     cbor.diagnose(buffer)
     //       .then(d => t.deepEqual(
@@ -99,9 +95,10 @@ test('vectors', () => {
     //       ))
     //   }
 
-    //   if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {
-    //     t.deepEqual(decoded, v.decoded, `Hex: "${v.hex}"`)
+    if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {
+      assert.deepEqual(decoded, v.decoded, `Hex: "${v.hex}"`);
 
+    //
     //     if (v.roundtrip) {
     //       // TODO: Don't know how to make these round-trip.  See:
     //       // https://github.com/cbor/test-vectors/issues/3
@@ -118,7 +115,7 @@ test('vectors', () => {
     //         t.notDeepEqual(encoded, buffer)
     //       }
     //     }
-    //   }
+    }
   }
 });
 

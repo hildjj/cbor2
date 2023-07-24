@@ -18,17 +18,14 @@ export function parseHalf(buf: Uint8Array, offset = 0): number {
 }
 
 /**
- * Create a 2 byte Uint8Array from a number as a IEEE754 binary16, and write
- * it into the given DataView at the given offset.
+ * Return a big-endian unsigned integer that has the same internal layout
+ * as the given number as a float16, if it fits.  Otherwise returns null.
  *
- * @param dv DataView to write into.
- * @param offset Where to start writing.
  * @param half The number to convert to a half-precision float.
- * @returns True on success.
+ * @returns Number on success, otherwise null.  Make sure to check with
+ *   `=== null`, in case this returns 0, which is valid.
  */
-export function writeFloat16(
-  dv: DataView, offset: number, half: number
-): boolean {
+export function halfToUint(half: number): number | null {
   // HACK: everyone settle in.  This isn't going to be pretty.
   // Translate cn-cbor's C code (from Carsten Borman):
 
@@ -51,7 +48,7 @@ export function writeFloat16(
   // we will lose precision in the conversion.
   // mant32 = 24bits, mant16 = 11bits, 24-11 = 13
   if ((u & 0x1FFF) !== 0) {
-    return false;
+    return null;
   }
 
   // Sign, exponent, mantissa
@@ -68,41 +65,44 @@ export function writeFloat16(
   //     ;              /* 0.0, -0.0 */
 
   if ((exp === 0) && (mant === 0)) {
-    // No-op
+    // No-op.  Sign already in s16.
   } else if ((exp >= 113) && (exp <= 142)) {
+    // Normal number.  Shift the exponent and mantissa to fit.
     //
     //   else if (exp >= 113 && exp <= 142) /* normalized */
     //     s16 += ((exp - 112) << 10) + (mant >> 13);
     s16 += ((exp - 112) << 10) + (mant >> 13);
   } else if ((exp >= 103) && (exp < 113)) {
-    // Denormalized numbers
+    // Denormalized numbers.  Might lose precision further, which is an error.
+    //
     //   else if (exp >= 103 && exp < 113) { /* denorm, exp16 = 0 */
     //     if (mant & ((1 << (126 - exp)) - 1))
     //       goto float32;         /* loss of precision */
     //     s16 += ((mant + 0x800000) >> (126 - exp));
 
     if (mant & ((1 << (126 - exp)) - 1)) {
-      return false;
+      return null;
     }
     s16 += ((mant + 0x800000) >> (126 - exp));
   } else if (exp === 255) {
+    // NaN and Infinities
+    //
     //   } else if (exp == 255 && mant == 0) { /* Inf */
     //     s16 += 0x7c00;
     if (mant === 0) { // +/- Infinity
-      s16 += 0x7c00;
+      s16 += 0x7c00; // Keep sign
     } else { // NaN
       s16 = 0x7e00;
     }
   } else {
     //   } else
     //     goto float32;           /* loss of range */
-    return false;
+    return null;
   }
 
   // Done
   //   ensure_writable(3);
   //   u16 = s16;
   //   be16 = hton16p((const uint8_t*)&u16);
-  dv.setUint16(offset, s16, false);
-  return true;
+  return s16;
 }

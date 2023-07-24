@@ -1,8 +1,10 @@
-import {writeFloat16} from './float.js';
-
 export interface WriterOptions {
   chunk_size?: number;
 }
+
+export const WriterOptionsDefault: Required<WriterOptions> = {
+  chunk_size: 4096,
+};
 
 // Don't inherit from stream.Writable, so it's more portable.
 export class Writer {
@@ -14,7 +16,7 @@ export class Writer {
 
   public constructor(opts = {}) {
     this.#opts = {
-      chunk_size: 4096,
+      ...WriterOptionsDefault,
       ...opts,
     };
     if (this.#opts.chunk_size < 8) {
@@ -67,42 +69,51 @@ export class Writer {
     this.#advance(1);
   }
 
-  public writeUint16(n: number): void {
+  public writeUint16(n: number, littleEndian = false): void {
     this.#makeSpace(2);
-    (this.#dv as DataView).setUint16(this.#offset, n, false);
+    (this.#dv as DataView).setUint16(this.#offset, n, littleEndian);
     this.#advance(2);
   }
 
-  public writeUint32(n: number): void {
+  public writeUint32(n: number, littleEndian = false): void {
     this.#makeSpace(4);
-    (this.#dv as DataView).setUint32(this.#offset, n, false);
+    (this.#dv as DataView).setUint32(this.#offset, n, littleEndian);
     this.#advance(4);
   }
 
-  public writeBigUint64(n: bigint): void {
+  public writeBigUint64(n: bigint, littleEndian = false): void {
     this.#makeSpace(8);
-    (this.#dv as DataView).setBigUint64(this.#offset, n, false);
+    (this.#dv as DataView).setBigUint64(this.#offset, n, littleEndian);
     this.#advance(8);
   }
 
-  public writeFloat16(n: number): boolean {
+  public writeInt16(n: number, littleEndian = false): void {
     this.#makeSpace(2);
-    if (writeFloat16(this.#dv as DataView, this.#offset, n)) {
-      this.#advance(2);
-      return true;
-    }
-    return false;
+    (this.#dv as DataView).setInt16(this.#offset, n, littleEndian);
+    this.#advance(2);
   }
 
-  public writeFloat32(n: number): void {
+  public writeInt32(n: number, littleEndian = false): void {
     this.#makeSpace(4);
-    (this.#dv as DataView).setFloat32(this.#offset, n, false);
+    (this.#dv as DataView).setInt32(this.#offset, n, littleEndian);
     this.#advance(4);
   }
 
-  public writeFloat64(n: number): void {
+  public writeBigInt64(n: bigint, littleEndian = false): void {
     this.#makeSpace(8);
-    (this.#dv as DataView).setFloat64(this.#offset, n, false);
+    (this.#dv as DataView).setBigInt64(this.#offset, n, littleEndian);
+    this.#advance(8);
+  }
+
+  public writeFloat32(n: number, littleEndian = false): void {
+    this.#makeSpace(4);
+    (this.#dv as DataView).setFloat32(this.#offset, n, littleEndian);
+    this.#advance(4);
+  }
+
+  public writeFloat64(n: number, littleEndian = false): void {
+    this.#makeSpace(8);
+    (this.#dv as DataView).setFloat64(this.#offset, n, littleEndian);
     this.#advance(8);
   }
 

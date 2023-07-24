@@ -1,4 +1,4 @@
-import {SYMS} from '../lib/constants.js';
+import {writeTag, writeUnknown} from '../lib/encoder.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
 import {hexToU8} from '../lib/utils.js';
@@ -9,12 +9,9 @@ export class TempClass {
     this.value = val || 'tempClass';
   }
 
-  encodeCBOR(gen) {
-    return gen._pushTag(0xffff) && gen.pushAny(this.value);
-  }
-
-  static toCBOR(gen, obj) {
-    return gen._pushTag(0xfffe) && gen.pushAny(obj.value);
+  toCBOR(w, opts) {
+    writeTag(w, 0xfffe);
+    writeUnknown(w, this.val, opts);
   }
 }
 
@@ -116,10 +113,13 @@ export const good = [
   fb                -- Float, next 8 bytes
     3ff199999999999a -- 1.1
 0xfb3ff199999999999a`],
+
+  // Node-cbor doesn't do short floats without canonical, so this says
+  // fa3fc00000
   [1.5, '1.5_2', `
-  fa                -- Float, next 4 bytes
-    3fc00000        -- 1.5
-0xfa3fc00000`],
+  f9                -- Float, next 2 bytes
+    3e00            -- 1.5
+0xf93e00`],
   [3.4028234663852886e+38, '3.4028234663852886e+38_2', `
   fa                -- Float, next 4 bytes
     7f7fffff        -- 3.4028234663852886e+38
@@ -128,19 +128,33 @@ export const good = [
   fb                -- Float, next 8 bytes
     7e37e43c8800759c -- 1e+300
 0xfb7e37e43c8800759c`],
-  [5.960464477539063e-8, '5.960464477539063e-8_2', `
-  fa                -- Float, next 4 bytes
-    33800000        -- 5.960464477539063e-8
-0xfa33800000`],
 
+  // Short now, so not fa33800000
+  [5.960464477539063e-8, '5.960464477539063e-8_2', `
+  f9                -- Float, next 2 bytes
+    0001            -- 5.960464477539063e-8
+0xf90001`],
+
+  // Short now, so not fa38800000
   [0.00006103515625, '0.00006103515625_2', `
-  fa                -- Float, next 4 bytes
-    38800000        -- 0.00006103515625
-0xfa38800000`],
+  f9                -- Float, next 2 bytes
+    0400            -- 0.00006103515625
+0xf90400`],
   [-4.1, '-4.1_3', `
   fb                -- Float, next 8 bytes
     c010666666666666 -- -4.1
 0xfbc010666666666666`],
+
+  [2.5, '2.5_1', '0xf94100'],
+  [-0, '-0_1', `
+  f9                -- Float, next 2 bytes
+    8000            -- -0
+0xf98000`],
+  [0.00006103515625, '0.00006103515625_1', '0xf90400'],
+  [1.1920928955078125e-7, '1.1920928955078125e-7_1', '0xf90002'], // De-norm
+  [1.1478035721284577e-41, '1.1478035721284577e-41_2', '0xfa00001fff'], // Exp too small
+  [3.4011621342146535e+38, '3.4011621342146535e+38_2', '0xfa7f7fe000'], // Exp too big
+  [1.1944212019443512e-7, '1.1944212019443512e-7_2', '0xfa34004000'], // De-norm prec loss
 
   [Infinity, 'Infinity_1', `
   f9                -- Float, next 2 bytes
@@ -587,73 +601,55 @@ export const good = [
     0100            -- Tag #256
       01            -- 1
 0xd9010001`],
-  [new Uint8Array([1, 2, 3]), '64(h\'010203\')', `
-  d8                --  next 1 byte
-    40              -- Tag #64
-      43            -- Bytes, length: 3
-        010203      -- 010203
-0xd84043010203`],
+  [new Uint8Array([1, 2, 3]), 'h\'010203\'', `
+  43            -- Bytes, length: 3
+    010203      -- 010203
+0x43010203`],
   [new Uint8ClampedArray([1, 2, 3]), '68(h\'010203\')', `
   d8                --  next 1 byte
     44              -- Tag #68
       43            -- Bytes, length: 3
         010203      -- 010203
 0xd84443010203`],
-  [new Uint16Array([1, 2, 3]), '69(h\'010002000300\')', `
-  d8                --  next 1 byte
-    45              -- Tag #69
-      46            -- Bytes, length: 6
-        010002000300 -- 010002000300
-0xd84546010002000300`],
-  [new Uint16Array([1, 2, 3]), '65(h\'000100020003\')', `
-  d8                --  next 1 byte
-    41              -- Tag #65
-      46            -- Bytes, length: 6
-        000100020003 -- 000100020003
-0xd84146000100020003`],
-  [new Uint32Array([1, 2, 3]), '70(h\'010000000200000003000000\')', `
-  d8                --  next 1 byte
-    46              -- Tag #70
-      4c            -- Bytes, length: 12
-        010000000200000003000000 -- 010000000200000003000000
-0xd8464c010000000200000003000000`],
-  [new Uint32Array([1, 2, 3]), '66(h\'000000010000000200000003\')', `
-  d8                --  next 1 byte
-    42              -- Tag #66
-      4c            -- Bytes, length: 12
-        000000010000000200000003 -- 000000010000000200000003
-0xd8424c000000010000000200000003`],
-  [new BigUint64Array([1n, 2n, 3n]), '71(h\'010000000000000002000000000000000300000000000000\')', `
-  d8                --  next 1 byte
-    47              -- Tag #71
-      58            -- Bytes, length next 1 byte
-        18          -- Bytes, length: 24
-          010000000000000002000000000000000300000000000000 -- 010000000000000002000000000000000300000000000000
-0xd8475818010000000000000002000000000000000300000000000000`],
-  [new BigUint64Array([1n, 2n, 3n]), '67(h\'000000000000000100000000000000020000000000000003\')', `
-  d8                --  next 1 byte
-    43              -- Tag #67
-      58            -- Bytes, length next 1 byte
-        18          -- Bytes, length: 24
-          000000000000000100000000000000020000000000000003 -- 000000000000000100000000000000020000000000000003
-0xd8435818000000000000000100000000000000020000000000000003`],
-
+  [new Set([1, 2]), '[1, 2]', `
+d9                --  next 2 bytes
+  0102            -- Tag #258
+    82            -- Array, 2 items
+      01          -- [0], 1
+      02          -- [1], 2
+0xd90102820102`],
+  [new Int8Array([-1, 0, 1, -128, 127]),
+    '72(\'ff0001807f\')',
+    '0xd84845ff0001807f'],
 ];
 
-export const encodeGood = [
-  [SYMS.NULL, 'null', `
-  f6                -- null
-0xf6`],
-  [SYMS.UNDEFINED, 'undefined', `
-  f7                -- undefined
-0xf7`],
-  [new Set([1, 2]), '[1, 2]', `
-  d9                --  next 2 bytes
-    0102            -- Tag #258
-      82            -- Array, 2 items
-        01          -- [0], 1
-        02          -- [1], 2
-0xd90102820102`],
+export const goodEndian = [
+  // Obj, little, big
+  [new Uint16Array([1, 2, 3]),
+    '0xd84546010002000300',
+    '0xd84146000100020003'],
+  [new Uint32Array([1, 2, 3]),
+    '0xd8464c010000000200000003000000',
+    '0xd8424c000000010000000200000003'],
+  [new BigUint64Array([1n, 2n, 3n]),
+    '0xd8475818010000000000000002000000000000000300000000000000',
+    '0xd8435818000000000000000100000000000000020000000000000003'],
+  [new Int16Array([1, 2, 3]),
+    '0xd84d46010002000300',
+    '0xd84946000100020003'],
+  [new Int32Array([1, 2, 3]),
+    '0xd84e4c010000000200000003000000',
+    '0xd84a4c000000010000000200000003'],
+  [new BigInt64Array([1n, 2n, 3n]),
+    '0xd84f5818010000000000000002000000000000000300000000000000',
+    '0xd84b5818000000000000000100000000000000020000000000000003'],
+
+  [new Float32Array([1.1, 1.2, 1.3]),
+    '0xd8554ccdcc8c3f9a99993f6666a63f',
+    '0xd8514c3f8ccccd3f99999a3fa66666'],
+  [new Float64Array([1.1, 1.2, 1.3]),
+    '0xd85658189a9999999999f13f333333333333f33fcdccccccccccf43f',
+    '0xd85258183ff199999999999a3ff33333333333333ff4cccccccccccd'],
 ];
 
 export const decodeGood = [
@@ -882,6 +878,15 @@ export const decodeGood = [
           eeff99    -- eeff99
         ff          -- BREAK
 0xd8405f44aabbccdd43eeff99ff`],
+];
+
+export const encodeGood = [
+  /* eslint-disable no-new-wrappers */
+  [new String('foo'), 'boxed', '0x63666f6f'],
+  [new Boolean(true), 'boxed', '0xf5'],
+  [new Number(12), 'boxed', '0x0c'],
+  [new ArrayBuffer(8), 'ArrayBuffer', '0x480000000000000000'],
+  /* eslint-enable no-new-wrappers */
 ];
 
 export const collapseBigIntegers = [

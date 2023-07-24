@@ -50,6 +50,7 @@ module.exports = {
           },
         ],
         'jsdoc/require-yields': 'off',
+        'no-use-before-define': 'off',
       },
     },
     {

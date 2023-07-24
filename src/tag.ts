@@ -1,5 +1,6 @@
+import {type RequiredEncodeOptions, writeTag, writeUnknown} from './encoder.js';
+import type {Writer} from './writer.js';
 
-// eslint-disable-next-line no-use-before-define
 export type TagConverter = (tag: Tag) => unknown;
 
 /**
@@ -29,6 +30,13 @@ export class Tag {
     return old;
   }
 
+  /**
+   * Makes Tag act like an array, so that no special casing is needed when
+   * the tag's contents are available.
+   *
+   * @param contents The value associated with the tag.
+   * @returns Always returns 1.
+   */
   public push(contents: unknown): number {
     this.contents = contents;
     return 1;
@@ -43,12 +51,22 @@ export class Tag {
     return this.contents;
   }
 
+  /**
+   * Convert this tagged value to a useful data type, if possible.
+   *
+   * @returns The converted value.
+   */
   public convert(): unknown {
     const converter = Tag.#tags.get(this.tag);
     if (converter) {
       return converter(this);
     }
     return this;
+  }
+
+  public toCBOR(w: Writer, opts: RequiredEncodeOptions): void {
+    writeTag(w, this.tag);
+    writeUnknown(w, this.contents, opts);
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](

@@ -1,3 +1,7 @@
+import {MT} from './constants.js';
+import type {Writer} from './writer.js';
+import {writeInt} from './encoder.js';
+
 /**
  * A CBOR "Simple" value that is not one of the pre-standardized set.
  */
@@ -6,6 +10,10 @@ export class Simple {
 
   public constructor(value: number) {
     this.value = value;
+  }
+
+  public toCBOR(w: Writer, val: unknown): void {
+    writeInt(w, this.value, MT.SIMPLE_FLOAT);
   }
 
   public toString(): string {

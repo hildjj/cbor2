@@ -46,42 +46,6 @@ test('TypedArray writes', () => {
   assert.deepEqual(w.read(), new Uint8Array([0, 0, 0, 2]));
   w.clear();
 
-  assert(w.writeFloat16(2.5));
-  assert.deepEqual(w.read(), new Uint8Array([65, 0]));
-  w.clear();
-
-  assert(w.writeFloat16(0));
-  assert.deepEqual(w.read(), new Uint8Array([0, 0]));
-  w.clear();
-
-  assert(w.writeFloat16(-0));
-  assert.deepEqual(w.read(), new Uint8Array([128, 0]));
-  w.clear();
-
-  assert(w.writeFloat16(0.00006103515625));
-  assert.deepEqual(w.read(), new Uint8Array([4, 0]));
-  w.clear();
-
-  assert(w.writeFloat16(1.1920928955078125e-7)); // De-norm
-  assert.deepEqual(w.read(), new Uint8Array([0, 2]));
-  w.clear();
-
-  assert(w.writeFloat16(Infinity));
-  assert.deepEqual(w.read(), new Uint8Array([124, 0]));
-  w.clear();
-
-  assert(w.writeFloat16(-Infinity));
-  assert.deepEqual(w.read(), new Uint8Array([252, 0]));
-  w.clear();
-
-  assert(w.writeFloat16(NaN));
-  assert.deepEqual(w.read(), new Uint8Array([0x7e, 0]));
-  w.clear();
-
-  assert(!w.writeFloat16(1.1478035721284577e-41)); // Too small exp
-  assert(!w.writeFloat16(3.4011621342146535e+38)); // Too big exp
-  assert(!w.writeFloat16(1.1944212019443512e-7)); // De-norm w/ prec loss
-
   w.writeFloat32(2.5);
   assert.deepEqual(w.read(), new Uint8Array([64, 32, 0, 0]));
   w.clear();

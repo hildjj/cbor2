@@ -7,9 +7,9 @@ import test from 'node:test';
 
 function testAll(list, opts) {
   let count = 0;
-  for (const c of list) {
-    const d = decode(cases.toBuffer(c), opts);
-    assert.deepEqual(d, c[0], cases.toString(c));
+  for (const [orig, diag, commented] of list) {
+    const d = decode(cases.toBuffer(commented), opts);
+    assert.deepEqual(d, orig, diag);
     count++;
   }
   assert.equal(count, list.length);
@@ -31,6 +31,11 @@ test('decode', () => {
 
 test('edges', () => {
   failAll(cases.decodeBad);
+});
+
+test('goodEndian', () => {
+  testAll(cases.goodEndian.map(([obj, little, big]) => [obj, 'little', little]));
+  testAll(cases.goodEndian.map(([obj, little, big]) => [obj, 'big', big]));
 });
 
 test('depth', () => {
