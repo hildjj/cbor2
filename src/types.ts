@@ -1,3 +1,15 @@
+/**
+ * Register all of the implemented tag types for both encoding and ecoding.
+ * Import this file for side effects only.
+ *
+ * After this is imported, you may want to tweak the encoding/decoding of
+ * certain classes with `Tag.registerType` and `encoder.addType`.
+ *
+ * Note that type registrations are currently GLOBAL in scope for simplicity.
+ *
+ * @module
+ */
+
 import {MT, TAG} from './constants.js';
 import {
   type RequiredEncodeOptions,
@@ -7,7 +19,6 @@ import {
   writeNumber,
   writeString,
   writeTag,
-  writeUint8Array,
   writeUnknown,
 } from './encoder.js';
 import {base64ToBytes, base64UrlToBytes, isBigEndian} from './utils.js';
@@ -16,9 +27,6 @@ import type {Writer} from './writer.js';
 import {decode} from './decoder.js';
 
 const LE = !isBigEndian();
-
-// Register all of the implemented tag types.  Import this file
-// for side effects only.
 
 function assertNumber(contents: any): asserts contents is number {
   if (typeof contents !== 'number') {
@@ -357,11 +365,12 @@ Tag.registerType(TAG.INVALID_64, (tag: Tag) => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
 });
 
-// Writer as normal buffer, since there's no tag defined yet.
-addType(ArrayBuffer, (w: Writer, obj: unknown) => {
-  const a = obj as ArrayBuffer;
-  writeUint8Array(w, new Uint8Array(a));
-});
+function intentionallyUnimplemented(w: Writer, obj: unknown): void {
+  throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`);
+}
+addType(ArrayBuffer, intentionallyUnimplemented);
+addType(SharedArrayBuffer, intentionallyUnimplemented);
+addType(DataView, intentionallyUnimplemented);
 
 function writeBoxed(
   w: Writer,

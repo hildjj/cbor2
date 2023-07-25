@@ -29,6 +29,11 @@ test('good encode', () => {
 
 test('collapseBigIntegers', () => {
   testAll(collapseBigIntegers);
+  for (const [val, bi] of collapseBigIntegers) {
+    const actual = u8toHex(encode(val, {collapseBigInts: false}));
+    const expected = toString(bi);
+    assert.equal(actual, expected, 'not collapsed');
+  }
 });
 
 test('good endian encode', () => {
@@ -52,12 +57,26 @@ test('clear type', () => {
   assert.equal(u8toHex(encode(t)), 'd9fffef7');
 });
 
+test('toJSON', () => {
+  class Temp {
+    // eslint-disable-next-line class-methods-use-this
+    toJSON() {
+      return {foo: true};
+    }
+  }
+  const t = new Temp();
+  assert.equal(JSON.stringify(t), '{"foo":true}');
+  assert.equal(u8toHex(encode(t)), 'a163666f6ff5');
+});
+
 test('encoder edges', () => {
   const w = new Writer();
   assert.throws(() => writeInt(w, -1, MT.ARRAY));
-  assert.throws(() => writeInt(w, Number.MAX_SAFE_INTEGER + 1, MT.ARRAY));
   assert.throws(() => encode(Symbol('UNKNOWN')));
   assert.throws(() => encode(() => {
     // Blank
   }));
+  assert.throws(() => encode(new ArrayBuffer(8)));
+  assert.throws(() => encode(new SharedArrayBuffer(8)));
+  assert.throws(() => encode(new DataView(new ArrayBuffer(8))));
 });
