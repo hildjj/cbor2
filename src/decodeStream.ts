@@ -17,7 +17,7 @@ export interface DecodeOptions {
    * trusted inputs, but be careful!
    * @default 1024
    */
-  max_depth?: number;
+  maxDepth?: number;
 
   /**
    * If the input is a string, how should it be decoded into a byte stream?
@@ -72,7 +72,7 @@ export class DecodeStream {
       this.#src.byteLength
     );
     this.#opts = {
-      max_depth: 1024,
+      maxDepth: 1024,
       encoding: null,
       ...opts,
     };
@@ -96,8 +96,8 @@ export class DecodeStream {
   }
 
   *#nextVal(depth: number): ValueGenerator {
-    if (depth++ > this.#opts.max_depth) {
-      throw new Error(`Maximum depth ${this.#opts.max_depth} exceeded`);
+    if (depth++ > this.#opts.maxDepth) {
+      throw new Error(`Maximum depth ${this.#opts.maxDepth} exceeded`);
     }
 
     // Will throw when out of data

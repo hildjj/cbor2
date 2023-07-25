@@ -39,7 +39,7 @@ test('goodEndian', () => {
 });
 
 test('depth', () => {
-  assert.throws(() => decode('818180', {max_depth: 1}));
+  assert.throws(() => decode('818180', {maxDepth: 1}));
 });
 
 test('types', () => {
