@@ -3,7 +3,7 @@
 /** @type {import('typedoc').TypeDocOptions} */
 module.exports = {
   entryPoints: [
-    './src/index.ts',
+    './src/*.ts',
   ],
   out: 'docs',
   cleanOutputDir: true,

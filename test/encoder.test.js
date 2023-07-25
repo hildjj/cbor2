@@ -29,6 +29,11 @@ test('good encode', () => {
 
 test('collapseBigIntegers', () => {
   testAll(collapseBigIntegers);
+  for (const [val, bi] of collapseBigIntegers) {
+    const actual = u8toHex(encode(val, {collapseBigInts: false}));
+    const expected = toString(bi);
+    assert.equal(actual, expected, 'not collapsed');
+  }
 });
 
 test('good endian encode', () => {
@@ -55,7 +60,6 @@ test('clear type', () => {
 test('encoder edges', () => {
   const w = new Writer();
   assert.throws(() => writeInt(w, -1, MT.ARRAY));
-  assert.throws(() => writeInt(w, Number.MAX_SAFE_INTEGER + 1, MT.ARRAY));
   assert.throws(() => encode(Symbol('UNKNOWN')));
   assert.throws(() => encode(() => {
     // Blank

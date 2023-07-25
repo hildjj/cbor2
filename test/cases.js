@@ -890,19 +890,19 @@ export const encodeGood = [
 ];
 
 export const collapseBigIntegers = [
-  [0n, undefined, '0x00'],
-  [1n, undefined, '0x01'],
-  [-1n, undefined, '0x20'],
-  [24n, undefined, '0x1818'],
-  [-25n, undefined, '0x3818'],
-  [0x01ffn, undefined, '0x1901ff'],
-  [-0x01ffn, undefined, '0x3901fe'],
-  [0x1ffffn, undefined, '0x1a0001ffff'],
-  [-0x1ffff, undefined, '0x3a0001fffe'],
-  [0x1ffffffffn, undefined, '0x1b00000001ffffffff'],
-  [-0x1ffffffffn, undefined, '0x3b00000001fffffffe'],
-  [0xffffffffffffffffn, undefined, '0x1bffffffffffffffff'],
-  [-0x10000000000000000n, undefined, '0x3bffffffffffffffff'],
+  [0n, '0xc24100', '0x00'],
+  [1n, '0xc24101', '0x01'],
+  [-1n, '0xc34100', '0x20'],
+  [24n, '0xc24118', '0x1818'],
+  [-25n, '0xc34118', '0x3818'],
+  [0x01ffn, '0xc24201ff', '0x1901ff'],
+  [-0x01ffn, '0xc34201fe', '0x3901fe'],
+  [0x1ffffn, '0xc24301ffff', '0x1a0001ffff'],
+  [-0x1ffffn, '0xc34301fffe', '0x3a0001fffe'],
+  [0x1ffffffffn, '0xc24501ffffffff', '0x1b00000001ffffffff'],
+  [-0x1ffffffffn, '0xc34501fffffffe', '0x3b00000001fffffffe'],
+  [0xffffffffffffffffn, '0xc248ffffffffffffffff', '0x1bffffffffffffffff'],
+  [-0x10000000000000000n, '0xc348ffffffffffffffff', '0x3bffffffffffffffff'],
 ];
 
 export const decodeBad = [

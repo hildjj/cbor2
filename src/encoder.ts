@@ -40,7 +40,7 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   collapseBigInts: true,
 };
 
-type AbstractClassType = abstract new (...args: any) => any;
+export type AbstractClassType = abstract new (...args: any) => any;
 export type TypeConverter = (
   w: Writer,
   obj: unknown,
@@ -113,14 +113,13 @@ export function writeFloat(w: Writer, val: number): void {
 }
 
 /**
- * Write a number that is likely an integer to the stream.  If no mt is given
- * writes major type POS_INT or NEG_INT as appropriate.  Otherwise uses the
- * given mt a the major type.  The exceptions are "integers" larger than
- * MAX_SAFE_INTEGER, which are really floats whose precision is greater than 1.
- * These are written as float/double.
+ * Write a number that is sure to be an integer to the stream.  If no mt is
+ * given writes major type POS_INT or NEG_INT as appropriate.  Otherwise uses
+ * the given mt a the major type.
  *
  * @param w Writer.
- * @param val Number that is usually an integer.
+ * @param val Number that is an integer that satisfies
+ *   `MIN_SAFE_INTEGER <= val <= MAX_SAFE_INTEGER`.
  * @param mt Major type, if desired.  Obj will be real integer > 0.
  * @throws On invalid combinations.
  */
@@ -146,22 +145,9 @@ export function writeInt(w: Writer, val: number, mt?: number): void {
     w.writeUint8(mt | NUMBYTES.FOUR);
     w.writeUint32(pos);
   } else {
-    let max = Number.MAX_SAFE_INTEGER;
-    if (neg) {
-      // Special case for Number.MIN_SAFE_INTEGER - 1
-      max--;
-    }
-    if (pos <= max) {
-      w.writeUint8(mt | NUMBYTES.EIGHT);
-      w.writeBigUint64(BigInt(pos));
-    } else {
-      // This is a number that *looks* like an integer, but it's a float
-      // whose precision is greater than 1.
-      if ((mt !== MT.POS_INT << 5) && (mt !== MT.NEG_INT << 5)) {
-        throw new RangeError(`Non-integer used for size: mt=${mt}, obj=${val}`);
-      }
-      writeFloat(w, val);
-    }
+    // Assert: MIN_SAFE_INTEGER <= val <= MAX_SAFE_INTEGER
+    w.writeUint8(mt | NUMBYTES.EIGHT);
+    w.writeBigUint64(BigInt(pos));
   }
 }
 
@@ -202,13 +188,20 @@ function writeBigInt(
 }
 
 /**
- * Write a number, be it integer or floating point, to the stream.
+ * Write a number, be it integer or floating point, to the stream, along with
+ * the appropriate major type.
  *
  * @param w Writer.
  * @param val Number.
  */
 export function writeNumber(w: Writer, val: number): void {
-  if (!isFinite(val) || (Math.round(val) !== val) || (Object.is(val, -0))) {
+  if (!isFinite(val) ||
+      (Math.round(val) !== val) ||
+      (Object.is(val, -0)) ||
+      // Is this a number that *looks* like an integer, but it's a float
+      // whose precision is greater than 1?
+      (val > Number.MAX_SAFE_INTEGER) ||
+      (val < Number.MIN_SAFE_INTEGER)) {
     writeFloat(w, val);
   } else {
     writeInt(w, val);

@@ -1,3 +1,15 @@
+/**
+ * Register all of the implemented tag types for both encoding and ecoding.
+ * Import this file for side effects only.
+ *
+ * After this is imported, you may want to tweak the encoding/decoding of
+ * certain classes with `Tag.registerType` and `encoder.addType`.
+ *
+ * Note that type registrations are currently GLOBAL in scope for simplicity.
+ *
+ * @module
+ */
+
 import {MT, TAG} from './constants.js';
 import {
   type RequiredEncodeOptions,
@@ -16,9 +28,6 @@ import type {Writer} from './writer.js';
 import {decode} from './decoder.js';
 
 const LE = !isBigEndian();
-
-// Register all of the implemented tag types.  Import this file
-// for side effects only.
 
 function assertNumber(contents: any): asserts contents is number {
   if (typeof contents !== 'number') {

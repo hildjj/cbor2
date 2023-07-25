@@ -10,6 +10,9 @@ import {parseHalf} from './float.js';
 
 const TD = new TextDecoder('utf8', {fatal: true, ignoreBOM: true});
 
+/**
+ * Options for decoding.
+ */
 export interface DecodeOptions {
   /**
    * Maximum allowed depth to parse into CBOR structures.  This limit is
@@ -21,17 +24,28 @@ export interface DecodeOptions {
 
   /**
    * If the input is a string, how should it be decoded into a byte stream?
+   * Ignored if the input is a Uint8Array.
+   * @default null
    */
   encoding?: 'base64' | 'hex' | null;
 }
 
+/**
+ * These less-complex types are decoded as tokens at this level.
+ */
 export type DecodeValue =
   Simple | Symbol | Uint8Array | bigint | boolean | number | string |
   null | undefined;
 
-type MtAiValue = [number, number, DecodeValue];
+/**
+ * Information about a decoded CBOR data item.  3-element tuple, containing:
+ * - Major type.
+ * - Additional Information (int if < 23, else length as 24-27, 31 as stream).
+ * - Decoded token value.
+ */
+export type MtAiValue = [mt: number, ai: number, val: DecodeValue];
 
-type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
+export type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
 
 /**
  * Decode bytes into a stream of events describing the CBOR read from the
@@ -51,8 +65,14 @@ export class DecodeStream {
   );
 
   public constructor(src: Uint8Array | string, opts?: DecodeOptions) {
+    this.#opts = {
+      maxDepth: 1024,
+      encoding: null,
+      ...opts,
+    };
+
     if (typeof src === 'string') {
-      switch (opts?.encoding) {
+      switch (this.#opts.encoding) {
         case 'hex':
           this.#src = hexToU8(src);
           break;
@@ -60,7 +80,7 @@ export class DecodeStream {
           this.#src = base64ToBytes(src);
           break;
         default:
-          throw new TypeError(`Encoding not implemented: "${opts?.encoding}"`);
+          throw new TypeError(`Encoding not implemented: "${this.#opts.encoding}"`);
       }
     } else {
       this.#src = src;
@@ -71,11 +91,6 @@ export class DecodeStream {
       this.#src.byteOffset,
       this.#src.byteLength
     );
-    this.#opts = {
-      maxDepth: 1024,
-      encoding: null,
-      ...opts,
-    };
   }
 
   /**
@@ -83,10 +98,12 @@ export class DecodeStream {
    *
    * @throws On invalid input or extra data in input.
    * @example
+   * ```js
    * const s = new DecodeStream(buffer);
-   * for (const [major_type, additional_info, value] of s) {
+   * for (const [majorType, additionalInfo, value] of s) {
    *  ...
    * }
+   * ```
    */
   public *[Symbol.iterator](): ValueGenerator {
     yield *this.#nextVal(0);
@@ -95,6 +112,14 @@ export class DecodeStream {
     }
   }
 
+  /**
+   * Get the next CBOR value from the input stream.
+   *
+   * @param depth The current depth in the CBOR tree.
+   * @returns A generator that yields information about every sub-item
+   *   found in the input.
+   * @throws Maximum depth exceeded, invalid input.
+   */
   *#nextVal(depth: number): ValueGenerator {
     if (depth++ > this.#opts.maxDepth) {
       throw new Error(`Maximum depth ${this.#opts.maxDepth} exceeded`);

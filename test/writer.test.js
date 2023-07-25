@@ -6,7 +6,7 @@ import test from 'node:test';
 test('writer', () => {
   const w = new Writer();
   assert(w);
-  assert.throws(() => new Writer({chunk_size: 2}));
+  assert.throws(() => new Writer({chunkSize: 2}));
   assert.equal(w.length, 0);
   assert.deepEqual(w.read(), new Uint8Array([]));
 
@@ -15,7 +15,7 @@ test('writer', () => {
 });
 
 test('small chunk writer', () => {
-  const w = new Writer({chunk_size: 8});
+  const w = new Writer({chunkSize: 8});
   assert(w);
   w.write(new Uint8Array(16)); // Overflow chunk
   assert.deepEqual(w.read(), new Uint8Array(16));

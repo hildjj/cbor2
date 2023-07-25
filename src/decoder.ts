@@ -28,7 +28,7 @@ type Parent = any[] | Tag;
  * @returns JS value decoded from cbor.
  * @throws {Error} No value found, decoding errors.
  */
-export function decode<T = any>(
+export function decode<T = unknown>(
   src: Uint8Array | string,
   opts?: DecodeOptions
 ): T {

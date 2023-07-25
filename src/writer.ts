@@ -1,9 +1,9 @@
 export interface WriterOptions {
-  chunk_size?: number;
+  chunkSize?: number;
 }
 
 export const WriterOptionsDefault: Required<WriterOptions> = {
-  chunk_size: 4096,
+  chunkSize: 4096,
 };
 
 // Don't inherit from stream.Writable, so it's more portable.
@@ -19,8 +19,8 @@ export class Writer {
       ...WriterOptionsDefault,
       ...opts,
     };
-    if (this.#opts.chunk_size < 8) {
-      throw new RangeError(`Expected size >= 8, got ${this.#opts.chunk_size}`);
+    if (this.#opts.chunkSize < 8) {
+      throw new RangeError(`Expected size >= 8, got ${this.#opts.chunkSize}`);
     }
     this.#alloc();
   }
@@ -45,7 +45,7 @@ export class Writer {
     const len = buf.length;
     if (len > this.#left()) {
       this.#trim();
-      if (len > this.#opts.chunk_size) {
+      if (len > this.#opts.chunkSize) {
         // Won't fit, just re-use the existing buffer.
         // Note: if input buffer gets reused in the caller, copy buf here.
         this.#chunks.push(buf);
@@ -124,7 +124,7 @@ export class Writer {
   }
 
   #alloc(): void {
-    const buf = new Uint8Array(this.#opts.chunk_size);
+    const buf = new Uint8Array(this.#opts.chunkSize);
     this.#chunks.push(buf);
     this.#offset = 0;
     this.#dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
