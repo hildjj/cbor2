@@ -19,7 +19,6 @@ import {
   writeNumber,
   writeString,
   writeTag,
-  writeUint8Array,
   writeUnknown,
 } from './encoder.js';
 import {base64ToBytes, base64UrlToBytes, isBigEndian} from './utils.js';
@@ -366,8 +365,8 @@ Tag.registerType(TAG.INVALID_64, (tag: Tag) => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
 });
 
-function intentionallyUnimplemented(w: Writer, obj: unknown) {
-  throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`)
+function intentionallyUnimplemented(w: Writer, obj: unknown): void {
+  throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`);
 }
 addType(ArrayBuffer, intentionallyUnimplemented);
 addType(SharedArrayBuffer, intentionallyUnimplemented);

@@ -59,6 +59,7 @@ test('clear type', () => {
 
 test('toJSON', () => {
   class Temp {
+    // eslint-disable-next-line class-methods-use-this
     toJSON() {
       return {foo: true};
     }
