@@ -84,7 +84,22 @@ export function clearType(
 }
 
 export interface ToCBOR {
+  /**
+   * If an object implements this interface, this method will be used to
+   * serialize the object when encoding.
+   *
+   * @param w Writer.
+   * @param opts Options.
+   */
   toCBOR(w: Writer, opts: RequiredEncodeOptions): void;
+}
+
+export interface ToJSON {
+  /**
+   * Used by the JSON.stringify method to enable the transformation of an
+   * object's data for JavaScript Object Notation (JSON) serialization.
+   */
+  toJSON(key?: any): string;
 }
 
 /**
@@ -283,6 +298,11 @@ function writeObject(
 
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
     (obj as ToCBOR).toCBOR(w, opts);
+    return;
+  }
+
+  if (typeof (obj as ToJSON).toJSON === 'function') {
+    writeUnknown(w, (obj as ToJSON).toJSON(), opts);
     return;
   }
 

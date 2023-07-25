@@ -885,7 +885,6 @@ export const encodeGood = [
   [new String('foo'), 'boxed', '0x63666f6f'],
   [new Boolean(true), 'boxed', '0xf5'],
   [new Number(12), 'boxed', '0x0c'],
-  [new ArrayBuffer(8), 'ArrayBuffer', '0x480000000000000000'],
   /* eslint-enable no-new-wrappers */
 ];
 

@@ -57,6 +57,17 @@ test('clear type', () => {
   assert.equal(u8toHex(encode(t)), 'd9fffef7');
 });
 
+test('toJSON', () => {
+  class Temp {
+    toJSON() {
+      return {foo: true};
+    }
+  }
+  const t = new Temp();
+  assert.equal(JSON.stringify(t), '{"foo":true}');
+  assert.equal(u8toHex(encode(t)), 'a163666f6ff5');
+});
+
 test('encoder edges', () => {
   const w = new Writer();
   assert.throws(() => writeInt(w, -1, MT.ARRAY));
@@ -64,4 +75,7 @@ test('encoder edges', () => {
   assert.throws(() => encode(() => {
     // Blank
   }));
+  assert.throws(() => encode(new ArrayBuffer(8)));
+  assert.throws(() => encode(new SharedArrayBuffer(8)));
+  assert.throws(() => encode(new DataView(new ArrayBuffer(8))));
 });

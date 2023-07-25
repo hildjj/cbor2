@@ -366,11 +366,12 @@ Tag.registerType(TAG.INVALID_64, (tag: Tag) => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
 });
 
-// Writer as normal buffer, since there's no tag defined yet.
-addType(ArrayBuffer, (w: Writer, obj: unknown) => {
-  const a = obj as ArrayBuffer;
-  writeUint8Array(w, new Uint8Array(a));
-});
+function intentionallyUnimplemented(w: Writer, obj: unknown) {
+  throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`)
+}
+addType(ArrayBuffer, intentionallyUnimplemented);
+addType(SharedArrayBuffer, intentionallyUnimplemented);
+addType(DataView, intentionallyUnimplemented);
 
 function writeBoxed(
   w: Writer,
