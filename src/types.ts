@@ -10,14 +10,13 @@
  * @module
  */
 
-import {MT, TAG} from './constants.js';
+import {MT, SYMS, TAG} from './constants.js';
+// eslint-disable-next-line sort-imports -- two types messes up sort-imports
 import {
+  type DoneEncoding,
   type RequiredEncodeOptions,
-  addType,
-  writeArray,
+  registerEncoder,
   writeInt,
-  writeNumber,
-  writeString,
   writeTag,
   writeUnknown,
 } from './encoder.js';
@@ -52,78 +51,82 @@ function assertArray(contents: any): asserts contents is any[] {
   }
 }
 
-addType(Map, (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
+registerEncoder(Map, (obj: unknown, w: Writer, opts: RequiredEncodeOptions) => {
   const m = obj as Map<unknown, unknown>;
-  writeInt(w, m.size, MT.MAP);
+  writeInt(m.size, w, MT.MAP);
   for (const [k, v] of m) {
-    writeUnknown(w, k, opts);
-    writeUnknown(w, v, opts);
+    writeUnknown(k, w, opts);
+    writeUnknown(v, w, opts);
   }
+  return SYMS.DONE;
 });
 
-Tag.registerType(TAG.DATE_STRING, tag => {
+Tag.registerDecoder(TAG.DATE_STRING, tag => {
   assertString(tag.contents);
   return new Date(tag.contents);
 });
 
-Tag.registerType(TAG.DATE_EPOCH, tag => {
+Tag.registerDecoder(TAG.DATE_EPOCH, tag => {
   assertNumber(tag.contents);
   return new Date(tag.contents * 1000);
 });
 
-addType(Date, (w: Writer, obj: unknown) => {
-  const d = obj as Date;
-  writeTag(w, TAG.DATE_EPOCH); // TODO: Make configurable?
-  writeNumber(w, d.valueOf() / 1000);
-});
+registerEncoder(Date,
+  (obj: unknown) => [TAG.DATE_EPOCH, (obj as Date).valueOf() / 1000]);
 
 function u8toBigInt(tag: Tag): bigint {
   assertU8(tag.contents);
   return tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
 }
-Tag.registerType(TAG.POS_BIGINT, u8toBigInt);
-Tag.registerType(TAG.NEG_BIGINT, (tag: Tag): bigint => -1n - u8toBigInt(tag));
+Tag.registerDecoder(TAG.POS_BIGINT, u8toBigInt);
+Tag.registerDecoder(TAG.NEG_BIGINT,
+  (tag: Tag): bigint => -1n - u8toBigInt(tag));
 
 // 24: Encoded CBOR data item; see Section 3.4.5.1
-Tag.registerType(TAG.CBOR, (tag: Tag): any => {
+Tag.registerDecoder(TAG.CBOR, (tag: Tag): any => {
   assertU8(tag.contents);
   return decode(tag.contents);
 });
 
-Tag.registerType(TAG.URI, (tag: Tag): URL => {
+Tag.registerDecoder(TAG.URI, (tag: Tag): URL => {
   assertString(tag.contents);
   return new URL(tag.contents);
 });
 
-addType(URL, (w: Writer, obj: unknown) => {
-  const u = obj as URL;
-  writeTag(w, TAG.URI);
-  writeString(w, u.toString());
-});
+registerEncoder(URL,
+  (obj: unknown) => [TAG.URI, (obj as URL).toString()]);
 
-Tag.registerType(TAG.BASE64URL, (tag: Tag): Uint8Array => {
+Tag.registerDecoder(TAG.BASE64URL, (tag: Tag): Uint8Array => {
   assertString(tag.contents);
   return base64UrlToBytes(tag.contents);
 });
 
-Tag.registerType(TAG.BASE64, (tag: Tag): Uint8Array => {
+Tag.registerDecoder(TAG.BASE64, (tag: Tag): Uint8Array => {
   assertString(tag.contents);
   return base64ToBytes(tag.contents);
 });
 
-Tag.registerType(TAG.REGEXP, (tag: Tag): RegExp => {
+// Old/deprecated regexp tag
+Tag.registerDecoder(35, (tag: Tag): RegExp => {
   assertString(tag.contents);
   return new RegExp(tag.contents);
 });
 
-addType(RegExp, (w: Writer, obj: unknown) => {
+Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
+  assertArray(tag.contents);
+  if (tag.contents.length < 1 || tag.contents.length > 2) {
+    throw new Error('Invalid RegExp Array');
+  }
+  return new RegExp(tag.contents[0], tag.contents[1]);
+});
+
+registerEncoder(RegExp, (obj: unknown) => {
   const r = obj as RegExp;
-  writeTag(w, TAG.REGEXP);
-  writeString(w, r.source);
+  return [TAG.REGEXP, [r.source, r.flags]];
 });
 
 // 64:uint8 Typed Array
-Tag.registerType(64, (tag: Tag): Uint8Array => {
+Tag.registerDecoder(64, (tag: Tag): Uint8Array => {
   assertU8(tag.contents);
   return tag.contents;
 });
@@ -176,11 +179,11 @@ function writeTyped<T extends TypedArray>(
   bigTag: number,
   array: T,
   opts: RequiredEncodeOptions
-): void {
+): DoneEncoding {
   const endian = opts.forceEndian ?? LE;
   const tag = endian ? littleTag : bigTag;
-  writeTag(w, tag);
-  writeInt(w, array.byteLength, MT.BYTE_STRING);
+  writeTag(tag, w);
+  writeInt(array.byteLength, w, MT.BYTE_STRING);
   if (LE === endian) {
     w.write(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
   } else {
@@ -191,197 +194,187 @@ function writeTyped<T extends TypedArray>(
       setter(i, endian);
     }
   }
+  return SYMS.DONE;
 }
 
 // 65: uint16, big endian, Typed Array
-Tag.registerType(65,
+Tag.registerDecoder(65,
   (tag: Tag): Uint16Array => convertToTyped(tag, Uint16Array, false));
 
 // 66: uint32, big endian, Typed Array
-Tag.registerType(66,
+Tag.registerDecoder(66,
   (tag: Tag): Uint32Array => convertToTyped(tag, Uint32Array, false));
 
 // 67: uint64, big endian, Typed Array
-Tag.registerType(67,
+Tag.registerDecoder(67,
   (tag: Tag): BigUint64Array => convertToTyped(tag, BigUint64Array, false));
 
 // 68: uint8 Typed Array, clamped arithmetic
-Tag.registerType(68, (tag: Tag): Uint8ClampedArray => {
+Tag.registerDecoder(68, (tag: Tag): Uint8ClampedArray => {
   assertU8(tag.contents);
   return new Uint8ClampedArray(tag.contents);
 });
 
-addType(Uint8ClampedArray, (w: Writer, obj: unknown) => {
+registerEncoder(Uint8ClampedArray, (obj: unknown) => {
   const u = obj as Uint8ClampedArray;
-  writeTag(w, 68);
-  writeInt(w, u.length, MT.BYTE_STRING);
-  w.write(new Uint8Array(u.buffer, u.byteOffset, u.byteLength));
+  return [68, new Uint8Array(u.buffer, u.byteOffset, u.byteLength)];
 });
 
 // 69: uint16, little endian, Typed Array
-Tag.registerType(69,
+Tag.registerDecoder(69,
   (tag: Tag): Uint16Array => convertToTyped(tag, Uint16Array, true));
-addType(
-  Uint16Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 69, 65, obj as Uint16Array, opts);
-  }
-);
+
+registerEncoder(Uint16Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 69, 65, obj as Uint16Array, opts));
 
 // 70: uint32, little endian, Typed Array
-Tag.registerType(70,
+Tag.registerDecoder(70,
   (tag: Tag): Uint32Array => convertToTyped(tag, Uint32Array, true));
-addType(
-  Uint32Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 70, 66, obj as Uint32Array, opts);
-  }
-);
+registerEncoder(Uint32Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 70, 66, obj as Uint32Array, opts));
 
 // 71: uint64, little endian, Typed Array
-Tag.registerType(71,
+Tag.registerDecoder(71,
   (tag: Tag): BigUint64Array => convertToTyped(tag, BigUint64Array, true));
-addType(
-  BigUint64Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 71, 67, obj as BigUint64Array, opts);
-  }
-);
+registerEncoder(BigUint64Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 71, 67, obj as BigUint64Array, opts));
 
 // 72: sint8 Typed Array
-Tag.registerType(72, (tag: Tag): Int8Array => {
+Tag.registerDecoder(72, (tag: Tag): Int8Array => {
   assertU8(tag.contents);
   return new Int8Array(tag.contents); // Wraps
 });
-addType(Int8Array, (w: Writer, obj: unknown) => {
+registerEncoder(Int8Array, (obj: unknown) => {
   const u = obj as Int8Array;
-  writeTag(w, 72);
-  writeInt(w, u.length, MT.BYTE_STRING);
-  w.write(new Uint8Array(u.buffer, u.byteOffset, u.byteLength));
+  return [72, new Uint8Array(u.buffer, u.byteOffset, u.byteLength)];
 });
 
 // 73: sint16, big endian, Typed Array
-Tag.registerType(73,
+Tag.registerDecoder(73,
   (tag: Tag): Int16Array => convertToTyped(tag, Int16Array, false));
 
 // 74: sint32, big endian, Typed Array
-Tag.registerType(74,
+Tag.registerDecoder(74,
   (tag: Tag): Int32Array => convertToTyped(tag, Int32Array, false));
 
 // 75: sint64, big endian, Typed Array
-Tag.registerType(75,
+Tag.registerDecoder(75,
   (tag: Tag): BigInt64Array => convertToTyped(tag, BigInt64Array, false));
 
 // 76: Reserved
 // 77: sint16, little endian, Typed Array
-Tag.registerType(77,
+Tag.registerDecoder(77,
   (tag: Tag): Int16Array => convertToTyped(tag, Int16Array, true));
-addType(
-  Int16Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 77, 73, obj as Int16Array, opts);
-  }
-);
+registerEncoder(Int16Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 77, 73, obj as Int16Array, opts));
 
 // 78: sint32, little endian, Typed Array
-Tag.registerType(78,
+Tag.registerDecoder(78,
   (tag: Tag): Int32Array => convertToTyped(tag, Int32Array, true));
-addType(
-  Int32Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 78, 74, obj as Int32Array, opts);
-  }
-);
+registerEncoder(Int32Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 78, 74, obj as Int32Array, opts));
 
 // 79: sint64, little endian, Typed Array
-Tag.registerType(79,
+Tag.registerDecoder(79,
   (tag: Tag): BigInt64Array => convertToTyped(tag, BigInt64Array, true));
-addType(
-  BigInt64Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 79, 75, obj as BigInt64Array, opts);
-  }
-);
+registerEncoder(BigInt64Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 79, 75, obj as BigInt64Array, opts));
 
 // 80: IEEE 754 binary16, big endian, Typed Array.  Not implemented.
 // 81: IEEE 754 binary32, big endian, Typed Array
-Tag.registerType(81,
+Tag.registerDecoder(81,
   (tag: Tag): Float32Array => convertToTyped(tag, Float32Array, false));
 
 // 82: IEEE 754 binary64, big endian, Typed Array
-Tag.registerType(82,
+Tag.registerDecoder(82,
   (tag: Tag): Float64Array => convertToTyped(tag, Float64Array, false));
 
 // 83: IEEE 754 binary128, big endian, Typed Array.  Not implemented.
 // 84: IEEE 754 binary16, little endian, Typed Array.  Not implemented.
 
 // 85: IEEE 754 binary32, little endian, Typed Array
-Tag.registerType(85,
+Tag.registerDecoder(85,
   (tag: Tag): Float32Array => convertToTyped(tag, Float32Array, true));
-addType(
-  Float32Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 85, 81, obj as Float32Array, opts);
-  }
-);
+registerEncoder(Float32Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 85, 81, obj as Float32Array, opts));
 
 // 86: IEEE 754 binary64, big endian, Typed Array
-Tag.registerType(86,
+Tag.registerDecoder(86,
   (tag: Tag): Float64Array => convertToTyped(tag, Float64Array, true));
-addType(
-  Float64Array,
-  (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
-    writeTyped(w, 86, 82, obj as Float64Array, opts);
-  }
-);
+registerEncoder(Float64Array, (
+  obj: unknown,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding => writeTyped(w, 86, 82, obj as Float64Array, opts));
 
-Tag.registerType(TAG.SET, (tag: Tag) => {
+Tag.registerDecoder(TAG.SET, (tag: Tag) => {
   assertArray(tag.contents);
   return new Set(tag.contents);
 });
 
-addType(Set, (w: Writer, obj: unknown, opts: RequiredEncodeOptions) => {
+registerEncoder(Set, (obj: unknown) => {
   const s = obj as Set<unknown>;
-  writeTag(w, TAG.SET);
-  writeArray(w, [...s], opts);
+  return [TAG.SET, [...s]];
 });
 
-Tag.registerType(TAG.JSON, (tag: Tag) => {
+Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
   assertString(tag.contents);
   return JSON.parse(tag.contents);
 });
 
-Tag.registerType(TAG.SELF_DESCRIBED, (tag: Tag): any => tag.contents);
+Tag.registerDecoder(TAG.SELF_DESCRIBED, (tag: Tag): any => tag.contents);
 
-Tag.registerType(TAG.INVALID_16, (tag: Tag) => {
+Tag.registerDecoder(TAG.INVALID_16, (tag: Tag) => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_16}`);
 });
 
-Tag.registerType(TAG.INVALID_32, (tag: Tag) => {
+Tag.registerDecoder(TAG.INVALID_32, (tag: Tag) => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_32}`);
 });
 
-Tag.registerType(TAG.INVALID_64, (tag: Tag) => {
+Tag.registerDecoder(TAG.INVALID_64, (tag: Tag) => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
 });
 
-function intentionallyUnimplemented(w: Writer, obj: unknown): void {
+function intentionallyUnimplemented(obj: unknown): DoneEncoding {
   throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`);
 }
-addType(ArrayBuffer, intentionallyUnimplemented);
-addType(SharedArrayBuffer, intentionallyUnimplemented);
-addType(DataView, intentionallyUnimplemented);
+registerEncoder(ArrayBuffer, intentionallyUnimplemented);
+registerEncoder(SharedArrayBuffer, intentionallyUnimplemented);
+registerEncoder(DataView, intentionallyUnimplemented);
 
 function writeBoxed(
-  w: Writer,
   obj: unknown,
+  w: Writer,
   opts: RequiredEncodeOptions
-): void {
+): DoneEncoding {
   const b = obj as Boolean | Number | String;
-  writeUnknown(w, b.valueOf(), opts);
+  writeUnknown(b.valueOf(), w, opts);
+  return SYMS.DONE;
 }
 
 // These useless types get converted to their unboxed values.
-addType(Boolean, writeBoxed);
-addType(Number, writeBoxed);
-addType(String, writeBoxed);
+registerEncoder(Boolean, writeBoxed);
+registerEncoder(Number, writeBoxed);
+registerEncoder(String, writeBoxed);

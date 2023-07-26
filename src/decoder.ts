@@ -123,7 +123,7 @@ export function decode<T = unknown>(
           ret = (parent as string[]).join('');
           break;
         case MT.TAG:
-          ret = (parent as Tag).convert();
+          ret = (parent as Tag).decode();
           break;
       }
       const p = parentMap.get(parent);

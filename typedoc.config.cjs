@@ -1,10 +1,12 @@
 'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
 
 /** @type {import('typedoc').TypeDocOptions} */
 module.exports = {
-  entryPoints: [
-    './src/*.ts',
-  ],
+  entryPoints: Object.values(pkg.exports).map(f => path.resolve(__dirname, f.replace('/lib/', '/src/').replace('.js', '.ts'))),
   out: 'docs',
   cleanOutputDir: true,
   sidebarLinks: {

@@ -11,9 +11,9 @@ test('Tag', () => {
   assert.equal(t.pop(), '2023-07-21T22:16:20-0600');
   assert.equal(util.inspect(t, {colors: false}), "0('2023-07-21T22:16:20-0600')");
 
-  const t0 = Tag.clearType(0);
+  const t0 = Tag.clearDecoder(0);
   assert(t0);
-  assert.equal(t.convert(), t);
-  assert.equal(Tag.registerType(0, t0), undefined);
-  assert.notEqual(t.convert(), t);
+  assert.equal(t.decode(), t);
+  assert.equal(Tag.registerDecoder(0, t0), undefined);
+  assert.notEqual(t.decode(), t);
 });

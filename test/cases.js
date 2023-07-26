@@ -1,4 +1,3 @@
-import {writeTag, writeUnknown} from '../lib/encoder.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
 import {hexToU8} from '../lib/utils.js';
@@ -9,9 +8,8 @@ export class TempClass {
     this.value = val || 'tempClass';
   }
 
-  toCBOR(w, opts) {
-    writeTag(w, 0xfffe);
-    writeUnknown(w, this.val, opts);
+  toCBOR() {
+    return [0xfffe, this.value];
   }
 }
 
@@ -488,12 +486,15 @@ export const good = [
   f8                -- Simple value, next 1 byte
     ff              -- simple(255)
 0xf8ff`],
-  [/a/, '35("a")', `
-  d8                --  next 1 byte
-    23              -- Tag #35
-      61            -- String, length: 1
-        61          -- "a"
-0xd8236161`],
+  [/a/, '279(["a", ""])', `
+  d9                --  next 2 bytes
+    0117            -- Tag #279
+      82            -- Array, 2 items
+        61          -- String, length: 1
+          61        -- [0], "a"
+        60          -- String, length: 0
+0xd9011782616160`],
+  [/a/gu, '279(["a", "gu"])', '0xd90117826161626775'],
   [new Map([[1, 2]]), '{1: 2}', `
   a1                -- Map, 1 pair
     01              -- {Key:0}, 1
@@ -661,12 +662,12 @@ export const decodeGood = [
   f9                -- Float, next 2 bytes
     7bff            -- 65504
 0xf97bff`],
-  [new Tag(23, hexToU8('01020304')).convert(), '23(h\'01020304\')', `
+  [new Tag(23, hexToU8('01020304')).decode(), '23(h\'01020304\')', `
   d7                -- Tag #23
     44              -- Bytes, length: 4
       01020304      -- 01020304
 0xd74401020304`],
-  [new Tag(24, hexToU8('6449455446')).convert(), '24(h\'6449455446\')', `
+  [new Tag(24, hexToU8('6449455446')).decode(), '24(h\'6449455446\')', `
   d8                --  next 1 byte
     18              -- Tag #24 Encoded CBOR data item
       45            -- Bytes, length: 5
@@ -878,6 +879,12 @@ export const decodeGood = [
           eeff99    -- eeff99
         ff          -- BREAK
 0xd8405f44aabbccdd43eeff99ff`],
+  [/a/, '35("a")', `
+d8                --  next 1 byte
+  23              -- Tag #35
+    61            -- String, length: 1
+      61          -- "a"
+0xd8236161`],
 ];
 
 export const encodeGood = [
@@ -936,6 +943,9 @@ export const decodeBad = [
   '0xfd', // Reserved AI
   '0xfe', // Reserved AI
   '0x62c0ae', // Invalid utf8
+  '0xd9011783616162677500', // RegExp array too long
+  '0xd9011780', // RegExp array too short
+  '0xd90117820000', // RegExp invalid flags
 ];
 
 const HEX = /0x(?<hex>[0-9a-f]+)$/i;

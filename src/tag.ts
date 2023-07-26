@@ -1,13 +1,13 @@
-import {type RequiredEncodeOptions, writeTag, writeUnknown} from './encoder.js';
+import type {RequiredEncodeOptions} from './encoder.js';
 import type {Writer} from './writer.js';
 
-export type TagConverter = (tag: Tag) => unknown;
+export type TagDecoder = (tag: Tag) => unknown;
 
 /**
  * A CBOR tagged value.
  */
 export class Tag {
-  static #tags = new Map<bigint | number, TagConverter>();
+  static #tags = new Map<bigint | number, TagDecoder>();
   public readonly tag: number;
   public contents: unknown;
 
@@ -16,15 +16,15 @@ export class Tag {
     this.contents = contents;
   }
 
-  public static registerType(
-    tag: bigint | number, converter: TagConverter
-  ): TagConverter | undefined {
+  public static registerDecoder(
+    tag: bigint | number, decoder: TagDecoder
+  ): TagDecoder | undefined {
     const old = this.#tags.get(tag);
-    this.#tags.set(tag, converter);
+    this.#tags.set(tag, decoder);
     return old;
   }
 
-  public static clearType(tag: number): TagConverter | undefined {
+  public static clearDecoder(tag: number): TagDecoder | undefined {
     const old = this.#tags.get(tag);
     this.#tags.delete(tag);
     return old;
@@ -56,17 +56,16 @@ export class Tag {
    *
    * @returns The converted value.
    */
-  public convert(): unknown {
-    const converter = Tag.#tags.get(this.tag);
-    if (converter) {
-      return converter(this);
+  public decode(): unknown {
+    const decoder = Tag.#tags.get(this.tag);
+    if (decoder) {
+      return decoder(this);
     }
     return this;
   }
 
-  public toCBOR(w: Writer, opts: RequiredEncodeOptions): void {
-    writeTag(w, this.tag);
-    writeUnknown(w, this.contents, opts);
+  public toCBOR(w: Writer, opts: RequiredEncodeOptions): [number, unknown] {
+    return [this.tag, this.contents];
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](
