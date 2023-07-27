@@ -1,4 +1,3 @@
-import {writeTag, writeUnknown} from '../lib/encoder.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
 import {hexToU8} from '../lib/utils.js';
@@ -9,9 +8,8 @@ export class TempClass {
     this.value = val || 'tempClass';
   }
 
-  toCBOR(w, opts) {
-    writeTag(w, 0xfffe);
-    writeUnknown(w, this.val, opts);
+  toCBOR() {
+    return [0xfffe, this.value];
   }
 }
 
@@ -29,34 +27,34 @@ export const good = [
   [23, '23', `
   17                -- 23
 0x17`],
-  [24, '24', `
+  [24, '24_0', `
   18                -- Positive number, next 1 byte
     18              -- 24
 0x1818`],
-  [25, '25', `
+  [25, '25_0', `
   18                -- Positive number, next 1 byte
     19              -- 25
 0x1819`],
-  [100, '100', `
+  [100, '100_0', `
   18                -- Positive number, next 1 byte
     64              -- 100
 0x1864`],
-  [1000, '1000', `
+  [1000, '1000_1', `
   19                -- Positive number, next 2 bytes
     03e8            -- 1000
 0x1903e8`],
-  [1000000, '1000000', `
+  [1000000, '1000000_2', `
   1a                -- Positive number, next 4 bytes
     000f4240        -- 1000000
 0x1a000f4240`],
-  [1000000000000, '1000000000000', `
+  [1000000000000, '1000000000000_3', `
   1b                -- Positive number, next 8 bytes
     000000e8d4a51000 -- 1000000000000
 0x1b000000e8d4a51000`],
 
   // JS rounding: 18446744073709552000
   // [18446744073709551615, '0x1bffffffffffffffff'],
-  [Number.MAX_SAFE_INTEGER, '9007199254740991', `
+  [Number.MAX_SAFE_INTEGER, '9007199254740991_3', `
   1b                -- Positive number, next 8 bytes
     001fffffffffffff -- 9007199254740991
 0x1b001fffffffffffff`],
@@ -64,7 +62,7 @@ export const good = [
   fb                -- Float, next 8 bytes
     7fefffffffffffff -- 1.7976931348623157e+308
 0xfb7fefffffffffffff`],
-  [Number.MIN_SAFE_INTEGER, '-9007199254740991', `
+  [Number.MIN_SAFE_INTEGER, '-9007199254740991_3', `
   3b                -- Negative number, next 8 bytes
     001ffffffffffffe -- -9007199254740991
 0x3b001ffffffffffffe`],
@@ -101,11 +99,11 @@ export const good = [
   [-10, '-10', `
   29                -- -10
 0x29`],
-  [-100, '-100', `
+  [-100, '-100_0', `
   38                -- Negative number, next 1 byte
     63              -- -100
 0x3863`],
-  [-1000, '-1000', `
+  [-1000, '-1000_1', `
   39                -- Negative number, next 2 bytes
     03e7            -- -1000
 0x3903e7`],
@@ -116,7 +114,7 @@ export const good = [
 
   // Node-cbor doesn't do short floats without canonical, so this says
   // fa3fc00000
-  [1.5, '1.5_2', `
+  [1.5, '1.5_1', `
   f9                -- Float, next 2 bytes
     3e00            -- 1.5
 0xf93e00`],
@@ -130,13 +128,13 @@ export const good = [
 0xfb7e37e43c8800759c`],
 
   // Short now, so not fa33800000
-  [5.960464477539063e-8, '5.960464477539063e-8_2', `
+  [5.960464477539063e-8, '5.960464477539063e-8_1', `
   f9                -- Float, next 2 bytes
     0001            -- 5.960464477539063e-8
 0xf90001`],
 
   // Short now, so not fa38800000
-  [0.00006103515625, '0.00006103515625_2', `
+  [0.00006103515625, '0.00006103515625_1', `
   f9                -- Float, next 2 bytes
     0400            -- 0.00006103515625
 0xf90400`],
@@ -184,21 +182,21 @@ export const good = [
   [new Simple(16), 'simple(16)', `
   f0                -- simple(16)
 0xf0`],
-  [new Simple(32), 'simple(32)', `
+  [new Simple(32), 'simple(32)_0', `
   f8                -- Simple value, next 1 byte
     20              -- simple(32)
 0xf820`],
-  [new Simple(255), 'simple(255)', `
+  [new Simple(255), 'simple(255)_0', `
   f8                -- Simple value, next 1 byte
     ff              -- simple(255)
 0xf8ff`],
-  [new Date(1363896240000), '1(1363896240)', `
+  [new Date(1363896240000), '1(1363896240_2)', `
   c1                -- Tag #1
     1a              -- Positive number, next 4 bytes
       514b67b0      -- 1363896240
 0xc11a514b67b0`],
 
-  [new URL('http://www.example.com'), '32("http://www.example.com/")', `
+  [new URL('http://www.example.com'), '32_0("http://www.example.com/")', `
   d8                --  next 1 byte
     20              -- Tag #32
       77            -- String, length: 23
@@ -268,7 +266,7 @@ export const good = [
       05            -- [1], 5
 0x8301820203820405`],
 
-  [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]', `
+  [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24_0, 25_0]', `
   98                -- Array, length next 1 byte
     19              -- Array, 25 items
       01            -- [0], 1
@@ -373,7 +371,7 @@ export const good = [
       04            -- [0], 4
       05            -- [1], 5
 0x8301820203820405`],
-  [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]', `
+  [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24_0, 25_0]', `
   98                -- Array, length next 1 byte
     19              -- Array, 25 items
       01            -- [0], 1
@@ -432,31 +430,31 @@ export const good = [
 0xf97e00`],
 
   // Ints
-  [0xff, '255', `
+  [0xff, '255_0', `
   18                -- Positive number, next 1 byte
     ff              -- 255
 0x18ff`],
-  [256, '256', `
+  [256, '256_1', `
   19                -- Positive number, next 2 bytes
     0100            -- 256
 0x190100`],
-  [65535, '65535', `
+  [65535, '65535_1', `
   19                -- Positive number, next 2 bytes
     ffff            -- 65535
 0x19ffff`],
-  [65536, '65536', `
+  [65536, '65536_2', `
   1a                -- Positive number, next 4 bytes
     00010000        -- 65536
 0x1a00010000`],
-  [4294967295, '4294967295', `
+  [4294967295, '4294967295_2', `
   1a                -- Positive number, next 4 bytes
     ffffffff        -- 4294967295
 0x1affffffff`],
-  [8589934591, '8589934591', `
+  [8589934591, '8589934591_3', `
   1b                -- Positive number, next 8 bytes
     00000001ffffffff -- 8589934591
 0x1b00000001ffffffff`],
-  [9007199254740991, '9007199254740991', `
+  [9007199254740991, '9007199254740991_3', `
   1b                -- Positive number, next 8 bytes
     001fffffffffffff -- 9007199254740991
 0x1b001fffffffffffff`],
@@ -468,7 +466,7 @@ export const good = [
   fa                -- Float, next 4 bytes
     df000000        -- -9223372036854776000
 0xfadf000000`],
-  [-2147483648, '-2147483648', `
+  [-2147483648, '-2147483648_2', `
   3a                -- Negative number, next 4 bytes
     7fffffff        -- -2147483648
 0x3a7fffffff`],
@@ -484,16 +482,19 @@ export const good = [
   45                -- Bytes, length: 5
     0001020304      -- 0001020304
 0x450001020304`],
-  [new Simple(0xff), 'simple(255)', `
+  [new Simple(0xff), 'simple(255)_0', `
   f8                -- Simple value, next 1 byte
     ff              -- simple(255)
 0xf8ff`],
-  [/a/, '35("a")', `
-  d8                --  next 1 byte
-    23              -- Tag #35
-      61            -- String, length: 1
-        61          -- "a"
-0xd8236161`],
+  [/a/, '279_1(["a", ""])', `
+  d9                --  next 2 bytes
+    0117            -- Tag #279
+      82            -- Array, 2 items
+        61          -- String, length: 1
+          61        -- [0], "a"
+        60          -- String, length: 0
+0xd9011782616160`],
+  [/a/gu, '279_1(["a", "gu"])', '0xd90117826161626775'],
   [new Map([[1, 2]]), '{1: 2}', `
   a1                -- Map, 1 pair
     01              -- {Key:0}, 1
@@ -510,7 +511,7 @@ export const good = [
         62          -- {Key:0}, "b"
       01            -- {Val:0}, 1
 0xa1a1616201a1616201`],
-  [new Map([[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6'], [7, '7'], [8, '8'], [9, '9'], [10, '10'], [11, '11'], [12, '12'], [13, '13'], [14, '14'], [15, '15'], [16, '16'], [17, '17'], [18, '18'], [19, '19'], [20, '20'], [21, '21'], [22, '22'], [23, '23'], [24, '24']]), '{0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "11", 12: "12", 13: "13", 14: "14", 15: "15", 16: "16", 17: "17", 18: "18", 19: "19", 20: "20", 21: "21", 22: "22", 23: "23", 24: "24"}', `
+  [new Map([[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6'], [7, '7'], [8, '8'], [9, '9'], [10, '10'], [11, '11'], [12, '12'], [13, '13'], [14, '14'], [15, '15'], [16, '16'], [17, '17'], [18, '18'], [19, '19'], [20, '20'], [21, '21'], [22, '22'], [23, '23'], [24, '24']]), '{0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "11", 12: "12", 13: "13", 14: "14", 15: "15", 16: "16", 17: "17", 18: "18", 19: "19", 20: "20", 21: "21", 22: "22", 23: "23", 24_0: "24"}', `
   b8                -- Map, count next 1 byte
     19              -- Map, 25 pairs
       00            -- {Key:0}, 0
@@ -596,7 +597,7 @@ export const good = [
       5f5f70726f746f5f5f -- {Key:0}, "__proto__"
     00              -- {Val:0}, 0
 0xa1695f5f70726f746f5f5f00`],
-  [new Tag(256, 1), '256(1)', `
+  [new Tag(256, 1), '256_1(1)', `
   d9                --  next 2 bytes
     0100            -- Tag #256
       01            -- 1
@@ -605,13 +606,13 @@ export const good = [
   43            -- Bytes, length: 3
     010203      -- 010203
 0x43010203`],
-  [new Uint8ClampedArray([1, 2, 3]), '68(h\'010203\')', `
+  [new Uint8ClampedArray([1, 2, 3]), '68_0(h\'010203\')', `
   d8                --  next 1 byte
     44              -- Tag #68
       43            -- Bytes, length: 3
         010203      -- 010203
 0xd84443010203`],
-  [new Set([1, 2]), '[1, 2]', `
+  [new Set([1, 2]), '258_1([1, 2])', `
 d9                --  next 2 bytes
   0102            -- Tag #258
     82            -- Array, 2 items
@@ -619,7 +620,7 @@ d9                --  next 2 bytes
       02          -- [1], 2
 0xd90102820102`],
   [new Int8Array([-1, 0, 1, -128, 127]),
-    '72(\'ff0001807f\')',
+    '72_0(h\'ff0001807f\')',
     '0xd84845ff0001807f'],
 ];
 
@@ -661,12 +662,12 @@ export const decodeGood = [
   f9                -- Float, next 2 bytes
     7bff            -- 65504
 0xf97bff`],
-  [new Tag(23, hexToU8('01020304')).convert(), '23(h\'01020304\')', `
+  [new Tag(23, hexToU8('01020304')).decode(), '23(h\'01020304\')', `
   d7                -- Tag #23
     44              -- Bytes, length: 4
       01020304      -- 01020304
 0xd74401020304`],
-  [new Tag(24, hexToU8('6449455446')).convert(), '24(h\'6449455446\')', `
+  [new Tag(24, hexToU8('6449455446')).decode(), '24_0(h\'6449455446\')', `
   d8                --  next 1 byte
     18              -- Tag #24 Encoded CBOR data item
       45            -- Bytes, length: 5
@@ -694,11 +695,11 @@ export const decodeGood = [
   f9                -- Float, next 2 bytes
     0001            -- 5.960464477539063e-8
 0xf90001`],
-  [9223372036854775807n, '9223372036854775807', `
+  [9223372036854775807n, '9223372036854775807_3', `
   1b                -- Positive number, next 8 bytes
     7fffffffffffffff -- 9223372036854775807
 0x1b7fffffffffffffff`],
-  [-9223372036854775808n, '-9223372036854775808', `
+  [-9223372036854775808n, '-9223372036854775808_3', `
   3b                -- Negative number, next 8 bytes
     7fffffffffffffff -- -9223372036854775808
 0x3b7fffffffffffffff`],
@@ -734,7 +735,7 @@ export const decodeGood = [
   fb                -- Float, next 8 bytes
     7ff8000000000000 -- NaN
 0xfb7ff8000000000000`],
-  [-9007199254740992, '-9007199254740992', `
+  [-9007199254740992, '-9007199254740992_3', `
   3b                -- Negative number, next 8 bytes
     001fffffffffffff -- -9007199254740992
 0x3b001fffffffffffff`],
@@ -748,6 +749,10 @@ export const decodeGood = [
     fb              -- Float, next 8 bytes
       41d452d9ec200000 -- 1363896240.5
 0xc1fb41d452d9ec200000`],
+  [hexToU8(''), "_''", '0x5fff'],
+  [hexToU8(''), "(_ h'')", '0x5f40ff'],
+  ['', '_""', '0x7fff'],
+  ['', '(_ "")', '0x7f60ff'],
   [hexToU8('0102030405'), '(_ h\'0102\', h\'030405\')', `
   5f                -- Bytes (streaming)
     42              -- Bytes, length: 2
@@ -813,7 +818,7 @@ export const decodeGood = [
       04            -- [0], 4
       05            -- [1], 5
 0x83019f0203ff820405`],
-  [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], '[_ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]', `
+  [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], '[_ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24_0, 25_0]', `
   9f                -- Array (streaming)
     01              -- [0], 1
     02              -- [1], 2
@@ -868,7 +873,7 @@ export const decodeGood = [
         63          -- {Val:0}, "c"
       ff            -- BREAK
 0x826161bf61626163ff`],
-  [new Uint8Array([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99]), '64((_ h\'aabbccdd\', h\'eeff99\'))', `
+  [new Uint8Array([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99]), '64_0((_ h\'aabbccdd\', h\'eeff99\'))', `
   d8                --  next 1 byte
     40              -- Tag #64
       5f            -- Bytes (streaming)
@@ -878,6 +883,12 @@ export const decodeGood = [
           eeff99    -- eeff99
         ff          -- BREAK
 0xd8405f44aabbccdd43eeff99ff`],
+  [/a/, '35_0("a")', `
+d8                --  next 1 byte
+  23              -- Tag #35
+    61            -- String, length: 1
+      61          -- "a"
+0xd8236161`],
 ];
 
 export const encodeGood = [
@@ -936,6 +947,14 @@ export const decodeBad = [
   '0xfd', // Reserved AI
   '0xfe', // Reserved AI
   '0x62c0ae', // Invalid utf8
+  '0xff', // Unexpected BREAK
+  '0x81ff', // Unexpected BREAK
+];
+
+export const decodeBadTags = [
+  '0xd9011783616162677500', // RegExp array too long
+  '0xd9011780', // RegExp array too short
+  '0xd90117820000', // RegExp invalid flags
 ];
 
 const HEX = /0x(?<hex>[0-9a-f]+)$/i;

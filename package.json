@@ -2,7 +2,15 @@
   "name": "cbor2",
   "version": "0.0.0",
   "description": "Encode and parse data in the Concise Binary Object Representation (CBOR) data format (RFC8949).",
-  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./decoder": "./lib/decoder.js",
+    "./diagnostic": "./lib/diagnostic.js",
+    "./encoder": "./lib/encoder.js",
+    "./simple": "./lib/simple.js",
+    "./tag": "./lib/tag.js",
+    "./types": "./lib/types.js"
+  },
   "type": "module",
   "repository": {
     "type": "git",
@@ -32,16 +40,7 @@
     "name": "Joe Hildebrand",
     "email": "joe-github@cursive.net"
   },
-  "contributors": [
-    "Patrick Gansterer <paroga@paroga.com> (http://paroga.com/)",
-    "Artyom Yagilev <github@scorpi.org> (http://scorpi.org/)",
-    "Denis Lapaev <den@lapaev.me> (http://lapaev.me/)",
-    "Ruben Bridgewater <ruben@bridgewater.de>",
-    "Burt Harris <Burt_Harris_cbor@azxs.33mail.com>",
-    "Jakub Arbet <hi@jakubarbet.me> (https://jakubarbet.me/)",
-    "Rouzbeh Karimi <rouzweltt@gmail.com> (https://github.com/rouzwelt)"
-  ],
-  "packageManager": "pnpm@8.6.8",
+  "packageManager": "pnpm@8.6.10",
   "devDependencies": {
     "@cto.af/eslint-config": "3.0.1",
     "@typescript-eslint/eslint-plugin": "6.2.0",

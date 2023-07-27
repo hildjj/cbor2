@@ -1,6 +1,6 @@
-import {MT} from './constants.js';
+import {type DoneEncoding, writeInt} from './encoder.js';
+import {MT, SYMS} from './constants.js';
 import type {Writer} from './writer.js';
-import {writeInt} from './encoder.js';
 
 /**
  * A CBOR "Simple" value that is not one of the pre-standardized set.
@@ -12,12 +12,13 @@ export class Simple {
     this.value = value;
   }
 
-  public toCBOR(w: Writer, val: unknown): void {
-    writeInt(w, this.value, MT.SIMPLE_FLOAT);
+  public toCBOR(w: Writer, val: unknown): DoneEncoding {
+    writeInt(this.value, w, MT.SIMPLE_FLOAT);
+    return SYMS.DONE;
   }
 
   public toString(): string {
-    return `Simple(${this.value})`;
+    return `simple(${this.value})`;
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](
@@ -25,6 +26,6 @@ export class Simple {
     inspectOptions: object,
     inspect: (val: any, opts: object) => any
   ): string {
-    return `Simple(${inspect(this.value, inspectOptions)})`;
+    return `simple(${inspect(this.value, inspectOptions)})`;
   }
 }

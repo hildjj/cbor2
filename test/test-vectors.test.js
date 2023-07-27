@@ -2,7 +2,7 @@
 
 import '../lib/types.js';
 import {base64ToBytes, hexToU8, u8toHex} from '../lib/utils.js';
-import {decode, encode} from '../lib/index.js';
+import {decode, diagnose, encode} from '../lib/index.js';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -62,6 +62,16 @@ use command \`git submodule update --init\` to load test-vectors`);
 }
 const failures = JSON.parse(failStr);
 
+// TODO: Don't know how to make these round-trip.  See:
+// https://github.com/cbor/test-vectors/issues/3
+const failRoundtrip = new Set([
+  'f90000',
+  'f93c00',
+  'f97bff',
+  'fa47c35000',
+  'f9c400',
+]);
+
 test('vectors', () => {
   assert(Array.isArray(vectors));
   for (const v of vectors) {
@@ -86,35 +96,21 @@ test('vectors', () => {
       `round trip error: ${v.hex} -> ${u8toHex(encoded)}`
     );
 
-    //
-    //   if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
-    //     cbor.diagnose(buffer)
-    //       .then(d => t.deepEqual(
-    //         d.trim().replace(/_\d+(?<end>$|\))/, '$<end>'),
-    //         v.diagnostic
-    //       ))
-    //   }
+    if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
+      const d = diagnose(buffer);
+      assert.deepEqual(d.replace(/_\d+/g, ''), v.diagnostic);
+    }
 
     if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {
       assert.deepEqual(decoded, v.decoded, `Hex: "${v.hex}"`);
 
-    //
-    //     if (v.roundtrip) {
-    //       // TODO: Don't know how to make these round-trip.  See:
-    //       // https://github.com/cbor/test-vectors/issues/3
-    //       if ([
-    //         'f90000',
-    //         'f93c00',
-    //         'f97bff',
-    //         'fa47c35000',
-    //         'f9c400',
-    //       ].indexOf(v.hex) === -1) {
-    //         t.deepEqual(encoded.toString('hex'), v.hex)
-    //       } else {
-    //         // Trigger if assumptions change
-    //         t.notDeepEqual(encoded, buffer)
-    //       }
-    //     }
+      if (v.roundtrip) {
+        if (failRoundtrip.has(v.hex)) {
+          assert.notDeepEqual(encoded, buffer);
+        } else {
+          assert.deepEqual(u8toHex(encoded), v.hex);
+        }
+      }
     }
   }
 });

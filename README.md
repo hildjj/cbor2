@@ -7,6 +7,9 @@ This package supersedes [node-cbor](https://github.com/hildjj/node-cbor/tree/mai
 
 - Web-first.  Usable in node.
 - Simpler where possible.  Remove non-core features in favor of extensibility.
+- Synchronous decoding.  Removes streaming capabilities that are rarely used.
+- Complete break of API compatibility, allowing use of newer JavaScript constructs.
+- No work-arounds for older environments.
 
 ## Supported Node.js versions
 
@@ -38,10 +41,15 @@ decode(encoded); // Returns true
 // Use integers as keys:
 const m = new Map();
 m.set(1, 2);
-cbor.encode(m); // Returns Uint8Array(3) [ 161, 1, 2 ]
+encode(m); // Returns Uint8Array(3) [ 161, 1, 2 ]
 ```
 
 ## Supported types
+
+If you load `cbor2` using `import {decode, encode} from 'cbor2';`, all of the
+type converters will be loaded automatically.  If you import only pieces of
+the API and you want the type converters loaded, please also do
+`import 'cbor2/types';`.
 
 The following types are supported for encoding:
 
@@ -55,9 +63,9 @@ The following types are supported for encoding:
 - Date,
 - RegExp
 - URL
-- TypedArrays, ArrayBuffer, DataView
+- TypedArrays
 - Map, Set
-- BigInt
+- bigint
 
 Decoding supports the above types, including the following CBOR tag numbers:
 
@@ -67,11 +75,7 @@ Decoding supports the above types, including the following CBOR tag numbers:
 | 1   | Date                |
 | 2   | BigInt              |
 | 3   | BigInt              |
-| 21  | Tagged, with toJSON |
-| 22  | Tagged, with toJSON |
-| 23  | Tagged, with toJSON |
-| 28  | Original object, with SharedValueEncoder |
-| 29  | Same original object, with SharedValueEncoder |
+| 24  | any                 |
 | 32  | URL                 |
 | 33  | Tagged              |
 | 34  | Tagged              |
@@ -96,91 +100,88 @@ Decoding supports the above types, including the following CBOR tag numbers:
 | 85  | Float32Array        |
 | 86  | Float64Array        |
 | 258 | Set                 |
+| 262 | any                 |
+| 279 | RegExp              |
+| 55799 | any               |
+| 0xffff | Error            |
+| 0xffffffff | Error        |
+| 0xffffffffffffffff | Error|
 
 ## Adding new Encoders
 
 There are several ways to add a new encoder:
 
-### `encodeCBOR` method
+### `toCBOR` method
 
-This is the easiest approach, if you can modify the class being encoded.  Add an
-`encodeCBOR` method to your class, which takes a single parameter of the encoder
-currently being used.  Your method should return `true` on success, else `false`.
-Your method may call `encoder.push(buffer)` or `encoder.pushAny(any)` as needed.
+This is the easiest approach, if you can modify the class being encoded.  Add
+a `toCBOR()` method to your class, which should return a two-element array
+containing the tag number and data item that encodes your class.  If the tag
+number is `undefined`, no tag will be written.
 
 For example:
 
 ```js
 class Foo {
-  constructor() {
-    this.one = 1;
-    this.two = 2;
+  constructor(one, two) {
+    this.one = one;
+    this.two = two;
   }
 
-  encodeCBOR(encoder) {
-    const tagged = new Tagged(64000, [this.one, this.two]);
-    return encoder.pushAny(tagged);
+  toCBOR() {
+    return [64000, [this.one, this.two]];
   }
 }
 ```
 
-You can also modify an existing type by monkey-patching an `encodeCBOR` function
+You can also modify an existing type by monkey-patching a `toCBOR` function
 onto its prototype, but this isn't recommended.
 
-### `addSemanticType`
+### `toJSON()` method
+
+If your object does not have a `toCBOR()` method, but does have a `toJSON()`
+method, the value returned from `toJSON()` will be used to serialize the
+object.
+
+### `registerEncoder`
 
 Sometimes, you want to support an existing type without modification to that
-type.  In this case, call `addSemanticType(type, encodeFunction)` on an existing
-`Encoder` instance. The `encodeFunction` takes an encoder and an object to
-encode, for example:
+type.  In this case, call `registerEncoder(type, encodeFunction)`. The
+`encodeFunction` takes an object instance and returns the same type as
+`toCBOR` above:
 
 ```js
+import {registerEncoder} from 'cbor2/encoder';
+
 class Bar {
   constructor() {
     this.three = 3;
   }
 }
-const enc = new Encoder();
-enc.addSemanticType(Bar, (encoder, b) => {
-  encoder.pushAny(b.three);
-});
+registerEncoder(Bar, b => [undefined, b.three]);
 ```
 
 ## Adding new decoders
 
 Most of the time, you will want to add support for decoding a new tag type.  If
-the Decoder class encounters a tag it doesn't support, it will generate a `Tagged`
+the Decoder class encounters a tag it doesn't support, it will generate a `Tag`
 instance that you can handle or ignore as needed.  To have a specific type
-generated instead, pass a `tags` option to the `Decoder`'s constructor, consisting
-of an object with tag number keys and function values.  The function will be
-passed the decoded value associated with the tag, and should return the decoded
-value.  For the `Foo` example above, this might look like:
+generated instead, call `Tag.registerDecoder()` with the tag number and a function that will convert the tags value to the appropriate type. For the `Foo` example above, this might look like:
 
 ```js
-const d = new Decoder({
-  tags: {
-    64000: val => {
-      // Check val to make sure it's an Array as expected, etc.
-      const foo = new Foo();
-      [foo.one, foo.two] = val;
-      return foo;
-    },
-  },
-});
+import {Tag} from 'cbor2/tag';
+
+Tag.registerDecoder(64000, tag => new Foo(tag.contents[0], tag.contents[1]));
 ```
 
 You can also replace the default decoders by passing in an appropriate tag
 function.  For example:
 
 ```js
-cbor.decodeFirstSync(input, {
-  tags: {
-    // Replace the Tag 0 (RFC3339 Date/Time string) decoder.
-    // See https://tc39.es/proposal-temporal/docs/ for the upcoming
-    // Temporal built-in, which supports nanosecond time:
-    0: x => Temporal.Instant.from(x),
-  },
-});
+// Tag 0 is Date/Time as an ISO-8601 string
+import 'cbor2/types';
+import {Tag} from 'cbor2/tag';
+
+Tag.registerDecoder(0, ({contents}) => Temporal.Instant.from(contents));
 ```
 
 ## Developers

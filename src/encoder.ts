@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
-import {MT, NUMBYTES, SIMPLE, TAG} from './constants.js';
+import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {Writer, type WriterOptions, WriterOptionsDefault} from './writer.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
@@ -41,14 +41,14 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
 };
 
 export type AbstractClassType = abstract new (...args: any) => any;
-export type TypeConverter = (
-  w: Writer,
+export type TypeEncoder = (
   obj: unknown,
+  w: Writer,
   opts: RequiredEncodeOptions
-) => void;
+) => DoneEncoding | [number, unknown];
 
 // Only add ones here that have to be in for compliance.
-const TYPES = new Map<InstanceType<AbstractClassType>, TypeConverter>([
+const TYPES = new Map<InstanceType<AbstractClassType>, TypeEncoder>([
   [Array, writeArray],
   [Uint8Array, writeUint8Array],
 ]);
@@ -57,15 +57,15 @@ const TYPES = new Map<InstanceType<AbstractClassType>, TypeConverter>([
  * Add a known converter for the given type to CBOR.
  *
  * @param typ Type constructor, e.g. "Array".
- * @param converter Converter function for that type.
+ * @param encoder Converter function for that type.
  * @returns Previous converter for that type, or unknown.
  */
-export function addType(
+export function registerEncoder(
   typ: AbstractClassType,
-  converter: TypeConverter
-): TypeConverter | undefined {
+  encoder: TypeEncoder
+): TypeEncoder | undefined {
   const old = TYPES.get(typ);
-  TYPES.set(typ, converter);
+  TYPES.set(typ, encoder);
   return old;
 }
 
@@ -75,13 +75,15 @@ export function addType(
  * @param typ Type constructor, e.e.g "Array".
  * @returns Previous converter for that type, or unknown.
  */
-export function clearType(
+export function clearEncoder(
   typ: AbstractClassType
-): TypeConverter | undefined {
+): TypeEncoder | undefined {
   const old = TYPES.get(typ);
   TYPES.delete(typ);
   return old;
 }
+
+export type DoneEncoding = typeof SYMS.DONE;
 
 export interface ToCBOR {
   /**
@@ -91,7 +93,8 @@ export interface ToCBOR {
    * @param w Writer.
    * @param opts Options.
    */
-  toCBOR(w: Writer, opts: RequiredEncodeOptions): void;
+  toCBOR(w: Writer, opts: RequiredEncodeOptions):
+    DoneEncoding | [number, unknown];
 }
 
 export interface ToJSON {
@@ -107,10 +110,10 @@ export interface ToJSON {
  * that does not lose precision for the given number.  Writes the size with
  * majpr type SIMPLE_FLOAT before big-endian bytes.
  *
- * @param w Writer.
  * @param val Floating point number.
+ * @param w Writer.
  */
-export function writeFloat(w: Writer, val: number): void {
+export function writeFloat(val: number, w: Writer): void {
   if (isNaN(val) || (Math.fround(val) === val)) {
     // It's at least as small as f32.
     const half = halfToUint(val);
@@ -132,13 +135,13 @@ export function writeFloat(w: Writer, val: number): void {
  * given writes major type POS_INT or NEG_INT as appropriate.  Otherwise uses
  * the given mt a the major type.
  *
- * @param w Writer.
  * @param val Number that is an integer that satisfies
  *   `MIN_SAFE_INTEGER <= val <= MAX_SAFE_INTEGER`.
+ * @param w Writer.
  * @param mt Major type, if desired.  Obj will be real integer > 0.
  * @throws On invalid combinations.
  */
-export function writeInt(w: Writer, val: number, mt?: number): void {
+export function writeInt(val: number, w: Writer, mt?: number): void {
   const neg = val < 0;
   const pos = neg ? -val - 1 : val;
   if (neg && mt) {
@@ -167,8 +170,8 @@ export function writeInt(w: Writer, val: number, mt?: number): void {
 }
 
 function writeBigInt(
-  w: Writer,
   val: bigint,
+  w: Writer,
   opts: RequiredEncodeOptions
 ): void {
   const neg = val < 0n;
@@ -177,7 +180,7 @@ function writeBigInt(
   if (opts.collapseBigInts) {
     if (pos <= 0xffffffffn) {
       // Always collapse small bigints
-      writeInt(w, Number(val));
+      writeInt(Number(val), w);
       return;
     }
 
@@ -194,11 +197,11 @@ function writeBigInt(
   const s = pos.toString(16);
   const z = (s.length % 2) ? '0' : '';
 
-  writeTag(w, tag);
+  writeTag(tag, w);
   // This takes a couple of big allocs for large numbers, but I still haven't
   // found a better way.
   const buf = hexToU8(z + s);
-  writeInt(w, buf.length, MT.BYTE_STRING);
+  writeInt(buf.length, w, MT.BYTE_STRING);
   w.write(buf);
 }
 
@@ -206,10 +209,10 @@ function writeBigInt(
  * Write a number, be it integer or floating point, to the stream, along with
  * the appropriate major type.
  *
- * @param w Writer.
  * @param val Number.
+ * @param w Writer.
  */
-export function writeNumber(w: Writer, val: number): void {
+export function writeNumber(val: number, w: Writer): void {
   if (!isFinite(val) ||
       (Math.round(val) !== val) ||
       (Object.is(val, -0)) ||
@@ -217,9 +220,9 @@ export function writeNumber(w: Writer, val: number): void {
       // whose precision is greater than 1?
       (val > Number.MAX_SAFE_INTEGER) ||
       (val < Number.MIN_SAFE_INTEGER)) {
-    writeFloat(w, val);
+    writeFloat(val, w);
   } else {
-    writeInt(w, val);
+    writeInt(val, w);
   }
 }
 
@@ -227,23 +230,23 @@ export function writeNumber(w: Writer, val: number): void {
  * Write a tag number to the output stream.  MUST be followed by writing
  * the tag contents.
  *
- * @param w Stream to write to.
  * @param tag Tag number.
+ * @param w Stream to write to.
  */
-export function writeTag(w: Writer, tag: number): void {
-  writeInt(w, tag, MT.TAG);
+export function writeTag(tag: number, w: Writer): void {
+  writeInt(tag, w, MT.TAG);
 }
 
 /**
  * Convert the string to UTF8.  Write the length of the UTF8 version to the
  * stream with major type UTF8_STRING, then the UTF8 bytes.
  *
- * @param w Writer.
  * @param val String.
+ * @param w Writer.
  */
-export function writeString(w: Writer, val: string): void {
+export function writeString(val: string, w: Writer): void {
   const utf8 = TE.encode(val);
-  writeInt(w, utf8.length, MT.UTF8_STRING);
+  writeInt(utf8.length, w, MT.UTF8_STRING);
   w.write(utf8);
 }
 
@@ -251,38 +254,42 @@ export function writeString(w: Writer, val: string): void {
  * Write the length of an array with ARRAY major type, then each of the items
  * in the array.  Writes undefined for holes in the array.
  *
- * @param w Writer.
  * @param obj Array.
+ * @param w Writer.
  * @param opts Options.
+ * @returns DONE.
  */
 export function writeArray(
-  w: Writer,
   obj: unknown,
+  w: Writer,
   opts: RequiredEncodeOptions
-): void {
+): DoneEncoding {
   const a = obj as any[];
-  writeInt(w, a.length, MT.ARRAY);
+  writeInt(a.length, w, MT.ARRAY);
   for (const i of a) { // Iterator gives undefined for holes.
-    writeUnknown(w, i, opts);
+    writeUnknown(i, w, opts);
   }
+  return SYMS.DONE;
 }
 
 /**
  * Write the length of a buffer with BYTE_STRING major type, then the contents
  * of the buffer.
  *
- * @param w Writer.
  * @param obj Buffer.
+ * @param w Writer.
+ * @returns DONE.
  */
-export function writeUint8Array(w: Writer, obj: unknown): void {
+export function writeUint8Array(obj: unknown, w: Writer): DoneEncoding {
   const u = obj as Uint8Array;
-  writeInt(w, u.length, MT.BYTE_STRING);
+  writeInt(u.length, w, MT.BYTE_STRING);
   w.write(u);
+  return SYMS.DONE;
 }
 
 function writeObject(
-  w: Writer,
   obj: object | null,
+  w: Writer,
   opts: RequiredEncodeOptions
 ): void {
   if (obj === null) {
@@ -290,51 +297,61 @@ function writeObject(
     return;
   }
 
-  const converter = TYPES.get(obj.constructor);
-  if (converter) {
-    converter(w, obj, opts);
+  const encoder = TYPES.get(obj.constructor);
+  if (encoder) {
+    const res = encoder(obj, w, opts);
+    if (res !== SYMS.DONE) {
+      if (typeof res[0] === 'number') {
+        writeTag(res[0], w);
+      }
+      writeUnknown(res[1], w, opts);
+    }
     return;
   }
 
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
-    (obj as ToCBOR).toCBOR(w, opts);
+    const res = (obj as ToCBOR).toCBOR(w, opts);
+    if (res !== SYMS.DONE) {
+      writeTag(res[0], w);
+      writeUnknown(res[1], w, opts);
+    }
     return;
   }
 
   if (typeof (obj as ToJSON).toJSON === 'function') {
-    writeUnknown(w, (obj as ToJSON).toJSON(), opts);
+    writeUnknown((obj as ToJSON).toJSON(), w, opts);
     return;
   }
 
   const entries = Object.entries(obj);
-  writeInt(w, entries.length, MT.MAP);
+  writeInt(entries.length, w, MT.MAP);
 
   for (const [k, v] of entries) {
-    writeString(w, k);
-    writeUnknown(w, v, opts);
+    writeString(k, w);
+    writeUnknown(v, w, opts);
   }
 }
 
 /**
  * Write a single value of unknown type to the given writer.
  *
- * @param w The writer.
  * @param val The value.
+ * @param w The writer.
  * @param opts Encoding options.
  * @throws TypeError for Symbols or unknown JS typeof results.
  */
 export function writeUnknown(
-  w: Writer,
   val: unknown,
+  w: Writer,
   opts: RequiredEncodeOptions
 ): void {
   switch (typeof val) {
-    case 'number': writeNumber(w, val); break;
-    case 'bigint': writeBigInt(w, val, opts); break;
-    case 'string': writeString(w, val); break;
+    case 'number': writeNumber(val, w); break;
+    case 'bigint': writeBigInt(val, w, opts); break;
+    case 'string': writeString(val, w); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;
     case 'undefined': w.writeUint8(UNDEFINED); break;
-    case 'object': writeObject(w, val, opts); break;
+    case 'object': writeObject(val, w, opts); break;
     case 'symbol':
       // TODO: Add pluggable support for symbols
       throw new TypeError(`Unknown symbol: ${val.toString()}`);
@@ -358,6 +375,6 @@ export function encode(val: unknown, options?: EncodeOptions): Uint8Array {
     ...options,
   };
   const w = new Writer(opts);
-  writeUnknown(w, val, opts);
+  writeUnknown(val, w, opts);
   return w.read();
 }

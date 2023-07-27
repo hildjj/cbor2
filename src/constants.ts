@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extraneous-class */
 /**
  * Major Types.
  *
@@ -35,11 +36,11 @@ export const TAG = {
   URI: 32,
   BASE64URL: 33,
   BASE64: 34,
-  REGEXP: 35,
   MIME: 36,
   // https://github.com/input-output-hk/cbor-sets-spec/blob/master/CBOR_SETS.md
   SET: 258,
   JSON: 262,
+  REGEXP: 279,
   SELF_DESCRIBED: 55799,
   // Always invalid: https://www.ietf.org/archive/id/draft-bormann-cbor-notable-tags-07.html#name-invalid-tag
   INVALID_16: 0xffff,
@@ -74,9 +75,12 @@ export const SIMPLE = {
 };
 
 /**
- * Symbols.  Made globally findable for testing.
+ * Symbols.  Made globally findable for testing.  Note that this is a class
+ * so that TypeScript can see each of these as a "unique symbol", which can
+ * then have `typeof` applied to it.
  */
-export const SYMS = {
-  BREAK: Symbol.for('github.com/hildjj/cbor2/break'),
-  STREAM: Symbol.for('github.com/hildjj/cbor2/stream'),
-};
+export class SYMS {
+  public static readonly BREAK = Symbol.for('github.com/hildjj/cbor2/break');
+  public static readonly STREAM = Symbol.for('github.com/hildjj/cbor2/stream');
+  public static readonly DONE = Symbol.for('github.com/hildjj/cbor2/done');
+}

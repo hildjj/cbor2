@@ -17,7 +17,7 @@ function testAll(list, opts) {
 
 function failAll(list) {
   for (const c of list) {
-    assert.throws(() => decode(cases.toBuffer(c)));
+    assert.throws(() => decode(cases.toBuffer(c)), c);
   }
 }
 
@@ -25,12 +25,16 @@ test('good', () => {
   testAll(cases.good);
 });
 
-test('decode', () => {
+test('decode good', () => {
   testAll(cases.decodeGood);
 });
 
-test('edges', () => {
+test('decode bad', () => {
   failAll(cases.decodeBad);
+});
+
+test('decode bad tags', () => {
+  failAll(cases.decodeBadTags);
 });
 
 test('goodEndian', () => {

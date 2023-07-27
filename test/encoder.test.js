@@ -1,10 +1,10 @@
 import '../lib/types.js';
+import {MT, SYMS} from '../lib/constants.js';
 import {
   TempClass, collapseBigIntegers, encodeGood, good, goodEndian, toString,
 } from './cases.js';
-import {addType, clearType, encode, writeInt} from '../lib/encoder.js';
+import {clearEncoder, encode, registerEncoder, writeInt} from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
-import {MT} from '../lib/constants.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -48,13 +48,14 @@ test('good endian encode', () => {
 
 test('clear type', () => {
   const t = new TempClass(1);
-  assert.equal(u8toHex(encode(t)), 'd9fffef7');
-  assert.equal(addType(TempClass, (w, obj, opts) => {
+  assert.equal(u8toHex(encode(t)), 'd9fffe01');
+  assert.equal(registerEncoder(TempClass, (obj, w, opts) => {
     w.writeUint8(0);
+    return SYMS.DONE;
   }), undefined);
   assert.equal(u8toHex(encode(t)), '00');
-  assert.notEqual(clearType(TempClass), undefined);
-  assert.equal(u8toHex(encode(t)), 'd9fffef7');
+  assert.notEqual(clearEncoder(TempClass), undefined);
+  assert.equal(u8toHex(encode(t)), 'd9fffe01');
 });
 
 test('toJSON', () => {
@@ -71,7 +72,7 @@ test('toJSON', () => {
 
 test('encoder edges', () => {
   const w = new Writer();
-  assert.throws(() => writeInt(w, -1, MT.ARRAY));
+  assert.throws(() => writeInt(-1, w, MT.ARRAY));
   assert.throws(() => encode(Symbol('UNKNOWN')));
   assert.throws(() => encode(() => {
     // Blank
