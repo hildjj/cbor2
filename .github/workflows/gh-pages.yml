@@ -28,7 +28,7 @@ jobs:
           node-version: 20.x
           cache: pnpm
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install -r
       - name: Build
         run: npm run docs
       - name: Deploy
