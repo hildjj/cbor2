@@ -9,7 +9,8 @@
     "./encoder": "./lib/encoder.js",
     "./simple": "./lib/simple.js",
     "./tag": "./lib/tag.js",
-    "./types": "./lib/types.js"
+    "./types": "./lib/types.js",
+    "./utils": "./lib/utils.js"
   },
   "type": "module",
   "repository": {
@@ -19,7 +20,7 @@
   "homepage": "https://github.com/hildjj/cbor2",
   "scripts": {
     "clean": "rimraf lib coverage docs",
-    "docs": "typedoc",
+    "docs": "typedoc && cd web && npm run build",
     "lint": "eslint . --ext ts,js,cjs",
     "pretest": "npm run build",
     "test": "npm run test:noBuild",
