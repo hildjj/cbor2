@@ -1,6 +1,10 @@
 import {MT} from './constants.js';
+import {Tag} from './tag.js';
+import {u8concat} from './utils.js';
 
-function *pairs(a: any[]): Generator<[any, any], undefined, undefined> {
+function *pairs(
+  a: unknown[]
+): Generator<[unknown, unknown], undefined, undefined> {
   const len = a.length;
   let i = 0;
   for (; i < len; i += 2) {
@@ -24,7 +28,7 @@ export class CBORcontainer {
   public mt: number;
   public ai: number;
   public left: number;
-  public children: unknown[] = [];
+  public children: Tag | unknown[] = [];
 
   public constructor(
     mt: number,
@@ -40,10 +44,6 @@ export class CBORcontainer {
 
   public get isStreaming(): boolean {
     return this.left === Infinity;
-  }
-
-  public get empty(): boolean {
-    return this.children.length === 0;
   }
 
   public get done(): boolean {
@@ -71,8 +71,11 @@ export class CBORcontainer {
         return new CBORcontainer(mt, ai, value as number, parent);
       case MT.MAP:
         return new CBORcontainer(mt, ai, (value as number) * 2, parent);
-      case MT.TAG:
-        return new CBORcontainer(mt, ai, 1, parent);
+      case MT.TAG: {
+        const ret = new CBORcontainer(mt, ai, 1, parent);
+        ret.children = new Tag(value as number);
+        return ret;
+      }
     }
     throw new TypeError(`Invalid major type: ${mt}`);
   }
@@ -83,6 +86,26 @@ export class CBORcontainer {
   }
 
   public convert(): unknown {
-
+    switch (this.mt) {
+      case MT.ARRAY:
+        return this.children;
+      case MT.MAP: {
+        // Are all of the keys strings?
+        // Note that __proto__ gets special handling as a key in fromEntries,
+        // since it's doing DefineOwnProperty down inside.
+        const cu = this.children as unknown[];
+        return cu.every((v, i) => (i % 2) || (typeof v === 'string')) ?
+          Object.fromEntries(pairs(cu)) :
+          new Map<unknown, unknown>(pairs(cu));
+      }
+      case MT.BYTE_STRING: {
+        return u8concat(this.children as Uint8Array[]);
+      }
+      case MT.UTF8_STRING:
+        return (this.children as string[]).join('');
+      case MT.TAG:
+        return (this.children as Tag).decode();
+    }
+    throw new TypeError(`Invalid mt on convert: ${this.mt}`);
   }
 }
