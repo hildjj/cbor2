@@ -43,15 +43,6 @@ export class Tag {
   }
 
   /**
-   * Here to make Tag look more like an Array for TS.  Not useful.
-   *
-   * @returns Contents.
-   */
-  public pop(): unknown {
-    return this.contents;
-  }
-
-  /**
    * Convert this tagged value to a useful data type, if possible.
    *
    * @returns The converted value.

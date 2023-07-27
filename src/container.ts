@@ -22,6 +22,8 @@ function *pairs(
  * - Map (streaming or concrete).
  * - Tag (always one item).
  * - Streaming byte arrays or UTF8 arrays.
+ *
+ * This is used in various decoding applications to keep track of state.
  */
 export class CBORcontainer {
   public parent: CBORcontainer | undefined;
@@ -50,6 +52,19 @@ export class CBORcontainer {
     return this.left === 0;
   }
 
+  /**
+   * Factory method that returns the given ParentType if the mt/ai dictate
+   * that is necessary, otherwise returns the given value.
+   *
+   * @param mt Major Type.
+   * @param ai Additional Information.
+   * @param value Associated value from token.
+   * @param parent If this item is inside another item, the direct parent.
+   * @param ParentType Constructor to call, if needed.  Defaults to
+   *   CBORcontainer.
+   * @returns ParentType instance or value.
+   * @throws Invalid major type, which should only occur from tests.
+   */
   // eslint-disable-next-line max-params
   public static create(
     mt: number,
@@ -82,16 +97,43 @@ export class CBORcontainer {
     throw new TypeError(`Invalid major type: ${mt}`);
   }
 
+  /**
+   * Add the given child to the list of children, and update how many are
+   * still needed.
+   *
+   * @param child Any child item.
+   * @returns The number of items still needed.
+   */
   public push(child: unknown): number {
     this.children.push(child);
     return --this.left;
   }
 
-  public pop(): unknown {
-    this.left++;
-    return this.children.pop();
+  /**
+   * Replace the last child with this one.  Usually after having called
+   * convert on the most recent child.
+   *
+   * @param child New child value.
+   * @returns Previous child value.
+   */
+  public replaceLast(child: unknown): unknown {
+    if (this.children instanceof Tag) {
+      const ret = this.children.contents;
+      this.children.contents = child;
+      return ret;
+    }
+    const last = this.children.length - 1;
+    const ret = this.children[last];
+    this.children[last] = child;
+    return ret;
   }
 
+  /**
+   * Converts the childen to the most appropriate form known.
+   *
+   * @returns Anything BUT a CBORcontainer.
+   * @throws Invalid major type.  Only possible in testing.
+   */
   public convert(): unknown {
     switch (this.mt) {
       case MT.ARRAY:

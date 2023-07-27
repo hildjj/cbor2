@@ -47,10 +47,7 @@ export function decode<T = unknown>(
       ret = parent?.convert();
 
       const p = parent?.parent;
-      if (p) {
-        p.pop();
-        p.push(ret);
-      }
+      p?.replaceLast(ret);
       parent = p;
     }
   }

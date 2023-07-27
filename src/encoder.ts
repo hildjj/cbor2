@@ -5,6 +5,11 @@ import {Writer, type WriterOptions, WriterOptionsDefault} from './writer.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
+/**
+ * Return this from toCBOR to signal that no further processing should be done.
+ */
+export const {DONE} = SYMS;
+
 const HALF = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.TWO;
 const FLOAT = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.FOUR;
 const DOUBLE = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.EIGHT;
@@ -88,7 +93,8 @@ export type DoneEncoding = typeof SYMS.DONE;
 export interface ToCBOR {
   /**
    * If an object implements this interface, this method will be used to
-   * serialize the object when encoding.
+   * serialize the object when encoding.  Return DONE if you don't want
+   * any further serialization to take place.
    *
    * @param w Writer.
    * @param opts Options.

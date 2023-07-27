@@ -80,7 +80,14 @@ export const SIMPLE = {
  * then have `typeof` applied to it.
  */
 export class SYMS {
+  /**
+   * A 0xFF byte as been found in the stream.  Used as a sentinal.
+   */
   public static readonly BREAK = Symbol.for('github.com/hildjj/cbor2/break');
-  public static readonly STREAM = Symbol.for('github.com/hildjj/cbor2/stream');
+
+  /**
+   * Return from toCBOR to signal that we are done encoding, and that the
+   * return value should be ignored.
+   */
   public static readonly DONE = Symbol.for('github.com/hildjj/cbor2/done');
 }

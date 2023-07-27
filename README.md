@@ -33,15 +33,16 @@ See the full API [documentation](http://hildjj.github.io/cbor2/).
 Example:
 
 ```js
-import {decode, encode} from 'cbor';
+import {decode, diagnose, encode} from 'cbor';
 
-const encoded = cbor.encode(true); // Returns Uint8Array(1) [ 245 ]
+const encoded = encode(true); // Returns Uint8Array(1) [ 245 ]
 decode(encoded); // Returns true
 
 // Use integers as keys:
 const m = new Map();
-m.set(1, 2);
-encode(m); // Returns Uint8Array(3) [ 161, 1, 2 ]
+m.set(1, 25);
+encode(m); // Returns Uint8Array(3) [ 161, 1, 24, 25 ]
+diagnose(encode(m)); // {1: 25_0}
 ```
 
 ## Supported types
