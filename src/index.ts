@@ -12,4 +12,5 @@
 import './types.js';
 export {DecodeStream} from './decodeStream.js';
 export {decode} from './decoder.js';
+export {diagnose} from './diagnostic.js';
 export {encode} from './encoder.js';

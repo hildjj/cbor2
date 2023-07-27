@@ -25,6 +25,23 @@ export function u8toHex(u8: Uint8Array): string {
 }
 
 /**
+ * Concatenate multiple Uint8Arrays into a single buffer.
+ *
+ * @param u8s Zero or more arrays to concatenate.
+ * @returns Combined array.
+ */
+export function u8concat(u8s: Uint8Array[]): Uint8Array {
+  const sz = u8s.reduce((t, v) => t + v.length, 0);
+  const ret = new Uint8Array(sz);
+  let len = 0;
+  for (const u8 of u8s) {
+    ret.set(u8, len);
+    len += u8.length;
+  }
+  return ret;
+}
+
+/**
  * Convert from Base64 to bytes in an unexciting way.
  * From https://developer.mozilla.org/en-US/docs/Glossary/Base64
  * which goes through an intermediate string form.  Bleh.

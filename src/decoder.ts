@@ -1,3 +1,5 @@
+// import {CBORcontainer} from './container.js';
+// eslint-disable-next-line sort-imports -- eslint bug
 import {type DecodeOptions, DecodeStream} from './decodeStream.js';
 import {
   MT,
@@ -41,7 +43,8 @@ export function decode<T = unknown>(
   const countMap = new WeakMap<Parent, number>();
   const typeMap = new WeakMap<Parent, number>();
 
-  for (const [mt, _ai, val] of stream) {
+  // eslint-disable-next-line prefer-const
+  for (let [mt, _ai, val] of stream) {
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
@@ -50,32 +53,18 @@ export function decode<T = unknown>(
         break;
       case MT.BYTE_STRING:
       case MT.UTF8_STRING:
-        if (val === Infinity) {
-          ret = [];
-          parentMap.set(ret, parent);
-          countMap.set(ret, Infinity);
-          typeMap.set(ret, mt);
-        } else {
-          ret = val;
-        }
+        ret = (val === Infinity) ? [] : val;
         break;
       case MT.ARRAY:
         ret = [];
-        parentMap.set(ret, parent);
-        countMap.set(ret, val as number);
-        typeMap.set(ret, mt);
         break;
       case MT.MAP:
         ret = [];
-        parentMap.set(ret, parent);
-        countMap.set(ret, (val as number) * 2);
-        typeMap.set(ret, mt);
+        val = (val as number) * 2; // Can't use shift because Infinity
         break;
       case MT.TAG:
         ret = new Tag(val as number);
-        parentMap.set(ret, parent);
-        countMap.set(ret, 1);
-        typeMap.set(ret, mt);
+        val = 1;
         break;
     }
     if (parent) {
@@ -94,6 +83,9 @@ export function decode<T = unknown>(
       }
     }
     if (Array.isArray(ret) || ret instanceof Tag) {
+      parentMap.set(ret, parent);
+      countMap.set(ret, val as number);
+      typeMap.set(ret, mt);
       parent = ret;
     }
     while (parent && (countMap.get(parent) === 0)) {

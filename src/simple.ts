@@ -18,7 +18,7 @@ export class Simple {
   }
 
   public toString(): string {
-    return `Simple(${this.value})`;
+    return `simple(${this.value})`;
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](
@@ -26,6 +26,6 @@ export class Simple {
     inspectOptions: object,
     inspect: (val: any, opts: object) => any
   ): string {
-    return `Simple(${inspect(this.value, inspectOptions)})`;
+    return `simple(${inspect(this.value, inspectOptions)})`;
   }
 }

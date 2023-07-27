@@ -5,6 +5,7 @@
   "exports": {
     ".": "./lib/index.js",
     "./decoder": "./lib/decoder.js",
+    "./diagnostic": "./lib/diagnostic.js",
     "./encoder": "./lib/encoder.js",
     "./simple": "./lib/simple.js",
     "./tag": "./lib/tag.js",

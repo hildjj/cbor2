@@ -5,6 +5,6 @@ import util from 'node:util';
 
 test('Simple', () => {
   const s = new Simple(0);
-  assert.equal(s.toString(), 'Simple(0)');
-  assert.equal(util.inspect(s, {colors: false}), 'Simple(0)');
+  assert.equal(s.toString(), 'simple(0)');
+  assert.equal(util.inspect(s, {colors: false}), 'simple(0)');
 });
