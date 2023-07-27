@@ -1,4 +1,14 @@
 /**
+ * These are all internal utility functions for cbor2.  They are only exported
+ * so that the web playground can use them.
+ *
+ * NO API backward compatibility is promised for these functions.  They are
+ * not a part of the public interface, and changes here will not affect the
+ * semver status of a changeset.  Use at your own risk.
+ * @module
+ */
+
+/**
  * Convert hex string to Uint8Array.
  *
  * @param str Hex string.
@@ -74,13 +84,6 @@ export function base64UrlToBytes(base64url: string): Uint8Array {
   const s = base64url.replace(/[_-]/g, (m: string) => urlToNotUrl[m]);
   return base64ToBytes(s.padEnd(Math.ceil(s.length / 4) * 4, '='));
 }
-
-//
-// function bytesToBase64(bytes: Uint8Array): string {
-//   const binString = Array.from(bytes, (x: number) => String.fromCodePoint(x))
-//     .join('');
-//   return btoa(binString);
-// }
 
 /**
  * Is the current system big-endian?  Tested for, rather than using a node

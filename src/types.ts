@@ -361,8 +361,11 @@ function intentionallyUnimplemented(obj: unknown): DoneEncoding {
   throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`);
 }
 registerEncoder(ArrayBuffer, intentionallyUnimplemented);
-registerEncoder(SharedArrayBuffer, intentionallyUnimplemented);
 registerEncoder(DataView, intentionallyUnimplemented);
+
+if (typeof SharedArrayBuffer !== 'undefined') {
+  registerEncoder(SharedArrayBuffer, intentionallyUnimplemented);
+}
 
 function writeBoxed(
   obj: unknown,

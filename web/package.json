@@ -1,0 +1,20 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "description": "Web playground for cbor2",
+  "private": true,
+  "scripts": {
+    "build": "webpack"
+  },
+  "author": "Joe Hildebrand <joe-github@cursive.net>",
+  "license": "MIT",
+  "devDependencies": {
+    "cbor2": "link:..",
+    "css-loader": "6.8.1",
+    "html-webpack-plugin": "5.5.3",
+    "node-inspect-extracted": "3.0.0",
+    "style-loader": "3.3.3",
+    "webpack": "5.88.2",
+    "webpack-cli": "5.1.4"
+  }
+}
