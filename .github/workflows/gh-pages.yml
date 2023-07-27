@@ -30,6 +30,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install -r
       - name: Build
+        run: npm run build
+      - name: Build docs
         run: npm run docs
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
