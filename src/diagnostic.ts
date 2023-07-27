@@ -3,27 +3,33 @@
  *
  * @module
  */
+
+import {CBORcontainer} from './container.js';
+// eslint-disable-next-line sort-imports -- eslint bug
 import {type DecodeOptions, DecodeStream} from './decodeStream.js';
 import {MT, SYMS} from './constants.js';
 import {u8toHex} from './utils.js';
 
 const NOT_FOUND = Symbol('NOT_FOUND');
 
-class Parent {
-  public mt: number;
-  public ai: number;
-  public left: number;
-  public parent: Parent | undefined;
+class DiagContainer extends CBORcontainer {
   public count = 0;
   public close = '';
   public quote = '"';
 
-  public constructor(mt: number, ai: number, size: number, parent?: Parent) {
-    this.mt = mt;
-    this.ai = ai;
-    this.left = size;
-    this.parent = parent;
+  public get emptyStream(): boolean {
+    return (this.mt === MT.UTF8_STRING || this.mt === MT.BYTE_STRING) &&
+      (this.count === 0);
   }
+}
+
+function sized(ai: number, value: number): string {
+  let str = Object.is(value, -0) ? '-0' : String(value);
+  if (ai >= 24) {
+    str += '_';
+    str += String(ai - 24);
+  }
+  return str;
 }
 
 /**
@@ -42,7 +48,7 @@ export function diagnose(
     new DecodeStream(src, {encoding: 'hex', ...opts}) :
     new DecodeStream(src, opts);
 
-  let parent: Parent | undefined = undefined;
+  let parent: DiagContainer | undefined = undefined;
   let ret: any = NOT_FOUND;
   let str = '';
 
@@ -55,27 +61,23 @@ export function diagnose(
         str += ', ';
       }
     }
+    ret = CBORcontainer.create(mt, ai, val, parent, DiagContainer);
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
+        str += sized(ai, val as number);
+        break;
       case MT.SIMPLE_FLOAT:
-        ret = val;
         if (val !== SYMS.BREAK) {
-          str += Object.is(val, -0) ? '-0' : String(val);
-          if (ai >= 24) {
-            str += '_';
-            str += String(ai - 24);
-          }
+          str += sized(ai, val as number);
         }
         break;
       case MT.BYTE_STRING:
         if (val === Infinity) {
-          ret = new Parent(mt, ai, val, parent);
           str += '(_ ';
           ret.close = ')';
           ret.quote = "'";
         } else {
-          ret = val;
           str += "h'";
           str += u8toHex(val as Uint8Array);
           str += "'";
@@ -83,16 +85,13 @@ export function diagnose(
         break;
       case MT.UTF8_STRING:
         if (val === Infinity) {
-          ret = new Parent(mt, ai, val, parent);
           str += '(_ ';
           ret.close = ')';
         } else {
-          ret = val;
-          str += JSON.stringify(val);
+          str += JSON.stringify(val); // Surrounds w/quotes and escapes
         }
         break;
       case MT.ARRAY:
-        ret = new Parent(mt, ai, val as number, parent);
         str += '[';
         ret.close = ']';
         if (val === Infinity) {
@@ -100,7 +99,6 @@ export function diagnose(
         }
         break;
       case MT.MAP:
-        ret = new Parent(mt, ai, (val as number) * 2, parent);
         str += '{';
         ret.close = '}';
         if (val === Infinity) {
@@ -108,37 +106,36 @@ export function diagnose(
         }
         break;
       case MT.TAG:
-        ret = new Parent(mt, ai, 1, parent);
-        str += val;
+        str += sized(ai, val as number);
         str += '(';
         ret.close = ')';
         break;
     }
-    if (parent) {
-      if (ret === SYMS.BREAK) {
-        if (parent.left === Infinity) {
-          parent.left = 0;
-        } else {
-          throw new Error('Unexpected BREAK');
-        }
+    if (ret === SYMS.BREAK) {
+      if (parent?.isStreaming) {
+        parent.left = 0;
       } else {
-        parent.count++;
-        parent.left--;
+        throw new Error('Unexpected BREAK');
       }
+    } else if (parent) {
+      parent.count++;
+      parent.left--;
     }
-    if (ret instanceof Parent) {
+
+    if (ret instanceof DiagContainer) {
       parent = ret;
     }
-    while (parent?.left === 0) {
-      if ((parent.mt === MT.UTF8_STRING || parent.mt === MT.BYTE_STRING) &&
-          (parent.count === 0)) {
+    while (parent?.done) {
+      if (parent.emptyStream) {
         str = str.slice(0, -3);
         str += `_${parent.quote}${parent.quote}`;
+      } else if ((parent.mt === MT.MAP) && ((parent.count % 2) !== 0)) {
+        throw new Error(`Odd streaming map size: ${parent.count}`);
       } else {
         str += parent.close;
       }
 
-      ({parent} = parent);
+      parent = parent.parent as DiagContainer | undefined;
     }
   }
 

@@ -277,6 +277,9 @@ export class DecodeStream {
       const [nmt, ai, val] = first.value as MtAiValue;
       if (val === SYMS.BREAK) {
         yield first.value as MtAiValue;
+        // Assert: this will return done.  It just cleans up the generator
+        // and causes the return statement after the yield of BREAK to run.
+        child.next();
         return;
       }
       if (check) {

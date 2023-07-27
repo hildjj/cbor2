@@ -26,26 +26,31 @@ export function decode<T = unknown>(
   // eslint-disable-next-line prefer-const
   for (let [mt, ai, val] of stream) {
     ret = CBORcontainer.create(mt, ai, val, parent);
-    if (parent) {
-      if (ret === SYMS.BREAK) {
-        if (parent.isStreaming) {
-          parent.left = 0;
-        } else {
-          throw new Error('Unexpected BREAK');
-        }
+
+    if (val === SYMS.BREAK) {
+      if (parent?.isStreaming) {
+        parent.left = 0;
       } else {
-        parent.push(ret);
+        throw new Error('Unexpected BREAK');
       }
+    } else if (parent) {
+      parent.push(ret);
     }
+
     if (ret instanceof CBORcontainer) {
       parent = ret;
     }
-    while (parent?.left === 0) {
+
+    // Convert all finished parents in the chain to the correct type, replacing
+    // in *their* parents as necessary.
+    while (parent?.done) {
       ret = parent?.convert();
 
       const p = parent?.parent;
-      p?.pop();
-      p?.push(ret);
+      if (p) {
+        p.pop();
+        p.push(ret);
+      }
       parent = p;
     }
   }

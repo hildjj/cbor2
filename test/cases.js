@@ -196,7 +196,7 @@ export const good = [
       514b67b0      -- 1363896240
 0xc11a514b67b0`],
 
-  [new URL('http://www.example.com'), '32("http://www.example.com/")', `
+  [new URL('http://www.example.com'), '32_0("http://www.example.com/")', `
   d8                --  next 1 byte
     20              -- Tag #32
       77            -- String, length: 23
@@ -486,7 +486,7 @@ export const good = [
   f8                -- Simple value, next 1 byte
     ff              -- simple(255)
 0xf8ff`],
-  [/a/, '279(["a", ""])', `
+  [/a/, '279_1(["a", ""])', `
   d9                --  next 2 bytes
     0117            -- Tag #279
       82            -- Array, 2 items
@@ -494,7 +494,7 @@ export const good = [
           61        -- [0], "a"
         60          -- String, length: 0
 0xd9011782616160`],
-  [/a/gu, '279(["a", "gu"])', '0xd90117826161626775'],
+  [/a/gu, '279_1(["a", "gu"])', '0xd90117826161626775'],
   [new Map([[1, 2]]), '{1: 2}', `
   a1                -- Map, 1 pair
     01              -- {Key:0}, 1
@@ -597,7 +597,7 @@ export const good = [
       5f5f70726f746f5f5f -- {Key:0}, "__proto__"
     00              -- {Val:0}, 0
 0xa1695f5f70726f746f5f5f00`],
-  [new Tag(256, 1), '256(1)', `
+  [new Tag(256, 1), '256_1(1)', `
   d9                --  next 2 bytes
     0100            -- Tag #256
       01            -- 1
@@ -606,13 +606,13 @@ export const good = [
   43            -- Bytes, length: 3
     010203      -- 010203
 0x43010203`],
-  [new Uint8ClampedArray([1, 2, 3]), '68(h\'010203\')', `
+  [new Uint8ClampedArray([1, 2, 3]), '68_0(h\'010203\')', `
   d8                --  next 1 byte
     44              -- Tag #68
       43            -- Bytes, length: 3
         010203      -- 010203
 0xd84443010203`],
-  [new Set([1, 2]), '258([1, 2])', `
+  [new Set([1, 2]), '258_1([1, 2])', `
 d9                --  next 2 bytes
   0102            -- Tag #258
     82            -- Array, 2 items
@@ -620,7 +620,7 @@ d9                --  next 2 bytes
       02          -- [1], 2
 0xd90102820102`],
   [new Int8Array([-1, 0, 1, -128, 127]),
-    '72(h\'ff0001807f\')',
+    '72_0(h\'ff0001807f\')',
     '0xd84845ff0001807f'],
 ];
 
@@ -667,7 +667,7 @@ export const decodeGood = [
     44              -- Bytes, length: 4
       01020304      -- 01020304
 0xd74401020304`],
-  [new Tag(24, hexToU8('6449455446')).decode(), '24(h\'6449455446\')', `
+  [new Tag(24, hexToU8('6449455446')).decode(), '24_0(h\'6449455446\')', `
   d8                --  next 1 byte
     18              -- Tag #24 Encoded CBOR data item
       45            -- Bytes, length: 5
@@ -749,6 +749,10 @@ export const decodeGood = [
     fb              -- Float, next 8 bytes
       41d452d9ec200000 -- 1363896240.5
 0xc1fb41d452d9ec200000`],
+  [hexToU8(''), "_''", '0x5fff'],
+  [hexToU8(''), "(_ h'')", '0x5f40ff'],
+  ['', '_""', '0x7fff'],
+  ['', '(_ "")', '0x7f60ff'],
   [hexToU8('0102030405'), '(_ h\'0102\', h\'030405\')', `
   5f                -- Bytes (streaming)
     42              -- Bytes, length: 2
@@ -869,7 +873,7 @@ export const decodeGood = [
         63          -- {Val:0}, "c"
       ff            -- BREAK
 0x826161bf61626163ff`],
-  [new Uint8Array([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99]), '64((_ h\'aabbccdd\', h\'eeff99\'))', `
+  [new Uint8Array([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99]), '64_0((_ h\'aabbccdd\', h\'eeff99\'))', `
   d8                --  next 1 byte
     40              -- Tag #64
       5f            -- Bytes (streaming)
@@ -879,7 +883,7 @@ export const decodeGood = [
           eeff99    -- eeff99
         ff          -- BREAK
 0xd8405f44aabbccdd43eeff99ff`],
-  [/a/, '35("a")', `
+  [/a/, '35_0("a")', `
 d8                --  next 1 byte
   23              -- Tag #35
     61            -- String, length: 1
@@ -943,6 +947,11 @@ export const decodeBad = [
   '0xfd', // Reserved AI
   '0xfe', // Reserved AI
   '0x62c0ae', // Invalid utf8
+  '0xff', // Unexpected BREAK
+  '0x81ff', // Unexpected BREAK
+];
+
+export const decodeBadTags = [
   '0xd9011783616162677500', // RegExp array too long
   '0xd9011780', // RegExp array too short
   '0xd90117820000', // RegExp invalid flags

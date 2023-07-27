@@ -98,7 +98,7 @@ test('vectors', () => {
 
     if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
       const d = diagnose(buffer);
-      assert.deepEqual(d.replace(/_\d+(?<end>$|\))/, '$<end>'), v.diagnostic);
+      assert.deepEqual(d.replace(/_\d+/g, ''), v.diagnostic);
     }
 
     if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {

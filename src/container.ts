@@ -50,11 +50,13 @@ export class CBORcontainer {
     return this.left === 0;
   }
 
+  // eslint-disable-next-line max-params
   public static create(
     mt: number,
     ai: number,
     value: unknown,
-    parent: CBORcontainer | undefined
+    parent: CBORcontainer | undefined,
+    ParentType: typeof CBORcontainer = CBORcontainer
   ): unknown {
     switch (mt) {
       case MT.POS_INT:
@@ -64,15 +66,15 @@ export class CBORcontainer {
       case MT.BYTE_STRING:
       case MT.UTF8_STRING:
         if (value === Infinity) {
-          return new CBORcontainer(mt, ai, Infinity, parent);
+          return new ParentType(mt, ai, Infinity, parent);
         }
         return value;
       case MT.ARRAY:
-        return new CBORcontainer(mt, ai, value as number, parent);
+        return new ParentType(mt, ai, value as number, parent);
       case MT.MAP:
-        return new CBORcontainer(mt, ai, (value as number) * 2, parent);
+        return new ParentType(mt, ai, (value as number) * 2, parent);
       case MT.TAG: {
-        const ret = new CBORcontainer(mt, ai, 1, parent);
+        const ret = new ParentType(mt, ai, 1, parent);
         ret.children = new Tag(value as number);
         return ret;
       }

@@ -16,8 +16,8 @@ function testAll(list) {
 
 function failAll(list) {
   let count = 0;
-  for (const [_orig, _diag, commented] of list) {
-    assert.throws(() => diagnose(toBuffer(commented)));
+  for (const hex of list) {
+    assert.throws(() => diagnose(toBuffer(hex)), hex);
     count++;
   }
   assert.equal(count, list.length);
@@ -27,10 +27,14 @@ test('good diagnose', () => {
   testAll(good);
 });
 
-test('decode', () => {
+test('diagnose decodeGood ', () => {
   testAll(decodeGood);
 });
 
-test('edges', () => {
+test('diagnose decodeBad', () => {
   failAll(decodeBad);
+});
+
+test('diagnose encodings', () => {
+  assert.equal(diagnose('AA==', {encoding: 'base64'}), '0');
 });
