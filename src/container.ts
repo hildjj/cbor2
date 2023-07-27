@@ -85,6 +85,11 @@ export class CBORcontainer {
     return --this.left;
   }
 
+  public pop(): unknown {
+    this.left++;
+    return this.children.pop();
+  }
+
   public convert(): unknown {
     switch (this.mt) {
       case MT.ARRAY:
