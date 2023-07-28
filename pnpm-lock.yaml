@@ -7,7 +7,7 @@ settings:
 devDependencies:
   '@cto.af/eslint-config':
     specifier: 3.0.1
-    version: 3.0.1(@typescript-eslint/eslint-plugin@6.2.0)(@typescript-eslint/parser@6.2.0)(eslint-plugin-jsdoc@46.4.4)(eslint-plugin-n@16.0.1)(typescript@5.1.6)
+    version: 3.0.1(@typescript-eslint/eslint-plugin@6.2.0)(@typescript-eslint/parser@6.2.0)(eslint-plugin-jsdoc@46.4.5)(eslint-plugin-n@16.0.1)(typescript@5.1.6)
   '@typescript-eslint/eslint-plugin':
     specifier: 6.2.0
     version: 6.2.0(@typescript-eslint/parser@6.2.0)(eslint@8.45.0)(typescript@5.1.6)
@@ -21,8 +21,8 @@ devDependencies:
     specifier: 8.45.0
     version: 8.45.0
   eslint-plugin-jsdoc:
-    specifier: 46.4.4
-    version: 46.4.4(eslint@8.45.0)
+    specifier: 46.4.5
+    version: 46.4.5(eslint@8.45.0)
   eslint-plugin-markdown:
     specifier: 3.0.0
     version: 3.0.0(eslint@8.45.0)
@@ -47,7 +47,7 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@cto.af/eslint-config@3.0.1(@typescript-eslint/eslint-plugin@6.2.0)(@typescript-eslint/parser@6.2.0)(eslint-plugin-jsdoc@46.4.4)(eslint-plugin-n@16.0.1)(typescript@5.1.6):
+  /@cto.af/eslint-config@3.0.1(@typescript-eslint/eslint-plugin@6.2.0)(@typescript-eslint/parser@6.2.0)(eslint-plugin-jsdoc@46.4.5)(eslint-plugin-n@16.0.1)(typescript@5.1.6):
     resolution: {integrity: sha512-74A5oEP/ug7BKYJP4xuAIMSdGVdfoc4TpxQzIi5dMbVm+RRfyZ4Y04FS/DGqadLLjE71HiPX96nDP/bqs4oU3A==}
     engines: {node: '>=16'}
     peerDependencies:
@@ -71,7 +71,7 @@ packages:
     dependencies:
       '@typescript-eslint/eslint-plugin': 6.2.0(@typescript-eslint/parser@6.2.0)(eslint@8.45.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.2.0(eslint@8.45.0)(typescript@5.1.6)
-      eslint-plugin-jsdoc: 46.4.4(eslint@8.45.0)
+      eslint-plugin-jsdoc: 46.4.5(eslint@8.45.0)
       eslint-plugin-n: 16.0.1(eslint@8.45.0)
       typescript: 5.1.6
     dev: true
@@ -902,8 +902,8 @@ packages:
       eslint: 8.45.0
     dev: true
 
-  /eslint-plugin-jsdoc@46.4.4(eslint@8.45.0):
-    resolution: {integrity: sha512-D8TGPOkq3bnzmYmA7Q6jdsW+Slx7CunhJk1tlouVq6wJjlP1p6eigZPvxFn7aufud/D66xBsNVMhkDQEuqumMg==}
+  /eslint-plugin-jsdoc@46.4.5(eslint@8.45.0):
+    resolution: {integrity: sha512-HjTuxqDYplAQFu29F3MHFCDDBgeqOxPXI6TyBhL0u2rr4XntJ0z3C9PmJvpjFscKdHwkZDN/0l1QCG0QwyRi4g==}
     engines: {node: '>=16'}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0
