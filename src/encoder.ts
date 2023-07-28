@@ -19,6 +19,74 @@ const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
 
+export type KeySorter = (kv: [unknown, unknown][]) => void;
+
+/**
+ * Sort according to RFC 8949, section 4.2.1.
+ *
+ * {@see https://www.rfc-editor.org/rfc/rfc8949.html#name-core-deterministic-encoding}.
+ *
+ * @param kv Object entries, an array of arrays each of which has a key, value
+ *   pair.
+ */
+export function sortCoreDeterministic(kv: [unknown, unknown][]): void {
+  const cache = new Map<unknown, Uint8Array>();
+  function enc(u: unknown): Uint8Array {
+    let u8 = cache.get(u);
+    if (!u8) {
+      u8 = encode(u);
+      cache.set(u, u8);
+    }
+    return u8;
+  }
+  kv.sort(([a], [b]) => {
+    const [a8, b8] = [enc(a), enc(b)];
+    const len = Math.min(a8.length, b8.length);
+    for (let i = 0; i < len; i++) {
+      const diff = a8[i] - b8[i];
+      if (diff !== 0) {
+        return diff;
+      }
+    }
+    return 0;
+  });
+}
+
+/**
+ * Sort according to RFC 8949, section 4.2.3.
+ *
+ * {@see https://www.rfc-editor.org/rfc/rfc8949.html#name-length-first-map-key-orderi}.
+ *
+ * @param kv Object entries, an array of arrays each of which has a key, value
+ *   pair.
+ */
+export function sortLengthFirstDeterministic(kv: [unknown, unknown][]): void {
+  const cache = new Map<unknown, Uint8Array>();
+  function enc(u: unknown): Uint8Array {
+    let u8 = cache.get(u);
+    if (!u8) {
+      u8 = encode(u);
+      cache.set(u, u8);
+    }
+    return u8;
+  }
+  kv.sort(([a], [b]) => {
+    const [a8, b8] = [enc(a), enc(b)];
+    const diffLen = a8.length - b8.length;
+    if (diffLen !== 0) {
+      return diffLen;
+    }
+    const len = Math.min(a8.length, b8.length);
+    for (let i = 0; i < len; i++) {
+      const diff = a8[i] - b8[i];
+      if (diff !== 0) {
+        return diff;
+      }
+    }
+    return 0;
+  });
+}
+
 export interface EncodeOptions extends WriterOptions {
   /**
    * How to write TypedArrays?
@@ -35,6 +103,12 @@ export interface EncodeOptions extends WriterOptions {
    * @default true
    */
   collapseBigInts?: boolean;
+
+  /**
+   * How should the key/value pairs be sorted before an object or Map
+   * gets created?
+   */
+  sortKeys?: KeySorter;
 }
 
 export type RequiredEncodeOptions = Required<EncodeOptions>;
@@ -43,6 +117,7 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   ...WriterOptionsDefault,
   forceEndian: null,
   collapseBigInts: true,
+  sortKeys: sortCoreDeterministic,
 };
 
 export type AbstractClassType = abstract new (...args: any) => any;
@@ -330,6 +405,7 @@ function writeObject(
   }
 
   const entries = Object.entries(obj);
+  opts.sortKeys(entries);
   writeInt(entries.length, w, MT.MAP);
 
   for (const [k, v] of entries) {

@@ -622,6 +622,7 @@ d9                --  next 2 bytes
   [new Int8Array([-1, 0, 1, -128, 127]),
     '72_0(h\'ff0001807f\')',
     '0xd84845ff0001807f'],
+  [new Map([[[], []], [[], []]]), '{[]: [], []: []}', '0xa280808080'],
 ];
 
 export const goodEndian = [

@@ -3,7 +3,9 @@ import {MT, SYMS} from '../lib/constants.js';
 import {
   TempClass, collapseBigIntegers, encodeGood, good, goodEndian, toString,
 } from './cases.js';
-import {clearEncoder, encode, registerEncoder, writeInt} from '../lib/encoder.js';
+import {
+  clearEncoder, encode, registerEncoder, sortLengthFirstDeterministic, writeInt,
+} from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
@@ -80,4 +82,33 @@ test('encoder edges', () => {
   assert.throws(() => encode(new ArrayBuffer(8)));
   assert.throws(() => encode(new SharedArrayBuffer(8)));
   assert.throws(() => encode(new DataView(new ArrayBuffer(8))));
+});
+
+test('deterministic sorting', () => {
+  let k = 0;
+  const m = new Map([
+    [10, k++],
+    [100, k++],
+    [-1, k++],
+    ['z', k++],
+    ['aa', k++],
+    [[100], k++],
+    [[-1], k++],
+    [false, k++],
+  ]);
+  assert.equal(
+    u8toHex(encode(m)),
+    'a80a001864012002617a036261610481186405812006f407'
+  );
+  assert.equal(
+    u8toHex(encode(m, {sortKeys: sortLengthFirstDeterministic})),
+    'a80a002002f407186401617a038120066261610481186405'
+  );
+  assert.equal(
+    u8toHex(encode(
+      new Map([[[], 0], [[], 1]]),
+      {sortKeys: sortLengthFirstDeterministic}
+    )),
+    'a280008001'
+  );
 });
