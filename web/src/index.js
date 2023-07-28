@@ -37,6 +37,9 @@ function input() {
       return hexToU8(txt);
     case 'base64':
       return base64ToBytes(txt);
+    case 'js':
+      // eslint-disable-next-line no-eval
+      return encode(eval(txt));
     default:
       throw new Error(`Unknown input: "${inp}"`);
   }

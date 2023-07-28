@@ -53,8 +53,10 @@ function assertArray(contents: any): asserts contents is any[] {
 
 registerEncoder(Map, (obj: unknown, w: Writer, opts: RequiredEncodeOptions) => {
   const m = obj as Map<unknown, unknown>;
+  const kv = [...m.entries()];
+  opts.sortKeys(kv);
   writeInt(m.size, w, MT.MAP);
-  for (const [k, v] of m) {
+  for (const [k, v] of kv) {
     writeUnknown(k, w, opts);
     writeUnknown(v, w, opts);
   }
