@@ -23,7 +23,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">EncodeOptions</span></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/80f87aa/src/encoder.ts#L22">encoder.ts:22</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/encoder.ts#L90">encoder.ts:90</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -34,6 +34,7 @@
 <div class="tsd-index-list"><a href="encoder.EncodeOptions.html#chunkSize" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-1024"><rect fill="var(--color-icon-background)" stroke="#FF984D" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12"></rect><path d="M9.354 16V7.24H12.174C12.99 7.24 13.638 7.476 14.118 7.948C14.606 8.412 14.85 9.036 14.85 9.82C14.85 10.604 14.606 11.232 14.118 11.704C13.638 12.168 12.99 12.4 12.174 12.4H10.434V16H9.354ZM10.434 11.428H12.174C12.646 11.428 13.022 11.284 13.302 10.996C13.59 10.7 13.734 10.308 13.734 9.82C13.734 9.324 13.59 8.932 13.302 8.644C13.022 8.356 12.646 8.212 12.174 8.212H10.434V11.428Z" fill="var(--color-text)"></path></g></svg><span>chunk<wbr/>Size?</span></a>
 <a href="encoder.EncodeOptions.html#collapseBigInts" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>collapse<wbr/>Big<wbr/>Ints?</span></a>
 <a href="encoder.EncodeOptions.html#forceEndian" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>force<wbr/>Endian?</span></a>
+<a href="encoder.EncodeOptions.html#sortKeys" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>sort<wbr/>Keys?</span></a>
 </div></section></div></details></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
@@ -42,7 +43,7 @@
 <div class="tsd-signature"><span class="tsd-kind-property">chunk<wbr/>Size</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <p>Inherited from WriterOptions.chunkSize</p>
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/80f87aa/src/writer.ts#L2">writer.ts:2</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/writer.ts#L2">writer.ts:2</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="collapseBigInts" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>collapse<wbr/>Big<wbr/>Ints</span><a href="#collapseBigInts" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">collapse<wbr/>Big<wbr/>Ints</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
@@ -54,7 +55,7 @@ normal integers?</p>
 </code><button>Copy</button></pre>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/80f87aa/src/encoder.ts#L37">encoder.ts:37</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/encoder.ts#L105">encoder.ts:105</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="forceEndian" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>force<wbr/>Endian</span><a href="#forceEndian" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">force<wbr/>Endian</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span></div>
@@ -68,7 +69,16 @@ False to always use big-endian.</p>
 </code><button>Copy</button></pre>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/80f87aa/src/encoder.ts#L30">encoder.ts:30</a></li></ul></aside></section></section></div>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/encoder.ts#L98">encoder.ts:98</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member"><a id="sortKeys" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>sort<wbr/>Keys</span><a href="#sortKeys" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">sort<wbr/>Keys</span><span class="tsd-signature-symbol">?:</span> <a href="../types/encoder.KeySorter.html" class="tsd-signature-type tsd-kind-type-alias">KeySorter</a></div>
+<div class="tsd-comment tsd-typography"><p>How should the key/value pairs be sorted before an object or Map
+gets created?</p>
+</div>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/encoder.ts#L111">encoder.ts:111</a></li></ul></aside></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -90,7 +100,8 @@ False to always use big-endian.</p>
 <ul>
 <li><a href="#chunkSize" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>chunk<wbr/>Size</span></a></li>
 <li><a href="#collapseBigInts" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>collapse<wbr/>Big<wbr/>Ints</span></a></li>
-<li><a href="#forceEndian" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>force<wbr/>Endian</span></a></li></ul></div></details></div>
+<li><a href="#forceEndian" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>force<wbr/>Endian</span></a></li>
+<li><a href="#sortKeys" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>sort<wbr/>Keys</span></a></li></ul></div></details></div>
 <div class="site-menu">
 <nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/hildjj/cbor2/" target="_blank">GitHub</a><a href="http://hildjj.github.io/cbor2/" target="_blank">Documentation</a><a href="playground/index.html" target="_blank">Playground</a><a href="http://cbor.io/" target="_blank">Spec</a></nav>
 <nav class="tsd-navigation"><a href="../index.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)"></path></g></svg><span>cbor2</span></a>
@@ -106,6 +117,7 @@ False to always use big-endian.</p>
 <li><a href="../types/encoder.DoneEncoding.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Done<wbr/>Encoding</span></a></li>
 <li><a href="encoder.EncodeOptions.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-256"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-interface)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.51 16V15.016H11.298V8.224H9.51V7.24H14.19V8.224H12.402V15.016H14.19V16H9.51Z" fill="var(--color-text)"></path></g></svg><span>Encode<wbr/>Options</span></a></li>
 <li><a href="../variables/encoder.EncodeOptionsDefault.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-32"></use></svg><span>Encode<wbr/>Options<wbr/>Default</span></a></li>
+<li><a href="../types/encoder.KeySorter.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Key<wbr/>Sorter</span></a></li>
 <li><a href="../types/encoder.RequiredEncodeOptions.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Required<wbr/>Encode<wbr/>Options</span></a></li>
 <li><a href="encoder.ToCBOR.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>ToCBOR</span></a></li>
 <li><a href="encoder.ToJSON.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>ToJSON</span></a></li>
@@ -113,6 +125,8 @@ False to always use big-endian.</p>
 <li><a href="../functions/encoder.clearEncoder.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-64"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)"></path></g></svg><span>clear<wbr/>Encoder</span></a></li>
 <li><a href="../functions/encoder.encode.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>encode</span></a></li>
 <li><a href="../functions/encoder.registerEncoder.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>register<wbr/>Encoder</span></a></li>
+<li><a href="../functions/encoder.sortCoreDeterministic.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>sort<wbr/>Core<wbr/>Deterministic</span></a></li>
+<li><a href="../functions/encoder.sortLengthFirstDeterministic.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>sort<wbr/>Length<wbr/>First<wbr/>Deterministic</span></a></li>
 <li><a href="../functions/encoder.writeArray.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>write<wbr/>Array</span></a></li>
 <li><a href="../functions/encoder.writeFloat.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>write<wbr/>Float</span></a></li>
 <li><a href="../functions/encoder.writeInt.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>write<wbr/>Int</span></a></li>

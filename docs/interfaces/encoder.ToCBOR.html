@@ -21,7 +21,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">ToCBOR</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/80f87aa/src/encoder.ts#L93">encoder.ts:93</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/encoder.ts#L168">encoder.ts:168</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -58,7 +58,7 @@ any further serialization to take place.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type ">DONE</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">]</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/80f87aa/src/encoder.ts#L102">encoder.ts:102</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/encoder.ts#L177">encoder.ts:177</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -94,6 +94,7 @@ any further serialization to take place.</p>
 <li><a href="../types/encoder.DoneEncoding.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Done<wbr/>Encoding</span></a></li>
 <li><a href="encoder.EncodeOptions.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-256"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-interface)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.51 16V15.016H11.298V8.224H9.51V7.24H14.19V8.224H12.402V15.016H14.19V16H9.51Z" fill="var(--color-text)"></path></g></svg><span>Encode<wbr/>Options</span></a></li>
 <li><a href="../variables/encoder.EncodeOptionsDefault.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-32"></use></svg><span>Encode<wbr/>Options<wbr/>Default</span></a></li>
+<li><a href="../types/encoder.KeySorter.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Key<wbr/>Sorter</span></a></li>
 <li><a href="../types/encoder.RequiredEncodeOptions.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Required<wbr/>Encode<wbr/>Options</span></a></li>
 <li><a href="encoder.ToCBOR.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>ToCBOR</span></a></li>
 <li><a href="encoder.ToJSON.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>ToJSON</span></a></li>
@@ -101,6 +102,8 @@ any further serialization to take place.</p>
 <li><a href="../functions/encoder.clearEncoder.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-64"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)"></path></g></svg><span>clear<wbr/>Encoder</span></a></li>
 <li><a href="../functions/encoder.encode.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>encode</span></a></li>
 <li><a href="../functions/encoder.registerEncoder.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>register<wbr/>Encoder</span></a></li>
+<li><a href="../functions/encoder.sortCoreDeterministic.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>sort<wbr/>Core<wbr/>Deterministic</span></a></li>
+<li><a href="../functions/encoder.sortLengthFirstDeterministic.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>sort<wbr/>Length<wbr/>First<wbr/>Deterministic</span></a></li>
 <li><a href="../functions/encoder.writeArray.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>write<wbr/>Array</span></a></li>
 <li><a href="../functions/encoder.writeFloat.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>write<wbr/>Float</span></a></li>
 <li><a href="../functions/encoder.writeInt.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>write<wbr/>Int</span></a></li>
