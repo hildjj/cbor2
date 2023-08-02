@@ -1,7 +1,14 @@
 import '../lib/types.js';
 import {MT, SYMS} from '../lib/constants.js';
 import {
-  TempClass, collapseBigIntegers, encodeGood, good, goodEndian, toString,
+  TempClass,
+  badBoxed,
+  collapseBigIntegers,
+  encodeGood,
+  good,
+  goodBoxed,
+  goodEndian,
+  toString,
 } from './cases.js';
 import {
   clearEncoder, encode, registerEncoder, sortLengthFirstDeterministic, writeInt,
@@ -24,9 +31,20 @@ function testAll(list, opts = undefined) {
   assert.equal(len, list.length);
 }
 
+function failAll(list) {
+  for (const c of list) {
+    assert.throws(() => encode(c), String(c));
+  }
+}
+
 test('good encode', () => {
   testAll(good);
   testAll(encodeGood);
+  testAll(goodBoxed, {boxed: true});
+});
+
+test('bad encode', () => {
+  failAll(badBoxed);
 });
 
 test('collapseBigIntegers', () => {

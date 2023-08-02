@@ -23,6 +23,7 @@ function failAll(list) {
 
 test('good', () => {
   testAll(cases.good);
+  testAll(cases.goodBoxed, {boxed: true});
 });
 
 test('decode good', () => {

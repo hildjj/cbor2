@@ -1,5 +1,5 @@
 import '../lib/types.js';
-import {decodeBad, decodeGood, good, toBuffer} from './cases.js';
+import {decodeBad, decodeGood, good, goodBoxed, toBuffer} from './cases.js';
 import assert from 'node:assert/strict';
 import {diagnose} from '../lib/diagnostic.js';
 import test from 'node:test';
@@ -25,6 +25,7 @@ function failAll(list) {
 
 test('good diagnose', () => {
   testAll(good);
+  testAll(goodBoxed, {boxed: true});
 });
 
 test('diagnose decodeGood ', () => {

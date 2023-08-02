@@ -10,7 +10,15 @@
  */
 
 import './types.js';
-export {DecodeStream} from './decodeStream.js';
+export {CBORnumber} from './number.js';
+export {
+  DecodeStream,
+  type DecodeStreamOptions,
+  type DecodeValue,
+  type MtAiValue,
+  type ValueGenerator,
+} from './decodeStream.js';
 export {decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
 export {encode} from './encoder.js';
+export type {Writer, WriterOptions} from './writer.js';

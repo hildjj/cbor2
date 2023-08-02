@@ -1,3 +1,5 @@
+import {DecodeStream, type DecodeStreamOptions, type MtAiValue} from './decodeStream.js';
+import {CBORnumber} from './number.js';
 import {MT} from './constants.js';
 import {Tag} from './tag.js';
 import {u8concat} from './utils.js';
@@ -15,6 +17,11 @@ function *pairs(
   }
 }
 
+export interface ContainerOptions extends DecodeStreamOptions {
+  ParentType?: typeof CBORcontainer;
+  boxed?: boolean;
+}
+
 /**
  * A CBOR data item that can contain other items.  One of:
  *
@@ -26,6 +33,12 @@ function *pairs(
  * This is used in various decoding applications to keep track of state.
  */
 export class CBORcontainer {
+  public static defaultOptions: Required<ContainerOptions> = {
+    ...DecodeStream.defaultOptions,
+    ParentType: CBORcontainer,
+    boxed: false,
+  };
+
   public parent: CBORcontainer | undefined;
   public mt: number;
   public ai: number;
@@ -56,40 +69,39 @@ export class CBORcontainer {
    * Factory method that returns the given ParentType if the mt/ai dictate
    * that is necessary, otherwise returns the given value.
    *
-   * @param mt Major Type.
-   * @param ai Additional Information.
-   * @param value Associated value from token.
+   * @param mav Major Type, Additional Information, and Associated value from
+   *   token.
    * @param parent If this item is inside another item, the direct parent.
-   * @param ParentType Constructor to call, if needed.  Defaults to
-   *   CBORcontainer.
+   * @param opts Options controlling creation.
    * @returns ParentType instance or value.
    * @throws Invalid major type, which should only occur from tests.
    */
-  // eslint-disable-next-line max-params
   public static create(
-    mt: number,
-    ai: number,
-    value: unknown,
+    mav: MtAiValue,
     parent: CBORcontainer | undefined,
-    ParentType: typeof CBORcontainer = CBORcontainer
+    opts: Required<ContainerOptions>
   ): unknown {
+    const [mt, ai, value] = mav;
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
       case MT.SIMPLE_FLOAT:
+        if (opts.boxed && (typeof value === 'number')) {
+          return new CBORnumber(value, mt, ai);
+        }
         return value;
       case MT.BYTE_STRING:
       case MT.UTF8_STRING:
         if (value === Infinity) {
-          return new ParentType(mt, ai, Infinity, parent);
+          return new opts.ParentType(mt, ai, Infinity, parent);
         }
         return value;
       case MT.ARRAY:
-        return new ParentType(mt, ai, value as number, parent);
+        return new opts.ParentType(mt, ai, value as number, parent);
       case MT.MAP:
-        return new ParentType(mt, ai, (value as number) * 2, parent);
+        return new opts.ParentType(mt, ai, (value as number) * 2, parent);
       case MT.TAG: {
-        const ret = new ParentType(mt, ai, 1, parent);
+        const ret = new opts.ParentType(mt, ai, 1, parent);
         ret.children = new Tag(value as number);
         return ret;
       }

@@ -13,7 +13,7 @@ const TD = new TextDecoder('utf8', {fatal: true, ignoreBOM: true});
 /**
  * Options for decoding.
  */
-export interface DecodeOptions {
+export interface DecodeStreamOptions {
   /**
    * Maximum allowed depth to parse into CBOR structures.  This limit is
    * security-relevant for untrusted inputs.  May be set to Infinity for
@@ -53,21 +53,19 @@ export type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
  * the input.
  */
 export class DecodeStream {
+  public static defaultOptions: Required<DecodeStreamOptions> = {
+    maxDepth: 1024,
+    encoding: 'hex',
+  };
+
   #src;
   #view;
   #offset = 0;
-  #opts: Required<DecodeOptions>;
+  #opts: Required<DecodeStreamOptions>;
 
-  public constructor(src: Uint8Array, opts?: DecodeOptions);
-  public constructor(
-    src: string,
-    opts: Omit<DecodeOptions, 'encoding'> & Required<Pick<DecodeOptions, 'encoding'>>
-  );
-
-  public constructor(src: Uint8Array | string, opts?: DecodeOptions) {
+  public constructor(src: Uint8Array | string, opts?: DecodeStreamOptions) {
     this.#opts = {
-      maxDepth: 1024,
-      encoding: null,
+      ...DecodeStream.defaultOptions,
       ...opts,
     };
 

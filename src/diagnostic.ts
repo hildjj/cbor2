@@ -10,13 +10,10 @@
  * ```
  */
 
-import {CBORcontainer} from './container.js';
-// eslint-disable-next-line sort-imports -- eslint bug
-import {type DecodeOptions, DecodeStream} from './decodeStream.js';
+import {CBORcontainer, type ContainerOptions} from './container.js';
 import {MT, SYMS} from './constants.js';
+import {DecodeStream} from './decodeStream.js';
 import {u8toHex} from './utils.js';
-
-const NOT_FOUND = Symbol('NOT_FOUND');
 
 /**
  * Doesn't actually "contain" the child elements; there is no reason to hold
@@ -61,24 +58,27 @@ function sized(ai: number, value: number): string {
  * Decode CBOR bytes a diagnostic string.
  *
  * @param src CBOR bytes to decode.
- * @param opts Options for decoding.
+ * @param options Options for decoding.
  * @returns JS value decoded from cbor.
  * @throws {Error} No value found, decoding errors.
  */
 export function diagnose(
   src: Uint8Array | string,
-  opts?: DecodeOptions
+  options?: ContainerOptions
 ): string {
-  const stream = (typeof src === 'string') ?
-    new DecodeStream(src, {encoding: 'hex', ...opts}) :
-    new DecodeStream(src, opts);
+  const opts: Required<ContainerOptions> = {
+    ...CBORcontainer.defaultOptions,
+    ...options,
+    ParentType: DiagContainer,
+  };
 
+  const stream = new DecodeStream(src, opts);
   let parent: DiagContainer | undefined = undefined;
-  let ret: any = NOT_FOUND;
+  let ret: any = SYMS.NOT_FOUND;
   let str = '';
 
-  // eslint-disable-next-line prefer-const
-  for (let [mt, ai, val] of stream) {
+  for (const mav of stream) {
+    const [mt, ai, val] = mav;
     if (parent && (parent.count > 0) && (val !== SYMS.BREAK)) {
       if ((parent.mt === MT.MAP) && (parent.count % 2)) {
         str += ': ';
@@ -86,7 +86,7 @@ export function diagnose(
         str += ', ';
       }
     }
-    ret = CBORcontainer.create(mt, ai, val, parent, DiagContainer);
+    ret = CBORcontainer.create(mav, parent, opts);
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:

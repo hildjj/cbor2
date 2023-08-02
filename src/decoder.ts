@@ -1,33 +1,33 @@
-import {CBORcontainer} from './container.js';
-// eslint-disable-next-line sort-imports -- eslint bug
-import {type DecodeOptions, DecodeStream} from './decodeStream.js';
+import {CBORcontainer, type ContainerOptions} from './container.js';
+import {DecodeStream} from './decodeStream.js';
 import {SYMS} from './constants.js';
-
-const NOT_FOUND = Symbol('NOT_FOUND');
 
 /**
  * Decode CBOR bytes to a JS value.
  *
  * @param src CBOR bytes to decode.
- * @param opts Options for decoding.
+ * @param options Options for decoding.
  * @returns JS value decoded from cbor.
  * @throws {Error} No value found, decoding errors.
  */
 export function decode<T = unknown>(
   src: Uint8Array | string,
-  opts?: DecodeOptions
+  options?: ContainerOptions
 ): T {
+  const opts: Required<ContainerOptions> = {
+    ...CBORcontainer.defaultOptions,
+    ...options,
+  };
   const stream = (typeof src === 'string') ?
-    new DecodeStream(src, {encoding: 'hex', ...opts}) :
+    new DecodeStream(src, opts) :
     new DecodeStream(src, opts);
   let parent: CBORcontainer | undefined = undefined;
-  let ret: unknown = NOT_FOUND;
+  let ret: unknown = SYMS.NOT_FOUND;
 
-  // eslint-disable-next-line prefer-const
-  for (let [mt, ai, val] of stream) {
-    ret = CBORcontainer.create(mt, ai, val, parent);
+  for (const mav of stream) {
+    ret = CBORcontainer.create(mav, parent, opts);
 
-    if (val === SYMS.BREAK) {
+    if (mav[2] === SYMS.BREAK) {
       if (parent?.isStreaming) {
         parent.left = 0;
       } else {

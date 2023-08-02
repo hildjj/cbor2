@@ -1,3 +1,5 @@
+import {MT, NUMBYTES} from '../lib/constants.js';
+import {CBORnumber} from '../lib/number.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
 import {hexToU8} from '../lib/utils.js';
@@ -652,6 +654,41 @@ export const goodEndian = [
   [new Float64Array([1.1, 1.2, 1.3]),
     '0xd85658189a9999999999f13f333333333333f33fcdccccccccccf43f',
     '0xd85258183ff199999999999a3ff33333333333333ff4cccccccccccd'],
+];
+
+export const goodBoxed = [
+  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.TWO),
+    '12_1',
+    '0xf94a00'],
+  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.FOUR),
+    '12_2',
+    '0xfa41400000'],
+  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.EIGHT),
+    '12_3',
+    '0xfb4028000000000000'],
+  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.ZERO),
+    '-12',
+    '0x2b'],
+  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.ONE),
+    '-12_0',
+    '0x380b'],
+  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.TWO),
+    '-12_1',
+    '0x39000b'],
+  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.FOUR),
+    '-12_2',
+    '0x3a0000000b'],
+  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.EIGHT),
+    '-12_3',
+    '0x3b000000000000000b'],
+];
+
+export const badBoxed = [
+  new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.ZERO),
+  new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.ONE),
+  new CBORnumber(1.1944212019443512e-7, MT.SIMPLE_FLOAT, NUMBYTES.TWO),
+  new CBORnumber(12, MT.POS_INT, 28),
+  new CBORnumber(12, MT.ARRAY, NUMBYTES.ZERO),
 ];
 
 export const decodeGood = [

@@ -22,9 +22,8 @@ const TE = new TextEncoder();
 export type KeySorter = (kv: [unknown, unknown][]) => void;
 
 /**
- * Sort according to RFC 8949, section 4.2.1.
- *
- * {@see https://www.rfc-editor.org/rfc/rfc8949.html#name-core-deterministic-encoding}.
+ * Sort according to RFC 8949, section 4.2.1
+ * (https://www.rfc-editor.org/rfc/rfc8949.html#name-core-deterministic-encoding).
  *
  * @param kv Object entries, an array of arrays each of which has a key, value
  *   pair.
@@ -53,9 +52,8 @@ export function sortCoreDeterministic(kv: [unknown, unknown][]): void {
 }
 
 /**
- * Sort according to RFC 8949, section 4.2.3.
- *
- * {@see https://www.rfc-editor.org/rfc/rfc8949.html#name-length-first-map-key-orderi}.
+ * Sort according to RFC 8949, section 4.2.3
+ * (https://www.rfc-editor.org/rfc/rfc8949.html#name-length-first-map-key-orderi).
  *
  * @param kv Object entries, an array of arrays each of which has a key, value
  *   pair.
