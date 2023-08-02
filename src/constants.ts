@@ -90,4 +90,10 @@ export class SYMS {
    * return value should be ignored.
    */
   public static readonly DONE = Symbol.for('github.com/hildjj/cbor2/done');
+
+  /**
+   * Nothing was found when decoding an item.  This should never be seen, since
+   * an exception should be thrown for short input first.
+   */
+  public static readonly NOT_FOUND = Symbol.for('github.com/hildjj/cbor2/notFound');
 }

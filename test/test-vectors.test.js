@@ -62,8 +62,7 @@ use command \`git submodule update --init\` to load test-vectors`);
 }
 const failures = JSON.parse(failStr);
 
-// TODO: Don't know how to make these round-trip.  See:
-// https://github.com/cbor/test-vectors/issues/3
+// Fixed with boxed decoding.
 const failRoundtrip = new Set([
   'f90000',
   'f93c00',
@@ -72,43 +71,47 @@ const failRoundtrip = new Set([
   'f9c400',
 ]);
 
+// Criss-cross.
+function applesauce(v, opts) {
+  const res = {};
+  res.buffer = hexToU8(v.hex);
+  assert.deepEqual(base64ToBytes(v.cbor), res.buffer, 'mismatch');
+
+  try {
+    res.decoded = decode(res.buffer, opts);
+    res.diagnosed = diagnose(res.buffer, opts);
+    res.encoded = encode(res.decoded, opts);
+    res.roundtrip = decode(res.encoded, opts);
+  } catch (e) {
+    e.message = `With "${v.hex}\n${e.message}"`;
+    throw e;
+  }
+  return res;
+}
+
 test('vectors', () => {
   assert(Array.isArray(vectors));
   for (const v of vectors) {
-    const buffer = hexToU8(v.hex);
+    const info = applesauce(v);
 
-    let decoded = null;
-    try {
-      decoded = decode(buffer);
-    } catch (e) {
-      console.log('DECODE ERROR', v.hex);
-      throw e;
+    assert.deepEqual(info.decoded, info.roundtrip, v.hex);
+
+    if ('diagnostic' in v) {
+      // Take off the _0 markings
+      const boring = info.diagnosed.replace(/_\d+/g, '');
+      assert.deepEqual(boring, v.diagnostic, v.hex);
     }
 
-    const encoded = encode(decoded);
-    const redecoded = decode(encoded);
-
-    assert.deepEqual(base64ToBytes(v.cbor), buffer, 'mismatch');
-
-    assert.deepEqual(
-      decoded,
-      redecoded,
-      `round trip error: ${v.hex} -> ${u8toHex(encoded)}`
-    );
-
-    if (Object.prototype.hasOwnProperty.call(v, 'diagnostic')) {
-      const d = diagnose(buffer);
-      assert.deepEqual(d.replace(/_\d+/g, ''), v.diagnostic);
-    }
-
-    if (Object.prototype.hasOwnProperty.call(v, 'decoded')) {
-      assert.deepEqual(decoded, v.decoded, `Hex: "${v.hex}"`);
+    if ('decoded' in v) {
+      assert.deepEqual(info.decoded, v.decoded, v.hex);
 
       if (v.roundtrip) {
         if (failRoundtrip.has(v.hex)) {
-          assert.notDeepEqual(encoded, buffer);
+          // Start over
+          const boxedInfo = applesauce(v, {boxed: true});
+          assert.deepEqual(u8toHex(boxedInfo.encoded), v.hex);
         } else {
-          assert.deepEqual(u8toHex(encoded), v.hex);
+          assert.deepEqual(u8toHex(info.encoded), v.hex);
         }
       }
     }
