@@ -114,6 +114,27 @@ Tag.registerDecoder(35, (tag: Tag): RegExp => {
   return new RegExp(tag.contents);
 });
 
+// I-Regexp
+Tag.registerDecoder(21065, (tag: Tag): RegExp => {
+  assertString(tag.contents);
+  // Perform the following steps on an I-Regexp to obtain an ECMAScript regexp
+  // [ECMA-262]:
+
+  // For any unescaped dots (.) outside character classes (first alternative
+  // of charClass production): replace dot by [^\n\r].
+  // ... yeah, we're not writing a full parser for this.  We'll give it a try,
+  // though.  This regexp is like 95% of what's needed.
+  // See https://regex101.com/r/UtCcwh/1
+  let str = tag.contents.replace(/(?<!\\)(?<!\[(?:[^\]]|\\\])*)\./g, '[^\n\r]');
+
+  // Envelope the result in ^(?: and )$.
+  str = `^(?:${str})$`;
+
+  // The ECMAScript regexp is to be interpreted as a Unicode pattern ("u"
+  // flag; see Section 21.2.2 "Pattern Semantics" of [ECMA-262]).
+  return new RegExp(str, 'u');
+});
+
 Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
   assertArray(tag.contents);
   if (tag.contents.length < 1 || tag.contents.length > 2) {
