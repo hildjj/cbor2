@@ -212,10 +212,12 @@ export function writeFloat(val: number, w: Writer): void {
 /**
  * Write a number that is sure to be an integer to the stream.  If no mt is
  * given writes major type POS_INT or NEG_INT as appropriate.  Otherwise uses
- * the given mt a the major type.
+ * the given mt a the major type, and the value must be non-negative.  Numbers
+ * with fractions are silently truncated to integer.  Numbers outside the safe
+ * range silently lose precision.  -0 is silently changed to 0.
  *
- * @param val Number that is an integer that satisfies
- *   `MIN_SAFE_INTEGER <= val <= MAX_SAFE_INTEGER`.
+ * @param val Number that is an integer that satisfies `MIN_SAFE_INTEGER <=
+ *   val <= MAX_SAFE_INTEGER`.
  * @param w Writer.
  * @param mt Major type, if desired.  Obj will be real integer > 0.
  * @throws On invalid combinations.
@@ -292,13 +294,7 @@ function writeBigInt(
  * @param w Writer.
  */
 export function writeNumber(val: number, w: Writer): void {
-  if (!isFinite(val) ||
-      (Math.round(val) !== val) ||
-      (Object.is(val, -0)) ||
-      // Is this a number that *looks* like an integer, but it's a float
-      // whose precision is greater than 1?
-      (val > Number.MAX_SAFE_INTEGER) ||
-      (val < Number.MIN_SAFE_INTEGER)) {
+  if ((Object.is(val, -0)) || !Number.isSafeInteger(val)) {
     writeFloat(val, w);
   } else {
     writeInt(val, w);
