@@ -40,7 +40,7 @@ export const TAG = {
   // https://github.com/input-output-hk/cbor-sets-spec/blob/master/CBOR_SETS.md
   SET: 258,
   JSON: 262,
-  REGEXP: 279,
+  REGEXP: 21066,
   SELF_DESCRIBED: 55799,
   // Always invalid: https://www.ietf.org/archive/id/draft-bormann-cbor-notable-tags-07.html#name-invalid-tag
   INVALID_16: 0xffff,

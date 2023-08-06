@@ -488,15 +488,15 @@ export const good = [
   f8                -- Simple value, next 1 byte
     ff              -- simple(255)
 0xf8ff`],
-  [/a/, '279_1(["a", ""])', `
+  [/a/, '21066_1(["a", ""])', `
   d9                --  next 2 bytes
-    0117            -- Tag #279
+    524a            -- Tag #21066
       82            -- Array, 2 items
         61          -- String, length: 1
           61        -- [0], "a"
         60          -- String, length: 0
-0xd9011782616160`],
-  [/a/gu, '279_1(["a", "gu"])', '0xd90117826161626775'],
+0xd9524a82616160`],
+  [/a/gu, '21066_1(["a", "gu"])', '0xd9524a826161626775'],
   [new Map([[1, 2]]), '{1: 2}', `
   a1                -- Map, 1 pair
     01              -- {Key:0}, 1
@@ -927,6 +927,13 @@ d8                --  next 1 byte
     61            -- String, length: 1
       61          -- "a"
 0xd8236161`],
+  [/^(?:[^\n\r])$/u, '21065_1(".")', '0xd95249612e'],
+  [/^(?:[.])$/u, '21065_1("[.]")', '0xd95249635b2e5d'],
+  [/^(?:\.)$/u, '21065_1("\\\\.")', '0xd95249625c2e'],
+  [/^(?:[asd.])$/u, '21065_1("[asd.]")', '0xd95249665b6173642e5d'],
+  [/^(?:[asd.f][^\n\r])$/u, '21065_1("[asd.f].")', '0xd95249685b6173642e665d2e'],
+  [/^(?:[as\].])$/u, '21065_1("[as\\\\].]")', '0xd95249675b61735c5d2e5d'],
+  [/^(?:\[asdf)$/u, '21065_1("\\\\[asdf")', '0xd95249665c5b61736466'],
 ];
 
 export const encodeGood = [
@@ -990,9 +997,10 @@ export const decodeBad = [
 ];
 
 export const decodeBadTags = [
-  '0xd9011783616162677500', // RegExp array too long
-  '0xd9011780', // RegExp array too short
-  '0xd90117820000', // RegExp invalid flags
+  '0xd9524a83616162677500', // RegExp array too long
+  '0xd9524a80', // RegExp array too short
+  '0xd9524a820000', // RegExp invalid flags
+  '0xd9524900', // I-regex not string
 ];
 
 const HEX = /0x(?<hex>[0-9a-f]+)$/i;
