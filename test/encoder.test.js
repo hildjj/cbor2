@@ -1,80 +1,78 @@
 import '../lib/types.js';
+import * as cases from './cases.js';
 import {MT, SYMS} from '../lib/constants.js';
 import {
-  TempClass,
-  badBoxed,
-  collapseBigIntegers,
-  encodeGood,
-  good,
-  goodBoxed,
-  goodEndian,
-  toString,
-} from './cases.js';
-import {
-  clearEncoder, encode, registerEncoder, sortLengthFirstDeterministic, writeInt,
+  clearEncoder, dCBORencodeOptions, encode, registerEncoder,
+  sortLengthFirstDeterministic, writeInt,
 } from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import util from 'node:util';
 
 const BE = isBigEndian();
 
 function testAll(list, opts = undefined) {
   let len = 0;
   for (const [orig, diag, commented] of list) {
-    const actual = u8toHex(encode(orig, opts));
-    const expected = toString(commented);
-    assert.equal(actual, expected, diag);
-    len++;
+    try {
+      const actual = u8toHex(encode(orig, opts));
+      const expected = cases.toString(commented);
+      assert.equal(actual, expected, diag);
+      len++;
+    } catch (e) {
+      e.message = `Error encoding ${util.inspect(orig)} (${commented}): ${e.message}`;
+      throw e;
+    }
   }
   assert.equal(len, list.length);
 }
 
-function failAll(list) {
+function failAll(list, opts) {
   for (const c of list) {
-    assert.throws(() => encode(c), String(c));
+    assert.throws(() => encode(c, opts), util.inspect(c));
   }
 }
 
 test('good encode', () => {
-  testAll(good);
-  testAll(encodeGood);
-  testAll(goodBoxed, {boxed: true});
+  testAll(cases.good);
+  testAll(cases.encodeGood);
+  testAll(cases.goodBoxed, {boxed: true});
 });
 
 test('bad encode', () => {
-  failAll(badBoxed);
+  failAll(cases.badBoxed);
 });
 
 test('collapseBigIntegers', () => {
-  testAll(collapseBigIntegers);
-  for (const [val, bi] of collapseBigIntegers) {
+  testAll(cases.collapseBigIntegers);
+  for (const [val, bi] of cases.collapseBigIntegers) {
     const actual = u8toHex(encode(val, {collapseBigInts: false}));
-    const expected = toString(bi);
+    const expected = cases.toString(bi);
     assert.equal(actual, expected, 'not collapsed');
   }
 });
 
 test('good endian encode', () => {
-  testAll(goodEndian.map(([obj, little]) => [obj, 'little', little]), {forceEndian: true});
-  testAll(goodEndian.map(([obj, _little, big]) => [obj, 'big', big]), {forceEndian: false});
+  testAll(cases.goodEndian.map(([obj, little]) => [obj, 'little', little]), {forceEndian: true});
+  testAll(cases.goodEndian.map(([obj, _little, big]) => [obj, 'big', big]), {forceEndian: false});
   if (BE) {
-    testAll(goodEndian.map(([obj, _little, big]) => [obj, 'big', big]));
+    testAll(cases.goodEndian.map(([obj, _little, big]) => [obj, 'big', big]));
   } else {
-    testAll(goodEndian.map(([obj, little]) => [obj, 'little', little]));
+    testAll(cases.goodEndian.map(([obj, little]) => [obj, 'little', little]));
   }
 });
 
 test('clear type', () => {
-  const t = new TempClass(1);
+  const t = new cases.TempClass(1);
   assert.equal(u8toHex(encode(t)), 'd9fffe01');
-  assert.equal(registerEncoder(TempClass, (obj, w, opts) => {
+  assert.equal(registerEncoder(cases.TempClass, (obj, w, opts) => {
     w.writeUint8(0);
     return SYMS.DONE;
   }), undefined);
   assert.equal(u8toHex(encode(t)), '00');
-  assert.notEqual(clearEncoder(TempClass), undefined);
+  assert.notEqual(clearEncoder(cases.TempClass), undefined);
   assert.equal(u8toHex(encode(t)), 'd9fffe01');
 });
 
@@ -129,4 +127,9 @@ test('deterministic sorting', () => {
     )),
     'a280008001'
   );
+});
+
+test('encode dCBOR', () => {
+  failAll(cases.encodeBadDCBOR, dCBORencodeOptions);
+  testAll(cases.good.filter(([o]) => o instanceof Map), dCBORencodeOptions);
 });

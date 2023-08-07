@@ -1,6 +1,7 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
 import assert from 'node:assert/strict';
+import {dCBORdecodeOptions} from '../lib/container.js';
 import {decode} from '../lib/decoder.js';
 import {hexToU8} from '../lib/utils.js';
 import test from 'node:test';
@@ -9,15 +10,15 @@ function testAll(list, opts) {
   let count = 0;
   for (const [orig, diag, commented] of list) {
     const d = decode(cases.toBuffer(commented), opts);
-    assert.deepEqual(d, orig, diag);
+    assert.deepEqual(d, orig, diag ?? commented);
     count++;
   }
   assert.equal(count, list.length);
 }
 
-function failAll(list) {
+function failAll(list, opts) {
   for (const c of list) {
-    assert.throws(() => decode(cases.toBuffer(c)), c);
+    assert.throws(() => decode(cases.toBuffer(c), opts), c);
   }
 }
 
@@ -28,6 +29,7 @@ test('good', () => {
 
 test('decode good', () => {
   testAll(cases.decodeGood);
+  testAll(cases.decodeGood, {rejectDuplicateKeys: true});
 });
 
 test('decode bad', () => {
@@ -36,6 +38,11 @@ test('decode bad', () => {
 
 test('decode bad tags', () => {
   failAll(cases.decodeBadTags);
+});
+
+test('decode with dCBOR', () => {
+  failAll(cases.decodeBadDcbor, dCBORdecodeOptions);
+  testAll(cases.goodNumbers, dCBORdecodeOptions);
 });
 
 test('goodEndian', () => {

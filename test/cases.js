@@ -15,8 +15,7 @@ export class TempClass {
   }
 }
 
-// [Decoded, Diagnostic, Commented]
-export const good = [
+export const goodNumbers = [
   [0, '0', `
   00                -- 0
 0x00`],
@@ -80,6 +79,12 @@ export const good = [
   fb                -- Float, next 8 bytes
     0000000000000001 -- 5e-324
 0xfb0000000000000001`],
+];
+
+// [Decoded, Diagnostic, Commented]
+export const good = [
+  ...goodNumbers,
+
   [-0x1c0000000000000001n, '3(h\'1c0000000000000000\')', `
   c3                -- Tag #3
     49              -- Bytes, length: 9
@@ -624,7 +629,7 @@ d9                --  next 2 bytes
   [new Int8Array([-1, 0, 1, -128, 127]),
     '72_0(h\'ff0001807f\')',
     '0xd84845ff0001807f'],
-  [new Map([[[], []], [[], []]]), '{[]: [], []: []}', '0xa280808080'],
+  [new Map([[[], []], [[0], []]]), '{[]: [], [0]: []}', '0xa28080810080'],
 ];
 
 export const goodEndian = [
@@ -937,11 +942,18 @@ d8                --  next 1 byte
 ];
 
 export const encodeGood = [
+  [new Map([[[], []], [[], []]]), '{[]: [], []: []}', '0xa280808080'],
+
   /* eslint-disable no-new-wrappers */
   [new String('foo'), 'boxed', '0x63666f6f'],
   [new Boolean(true), 'boxed', '0xf5'],
   [new Number(12), 'boxed', '0x0c'],
   /* eslint-enable no-new-wrappers */
+];
+
+export const encodeBadDCBOR = [
+  new Map([[[], 0], [[], 1]]),
+  new Simple(0),
 ];
 
 export const collapseBigIntegers = [
@@ -1003,6 +1015,42 @@ export const decodeBadTags = [
   '0xd9524900', // I-regex not string
 ];
 
+export const decodeBadDcbor = [
+  '0xa2616101616102', // {a: 1, a: 2}
+  '0xa200010002',
+  '0xa2f5f4f5f6',
+  '0xa280008001',
+  '0xa20a000a001',
+  '0xa2810000810001',
+  '0xf98000', // -0
+  '0xfa7f800000', // Long infinities
+  '0xfaff800000',
+  '0xfb7ff0000000000000',
+  '0xfbfff0000000000000',
+  '0xfa7fc00000', // Long NaNs
+  '0xfa7ff8000000000000',
+  '0xf97e01', // Signalling NaN
+  '0x3b8000000000000000', // 65bit neg
+  // Should be smaller
+  '0x1817',
+  '0x190017',
+  '0x1a00000017',
+  '0x1b0000000000000017',
+  '0xfa3fa00000', // 1.25_2
+  '0xfb3ff4000000000000', // 1.25_3
+  '0xfb402400000000000000', // 10
+  // Should be int
+  '0xf94900',
+  '0xfa50000000',
+  // No streaming
+  '0x5fff',
+  '0x7fff',
+  '0x9fff',
+  '0xbfff',
+  // Simple
+  '0xe0',
+];
+
 const HEX = /0x(?<hex>[0-9a-f]+)$/i;
 
 /**
@@ -1039,45 +1087,6 @@ export function toString(c) {
   const match = c.match(HEX);
   return match.groups.hex;
 }
-
-//
-// export class EncodeFailer extends cbor.Encoder {
-//   constructor(count) {
-//     super();
-//     if (count == null) {
-//       count = Number.MAX_SAFE_INTEGER;
-//     }
-//     this.count = count;
-//     this.start = count;
-//   }
-
-//   push(fresh, encoding) {
-//     if (this.count-- <= 0) {
-//       super.push(null);
-//       return false;
-//     }
-//     return super.push(fresh, encoding);
-//   }
-
-//   get used() {
-//     return this.start - this.count;
-//   }
-
-//   static tryAll(t, f, canonical) {
-//     let enc = new EncodeFailer();
-//     enc.canonical = canonical;
-//     t.truthy(enc.pushAny(f));
-//     const {used} = enc;
-//     for (let i = 0; i < used; i++) {
-//       enc = new EncodeFailer(i);
-//       enc.canonical = canonical;
-//       t.falsy(enc.pushAny(f));
-//     }
-//     enc = new EncodeFailer(used);
-//     enc.canonical = canonical;
-//     t.truthy(enc.pushAny(f));
-//   }
-// }
 
 // Here to avoid ava's odd injection of Map into the namespace of the tests
 export const goodMap = new Map([

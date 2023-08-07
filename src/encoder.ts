@@ -19,70 +19,68 @@ const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
 
-export type KeySorter = (kv: [unknown, unknown][]) => void;
+/**
+ * Key, value, and key CBOR-encoded with the current options.
+ */
+export type KeyValueEncoded =
+  [key: unknown, value: unknown, keyEncoded: Uint8Array];
+
+/**
+ * Sort keys in an object or Map before encoding.
+ */
+export type KeySorter = (a: KeyValueEncoded, b: KeyValueEncoded) => number;
 
 /**
  * Sort according to RFC 8949, section 4.2.1
  * (https://www.rfc-editor.org/rfc/rfc8949.html#name-core-deterministic-encoding).
  *
- * @param kv Object entries, an array of arrays each of which has a key, value
- *   pair.
+ * @param a First item.
+ * @param b Second item.
+ * @returns Negative for a < b, Positive for b > a, 0 if equal.
  */
-export function sortCoreDeterministic(kv: [unknown, unknown][]): void {
-  const cache = new Map<unknown, Uint8Array>();
-  function enc(u: unknown): Uint8Array {
-    let u8 = cache.get(u);
-    if (!u8) {
-      u8 = encode(u);
-      cache.set(u, u8);
+export function sortCoreDeterministic(
+  a: KeyValueEncoded,
+  b: KeyValueEncoded
+): number {
+  const [_ak, _av, a8] = a;
+  const [_bk, _bv, b8] = b;
+  const len = Math.min(a8.length, b8.length);
+  for (let i = 0; i < len; i++) {
+    const diff = a8[i] - b8[i];
+    if (diff !== 0) {
+      return diff;
     }
-    return u8;
   }
-  kv.sort(([a], [b]) => {
-    const [a8, b8] = [enc(a), enc(b)];
-    const len = Math.min(a8.length, b8.length);
-    for (let i = 0; i < len; i++) {
-      const diff = a8[i] - b8[i];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-    return 0;
-  });
+  return 0;
 }
 
 /**
  * Sort according to RFC 8949, section 4.2.3
  * (https://www.rfc-editor.org/rfc/rfc8949.html#name-length-first-map-key-orderi).
  *
- * @param kv Object entries, an array of arrays each of which has a key, value
- *   pair.
+ * @param a First item.
+ * @param b Second item.
+ * @returns Negative for a < b, Positive for b > a, 0 if equal.
  */
-export function sortLengthFirstDeterministic(kv: [unknown, unknown][]): void {
-  const cache = new Map<unknown, Uint8Array>();
-  function enc(u: unknown): Uint8Array {
-    let u8 = cache.get(u);
-    if (!u8) {
-      u8 = encode(u);
-      cache.set(u, u8);
-    }
-    return u8;
+export function sortLengthFirstDeterministic(
+  a: KeyValueEncoded,
+  b: KeyValueEncoded
+): number {
+  const [_ak, _av, a8] = a;
+  const [_bk, _bv, b8] = b;
+
+  const diffLen = a8.length - b8.length;
+  if (diffLen !== 0) {
+    return diffLen;
   }
-  kv.sort(([a], [b]) => {
-    const [a8, b8] = [enc(a), enc(b)];
-    const diffLen = a8.length - b8.length;
-    if (diffLen !== 0) {
-      return diffLen;
+  const len = Math.min(a8.length, b8.length);
+  for (let i = 0; i < len; i++) {
+    const diff = a8[i] - b8[i];
+    if (diff !== 0) {
+      return diff;
     }
-    const len = Math.min(a8.length, b8.length);
-    for (let i = 0; i < len; i++) {
-      const diff = a8[i] - b8[i];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-    return 0;
-  });
+  }
+  return 0;
 }
 
 export interface EncodeOptions extends WriterOptions {
@@ -103,11 +101,31 @@ export interface EncodeOptions extends WriterOptions {
   collapseBigInts?: boolean;
 
   /**
+   * Check that Maps do not contain keys that encode to the same bytes as
+   * one another.
+   * @default false
+   */
+  checkDuplicateKeys?: boolean;
+
+  /**
+   * If true, error instead of encoding an instance of Simple.
+   * @default false
+   */
+  avoidSimple?: boolean;
+
+  /**
    * How should the key/value pairs be sorted before an object or Map
    * gets created?
    */
-  sortKeys?: KeySorter;
+  sortKeys?: KeySorter | null;
 }
+
+export const dCBORencodeOptions: EncodeOptions = {
+  // Default: collapseBigInts: true,
+  checkDuplicateKeys: true,
+  avoidSimple: true,
+  // Default: sortKeys: sortCoreDeterministic,
+};
 
 export type RequiredEncodeOptions = Required<EncodeOptions>;
 
@@ -115,6 +133,8 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   ...WriterOptionsDefault,
   forceEndian: null,
   collapseBigInts: true,
+  checkDuplicateKeys: false,
+  avoidSimple: false,
   sortKeys: sortCoreDeterministic,
 };
 
@@ -398,12 +418,17 @@ function writeObject(
     return;
   }
 
-  const entries = Object.entries(obj);
-  opts.sortKeys(entries);
+  // Note: keys will never be duplicated here.
+  const entries = Object.entries(obj).map<KeyValueEncoded>(
+    e => [e[0], e[1], encode(e[0], opts)]
+  );
+  if (opts.sortKeys) {
+    entries.sort(opts.sortKeys);
+  }
   writeInt(entries.length, w, MT.MAP);
 
-  for (const [k, v] of entries) {
-    writeString(k, w);
+  for (const [_k, v, e] of entries) {
+    w.write(e);
     writeUnknown(v, w, opts);
   }
 }

@@ -20,5 +20,6 @@ export {
 } from './decodeStream.js';
 export {decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
-export {encode} from './encoder.js';
+export {dCBORencodeOptions, encode} from './encoder.js';
 export type {Writer, WriterOptions} from './writer.js';
+export {dCBORdecodeOptions} from './container.js';

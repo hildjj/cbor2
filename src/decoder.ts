@@ -25,7 +25,7 @@ export function decode<T = unknown>(
   let ret: unknown = SYMS.NOT_FOUND;
 
   for (const mav of stream) {
-    ret = CBORcontainer.create(mav, parent, opts);
+    ret = CBORcontainer.create(mav, parent, opts, stream);
 
     if (mav[2] === SYMS.BREAK) {
       if (parent?.isStreaming) {
@@ -44,10 +44,10 @@ export function decode<T = unknown>(
     // Convert all finished parents in the chain to the correct type, replacing
     // in *their* parents as necessary.
     while (parent?.done) {
-      ret = parent?.convert();
+      ret = parent.convert();
 
-      const p = parent?.parent;
-      p?.replaceLast(ret);
+      const p = parent.parent;
+      p?.replaceLast(ret, parent, stream);
       parent = p;
     }
   }

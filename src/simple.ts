@@ -1,4 +1,4 @@
-import {type DoneEncoding, writeInt} from './encoder.js';
+import {type DoneEncoding, type RequiredEncodeOptions, writeInt} from './encoder.js';
 import {MT, SYMS} from './constants.js';
 import type {Writer} from './writer.js';
 
@@ -12,7 +12,10 @@ export class Simple {
     this.value = value;
   }
 
-  public toCBOR(w: Writer, val: unknown): DoneEncoding {
+  public toCBOR(w: Writer, opts: RequiredEncodeOptions): DoneEncoding {
+    if (opts.avoidSimple) {
+      throw new Error(`Cannot encode non-standard Simple value: ${this.value}`);
+    }
     writeInt(this.value, w, MT.SIMPLE_FLOAT);
     return SYMS.DONE;
   }
