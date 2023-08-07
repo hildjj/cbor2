@@ -1022,6 +1022,7 @@ export const decodeBadDcbor = [
   '0xa280008001',
   '0xa20a000a001',
   '0xa2810000810001',
+  '0xa2616200616101', // {b: 1, a: 2}
   '0xf98000', // -0
   '0xfa7f800000', // Long infinities
   '0xfaff800000',

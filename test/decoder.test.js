@@ -43,6 +43,11 @@ test('decode bad tags', () => {
 test('decode with dCBOR', () => {
   failAll(cases.decodeBadDcbor, dCBORdecodeOptions);
   testAll(cases.goodNumbers, dCBORdecodeOptions);
+  testAll(cases.good.filter(([o]) => o instanceof Map), dCBORdecodeOptions);
+  failAll([
+    '0xa280008001',
+    '0xa200010002',
+  ], {rejectDuplicateKeys: true});
 });
 
 test('goodEndian', () => {

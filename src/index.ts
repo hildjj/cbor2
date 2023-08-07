@@ -18,8 +18,7 @@ export {
   type MtAiValue,
   type ValueGenerator,
 } from './decodeStream.js';
-export {decode} from './decoder.js';
+export {dCBORdecodeOptions, decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
-export {dCBORencodeOptions, encode} from './encoder.js';
+export {DONE, dCBORencodeOptions, encode} from './encoder.js';
 export type {Writer, WriterOptions} from './writer.js';
-export {dCBORdecodeOptions} from './container.js';

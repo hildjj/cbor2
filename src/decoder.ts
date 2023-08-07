@@ -2,6 +2,8 @@ import {CBORcontainer, type ContainerOptions} from './container.js';
 import {DecodeStream} from './decodeStream.js';
 import {SYMS} from './constants.js';
 
+export {dCBORdecodeOptions} from './container.js';
+
 /**
  * Decode CBOR bytes to a JS value.
  *
@@ -34,7 +36,7 @@ export function decode<T = unknown>(
         throw new Error('Unexpected BREAK');
       }
     } else if (parent) {
-      parent.push(ret);
+      parent.push(ret, stream, mav[3]);
     }
 
     if (ret instanceof CBORcontainer) {

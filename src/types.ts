@@ -14,7 +14,6 @@ import {MT, SYMS, TAG} from './constants.js';
 // eslint-disable-next-line sort-imports -- two types messes up sort-imports
 import {
   type DoneEncoding,
-  type KeyValueEncoded,
   type RequiredEncodeOptions,
   encode,
   registerEncoder,
@@ -23,6 +22,7 @@ import {
   writeUnknown,
 } from './encoder.js';
 import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
+import {KeyValueEncoded} from './sorts.js';
 import {Tag} from './tag.js';
 import type {Writer} from './writer.js';
 import {decode} from './decoder.js';
@@ -60,10 +60,10 @@ registerEncoder(Map, (obj: unknown, w: Writer, opts: RequiredEncodeOptions) => {
   );
   if (opts.checkDuplicateKeys) {
     const dups = new Set<string>();
-    for (const [k, _v, e] of kve) {
+    for (const [_k, _v, e] of kve) {
       const hex = u8toHex(e);
       if (dups.has(hex)) {
-        throw new Error(`Duplicate map key: "${String(k)}"/0x${hex}`);
+        throw new Error(`Duplicate map key: 0x${hex}`);
       }
       dups.add(hex);
     }
