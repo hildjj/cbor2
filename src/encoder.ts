@@ -1,14 +1,19 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
+import {type KeySorter, type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {Writer, type WriterOptions, WriterOptionsDefault} from './writer.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
-/**
- * Return this from toCBOR to signal that no further processing should be done.
- */
-export const {DONE} = SYMS;
+export const {
+
+  /**
+   * Return this from toCBOR to signal that no further processing should be
+   * done.
+   */
+  DONE,
+} = SYMS;
 
 const HALF = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.TWO;
 const FLOAT = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.FOUR;
@@ -18,72 +23,6 @@ const FALSE = (MT.SIMPLE_FLOAT << 5) | SIMPLE.FALSE;
 const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
-
-export type KeySorter = (kv: [unknown, unknown][]) => void;
-
-/**
- * Sort according to RFC 8949, section 4.2.1
- * (https://www.rfc-editor.org/rfc/rfc8949.html#name-core-deterministic-encoding).
- *
- * @param kv Object entries, an array of arrays each of which has a key, value
- *   pair.
- */
-export function sortCoreDeterministic(kv: [unknown, unknown][]): void {
-  const cache = new Map<unknown, Uint8Array>();
-  function enc(u: unknown): Uint8Array {
-    let u8 = cache.get(u);
-    if (!u8) {
-      u8 = encode(u);
-      cache.set(u, u8);
-    }
-    return u8;
-  }
-  kv.sort(([a], [b]) => {
-    const [a8, b8] = [enc(a), enc(b)];
-    const len = Math.min(a8.length, b8.length);
-    for (let i = 0; i < len; i++) {
-      const diff = a8[i] - b8[i];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-    return 0;
-  });
-}
-
-/**
- * Sort according to RFC 8949, section 4.2.3
- * (https://www.rfc-editor.org/rfc/rfc8949.html#name-length-first-map-key-orderi).
- *
- * @param kv Object entries, an array of arrays each of which has a key, value
- *   pair.
- */
-export function sortLengthFirstDeterministic(kv: [unknown, unknown][]): void {
-  const cache = new Map<unknown, Uint8Array>();
-  function enc(u: unknown): Uint8Array {
-    let u8 = cache.get(u);
-    if (!u8) {
-      u8 = encode(u);
-      cache.set(u, u8);
-    }
-    return u8;
-  }
-  kv.sort(([a], [b]) => {
-    const [a8, b8] = [enc(a), enc(b)];
-    const diffLen = a8.length - b8.length;
-    if (diffLen !== 0) {
-      return diffLen;
-    }
-    const len = Math.min(a8.length, b8.length);
-    for (let i = 0; i < len; i++) {
-      const diff = a8[i] - b8[i];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-    return 0;
-  });
-}
 
 export interface EncodeOptions extends WriterOptions {
   /**
@@ -103,11 +42,54 @@ export interface EncodeOptions extends WriterOptions {
   collapseBigInts?: boolean;
 
   /**
+   * Check that Maps do not contain keys that encode to the same bytes as
+   * one another.
+   * @default false
+   */
+  checkDuplicateKeys?: boolean;
+
+  /**
+   * If true, error instead of encoding an instance of Simple.
+   * @default false
+   */
+  avoidSimple?: boolean;
+
+  /**
+   * If true, encode -0 as 0.
+   * @default false
+   */
+  avoidNegativeZero?: boolean;
+
+  /**
+   * Simplify all NaNs to 0xf97e00, even if the NaN has a payload or is
+   * signalling.
+   * @default false
+   */
+  simplifyNaN?: boolean;
+
+  /**
+   * Do not encode numbers in the range  [CBOR_NEGATIVE_INT_MAX ...
+   * STANDARD_NEGATIVE_INT_MAX - 1] as MT 1.
+   * @default false
+   */
+  avoid65bitNegative?: boolean;
+
+  /**
    * How should the key/value pairs be sorted before an object or Map
    * gets created?
    */
-  sortKeys?: KeySorter;
+  sortKeys?: KeySorter | null;
 }
+
+export const dCBORencodeOptions: EncodeOptions = {
+  // Default: collapseBigInts: true,
+  checkDuplicateKeys: true,
+  avoidSimple: true,
+  avoidNegativeZero: true,
+  simplifyNaN: true,
+  avoid65bitNegative: true,
+  // Default: sortKeys: sortCoreDeterministic,
+};
 
 export type RequiredEncodeOptions = Required<EncodeOptions>;
 
@@ -115,9 +97,17 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   ...WriterOptionsDefault,
   forceEndian: null,
   collapseBigInts: true,
+  checkDuplicateKeys: false,
+  avoidSimple: false,
+  avoidNegativeZero: false,
+  simplifyNaN: false,
+  avoid65bitNegative: false,
   sortKeys: sortCoreDeterministic,
 };
 
+/**
+ * Any class.
+ */
 export type AbstractClassType = abstract new (...args: any) => any;
 export type TypeEncoder = (
   obj: unknown,
@@ -191,9 +181,16 @@ export interface ToJSON {
  *
  * @param val Floating point number.
  * @param w Writer.
+ * @param opts Encoding options.
  */
-export function writeFloat(val: number, w: Writer): void {
-  if (isNaN(val) || (Math.fround(val) === val)) {
+export function writeFloat(
+  val: number, w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  if (opts.simplifyNaN && isNaN(val)) {
+    w.writeUint8(HALF);
+    w.writeUint16(0x7e00);
+  } else if (isNaN(val) || (Math.fround(val) === val)) {
     // It's at least as small as f32.
     const half = halfToUint(val);
     if (half === null) {
@@ -258,7 +255,8 @@ function writeBigInt(
   const neg = val < 0n;
   const pos = neg ? -val - 1n : val;
 
-  if (opts.collapseBigInts) {
+  if (opts.collapseBigInts &&
+      (!opts.avoid65bitNegative || (val >= -0x8000000000000000n))) {
     if (pos <= 0xffffffffn) {
       // Always collapse small bigints
       writeInt(Number(val), w);
@@ -292,12 +290,22 @@ function writeBigInt(
  *
  * @param val Number.
  * @param w Writer.
+ * @param opts Encoding options.
  */
-export function writeNumber(val: number, w: Writer): void {
-  if ((Object.is(val, -0)) || !Number.isSafeInteger(val)) {
-    writeFloat(val, w);
-  } else {
+export function writeNumber(
+  val: number, w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  if (Object.is(val, -0)) {
+    if (opts.avoidNegativeZero) {
+      writeInt(0, w);
+    } else {
+      writeFloat(val, w, opts);
+    }
+  } else if (Number.isSafeInteger(val)) {
     writeInt(val, w);
+  } else {
+    writeFloat(val, w, opts);
   }
 }
 
@@ -398,12 +406,17 @@ function writeObject(
     return;
   }
 
-  const entries = Object.entries(obj);
-  opts.sortKeys(entries);
+  // Note: keys will never be duplicated here.
+  const entries = Object.entries(obj).map<KeyValueEncoded>(
+    e => [e[0], e[1], encode(e[0], opts)]
+  );
+  if (opts.sortKeys) {
+    entries.sort(opts.sortKeys);
+  }
   writeInt(entries.length, w, MT.MAP);
 
-  for (const [k, v] of entries) {
-    writeString(k, w);
+  for (const [_k, v, e] of entries) {
+    w.write(e);
     writeUnknown(v, w, opts);
   }
 }
@@ -422,7 +435,7 @@ export function writeUnknown(
   opts: RequiredEncodeOptions
 ): void {
   switch (typeof val) {
-    case 'number': writeNumber(val, w); break;
+    case 'number': writeNumber(val, w, opts); break;
     case 'bigint': writeBigInt(val, w, opts); break;
     case 'string': writeString(val, w); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;

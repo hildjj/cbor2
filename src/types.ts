@@ -15,12 +15,14 @@ import {MT, SYMS, TAG} from './constants.js';
 import {
   type DoneEncoding,
   type RequiredEncodeOptions,
+  encode,
   registerEncoder,
   writeInt,
   writeTag,
   writeUnknown,
 } from './encoder.js';
-import {base64ToBytes, base64UrlToBytes, isBigEndian} from './utils.js';
+import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
+import {KeyValueEncoded} from './sorts.js';
 import {Tag} from './tag.js';
 import type {Writer} from './writer.js';
 import {decode} from './decoder.js';
@@ -53,11 +55,25 @@ function assertArray(contents: any): asserts contents is any[] {
 
 registerEncoder(Map, (obj: unknown, w: Writer, opts: RequiredEncodeOptions) => {
   const m = obj as Map<unknown, unknown>;
-  const kv = [...m.entries()];
-  opts.sortKeys(kv);
+  const kve = [...m.entries()].map<KeyValueEncoded>(
+    e => [e[0], e[1], encode(e[0], opts)]
+  );
+  if (opts.checkDuplicateKeys) {
+    const dups = new Set<string>();
+    for (const [_k, _v, e] of kve) {
+      const hex = u8toHex(e);
+      if (dups.has(hex)) {
+        throw new Error(`Duplicate map key: 0x${hex}`);
+      }
+      dups.add(hex);
+    }
+  }
+  if (opts.sortKeys) {
+    kve.sort(opts.sortKeys);
+  }
   writeInt(m.size, w, MT.MAP);
-  for (const [k, v] of kv) {
-    writeUnknown(k, w, opts);
+  for (const [_k, v, e] of kve) {
+    w.write(e);
     writeUnknown(v, w, opts);
   }
   return SYMS.DONE;

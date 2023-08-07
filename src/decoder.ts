@@ -2,6 +2,8 @@ import {CBORcontainer, type ContainerOptions} from './container.js';
 import {DecodeStream} from './decodeStream.js';
 import {SYMS} from './constants.js';
 
+export {dCBORdecodeOptions} from './container.js';
+
 /**
  * Decode CBOR bytes to a JS value.
  *
@@ -25,7 +27,7 @@ export function decode<T = unknown>(
   let ret: unknown = SYMS.NOT_FOUND;
 
   for (const mav of stream) {
-    ret = CBORcontainer.create(mav, parent, opts);
+    ret = CBORcontainer.create(mav, parent, opts, stream);
 
     if (mav[2] === SYMS.BREAK) {
       if (parent?.isStreaming) {
@@ -34,7 +36,7 @@ export function decode<T = unknown>(
         throw new Error('Unexpected BREAK');
       }
     } else if (parent) {
-      parent.push(ret);
+      parent.push(ret, stream, mav[3]);
     }
 
     if (ret instanceof CBORcontainer) {
@@ -44,10 +46,10 @@ export function decode<T = unknown>(
     // Convert all finished parents in the chain to the correct type, replacing
     // in *their* parents as necessary.
     while (parent?.done) {
-      ret = parent?.convert();
+      ret = parent.convert();
 
-      const p = parent?.parent;
-      p?.replaceLast(ret);
+      const p = parent.parent;
+      p?.replaceLast(ret, parent, stream);
       parent = p;
     }
   }

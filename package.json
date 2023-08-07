@@ -8,6 +8,7 @@
     "./diagnostic": "./lib/diagnostic.js",
     "./encoder": "./lib/encoder.js",
     "./simple": "./lib/simple.js",
+    "./sorts": "./lib/sorts.js",
     "./tag": "./lib/tag.js",
     "./types": "./lib/types.js",
     "./utils": "./lib/utils.js"

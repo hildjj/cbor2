@@ -86,7 +86,7 @@ export function diagnose(
         str += ', ';
       }
     }
-    ret = CBORcontainer.create(mav, parent, opts);
+    ret = CBORcontainer.create(mav, parent, opts, stream);
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
