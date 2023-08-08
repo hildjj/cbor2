@@ -55,6 +55,26 @@ export interface EncodeOptions extends WriterOptions {
   avoidSimple?: boolean;
 
   /**
+   * If true, encode -0 as 0.
+   * @default false
+   */
+  avoidNegativeZero?: boolean;
+
+  /**
+   * Simplify all NaNs to 0xf97e00, even if the NaN has a payload or is
+   * signalling.
+   * @default false
+   */
+  simplifyNaN?: boolean;
+
+  /**
+   * Do not encode numbers in the range  [CBOR_NEGATIVE_INT_MAX ...
+   * STANDARD_NEGATIVE_INT_MAX - 1] as MT 1.
+   * @default false
+   */
+  avoid65bitNegative?: boolean;
+
+  /**
    * How should the key/value pairs be sorted before an object or Map
    * gets created?
    */
@@ -65,6 +85,9 @@ export const dCBORencodeOptions: EncodeOptions = {
   // Default: collapseBigInts: true,
   checkDuplicateKeys: true,
   avoidSimple: true,
+  avoidNegativeZero: true,
+  simplifyNaN: true,
+  avoid65bitNegative: true,
   // Default: sortKeys: sortCoreDeterministic,
 };
 
@@ -76,6 +99,9 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   collapseBigInts: true,
   checkDuplicateKeys: false,
   avoidSimple: false,
+  avoidNegativeZero: false,
+  simplifyNaN: false,
+  avoid65bitNegative: false,
   sortKeys: sortCoreDeterministic,
 };
 
@@ -155,9 +181,16 @@ export interface ToJSON {
  *
  * @param val Floating point number.
  * @param w Writer.
+ * @param opts Encoding options.
  */
-export function writeFloat(val: number, w: Writer): void {
-  if (isNaN(val) || (Math.fround(val) === val)) {
+export function writeFloat(
+  val: number, w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  if (opts.simplifyNaN && isNaN(val)) {
+    w.writeUint8(HALF);
+    w.writeUint16(0x7e00);
+  } else if (isNaN(val) || (Math.fround(val) === val)) {
     // It's at least as small as f32.
     const half = halfToUint(val);
     if (half === null) {
@@ -222,7 +255,8 @@ function writeBigInt(
   const neg = val < 0n;
   const pos = neg ? -val - 1n : val;
 
-  if (opts.collapseBigInts) {
+  if (opts.collapseBigInts &&
+      (!opts.avoid65bitNegative || (val >= -0x8000000000000000n))) {
     if (pos <= 0xffffffffn) {
       // Always collapse small bigints
       writeInt(Number(val), w);
@@ -256,12 +290,22 @@ function writeBigInt(
  *
  * @param val Number.
  * @param w Writer.
+ * @param opts Encoding options.
  */
-export function writeNumber(val: number, w: Writer): void {
-  if ((Object.is(val, -0)) || !Number.isSafeInteger(val)) {
-    writeFloat(val, w);
-  } else {
+export function writeNumber(
+  val: number, w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  if (Object.is(val, -0)) {
+    if (opts.avoidNegativeZero) {
+      writeInt(0, w);
+    } else {
+      writeFloat(val, w, opts);
+    }
+  } else if (Number.isSafeInteger(val)) {
     writeInt(val, w);
+  } else {
+    writeFloat(val, w, opts);
   }
 }
 
@@ -391,7 +435,7 @@ export function writeUnknown(
   opts: RequiredEncodeOptions
 ): void {
   switch (typeof val) {
-    case 'number': writeNumber(val, w); break;
+    case 'number': writeNumber(val, w, opts); break;
     case 'bigint': writeBigInt(val, w, opts); break;
     case 'string': writeString(val, w); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;

@@ -132,4 +132,14 @@ test('deterministic sorting', () => {
 test('encode dCBOR', () => {
   failAll(cases.encodeBadDCBOR, dCBORencodeOptions);
   testAll(cases.good.filter(([o]) => o instanceof Map), dCBORencodeOptions);
+  const dv = new DataView(new ArrayBuffer(4));
+  dv.setFloat32(0, NaN);
+  dv.setUint8(3, 1);
+  const n = dv.getFloat32(0); // NaN with extra bits set.
+  testAll([
+    [-0, '', '0x00'], // -0 -> 0
+    [n, '', '0xf97e00'],
+    [-0x8000000000000000n, '', '0x3b7fffffffffffffff'],
+    [-0x8000000000000001n, '', '0xc3488000000000000000'],
+  ], dCBORencodeOptions);
 });
