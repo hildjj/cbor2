@@ -96,4 +96,9 @@ export class SYMS {
    * an exception should be thrown for short input first.
    */
   public static readonly NOT_FOUND = Symbol.for('github.com/hildjj/cbor2/notFound');
+
+  /**
+   * Number of bytes received for a BigInt, for round-tripping.
+   */
+  public static readonly BIGINT_LEN = Symbol.for('github.com/hildjj/cbor2/BigIntLen');
 }

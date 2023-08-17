@@ -21,8 +21,9 @@ import {
   writeTag,
   writeUnknown,
 } from './encoder.js';
-import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
+import {base64ToBytes, base64UrlToBytes, hexToU8, isBigEndian, u8toHex} from './utils.js';
 import {KeyValueEncoded} from './sorts.js';
+import type {RequiredContainerOptions} from './options.js';
 import {Tag} from './tag.js';
 import type {Writer} from './writer.js';
 import {decode} from './decoder.js';
@@ -92,13 +93,46 @@ Tag.registerDecoder(TAG.DATE_EPOCH, tag => {
 registerEncoder(Date,
   (obj: unknown) => [TAG.DATE_EPOCH, (obj as Date).valueOf() / 1000]);
 
-function u8toBigInt(tag: Tag): bigint {
+function u8toBigInt(
+  neg: boolean,
+  tag: Tag,
+  opts: RequiredContainerOptions
+): bigint {
   assertU8(tag.contents);
-  return tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
+  let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
+  if (neg) {
+    bi = -1n - bi;
+  }
+  if (opts.boxed) {
+    const bio = Object(bi);
+    bio[SYMS.BIGINT_LEN] = tag.contents.length;
+    return bio;
+  }
+  return bi;
 }
-Tag.registerDecoder(TAG.POS_BIGINT, u8toBigInt);
-Tag.registerDecoder(TAG.NEG_BIGINT,
-  (tag: Tag): bigint => -1n - u8toBigInt(tag));
+Tag.registerDecoder(TAG.POS_BIGINT, u8toBigInt.bind(null, false));
+Tag.registerDecoder(TAG.NEG_BIGINT, u8toBigInt.bind(null, true));
+// @ts-expect-error -- I know, `new BigInt` is impossible
+registerEncoder(BigInt, (
+  obj: BigInt,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding | unknown => {
+  const val = obj.valueOf();
+  if (SYMS.BIGINT_LEN in obj) {
+    const neg = val < 0n;
+    const pos = neg ? -val - 1n : val;
+
+    writeTag(neg ? TAG.NEG_BIGINT : TAG.POS_BIGINT, w);
+    const s = pos.toString(16).padStart(2 * (obj[SYMS.BIGINT_LEN] as number));
+    const buf = hexToU8(s);
+    writeInt(buf.length, w, MT.BYTE_STRING);
+    w.write(buf);
+    return SYMS.DONE;
+  }
+
+  return val;
+});
 
 // 24: Encoded CBOR data item; see Section 3.4.5.1
 Tag.registerDecoder(TAG.CBOR, (tag: Tag): any => {

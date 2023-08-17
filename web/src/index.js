@@ -71,7 +71,7 @@ function output(buf, typ) {
         otxt.value = diagnose(buf);
         break;
       case 'js':
-        copy.disabled = true;
+        copy.disabled = false;
         otxt.value = inspect(decode(buf), {
           depth: Infinity,
           compact: 1,

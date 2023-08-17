@@ -1,3 +1,4 @@
+import type {DecodeStreamOptions, DecodeValue, MtAiValue} from './options.js';
 import {
   MT,
   NUMBYTES,
@@ -9,43 +10,6 @@ import {Simple} from './simple.js';
 import {parseHalf} from './float.js';
 
 const TD = new TextDecoder('utf8', {fatal: true, ignoreBOM: true});
-
-/**
- * Options for decoding.
- */
-export interface DecodeStreamOptions {
-  /**
-   * Maximum allowed depth to parse into CBOR structures.  This limit is
-   * security-relevant for untrusted inputs.  May be set to Infinity for
-   * trusted inputs, but be careful!
-   * @default 1024
-   */
-  maxDepth?: number;
-
-  /**
-   * If the input is a string, how should it be decoded into a byte stream?
-   * Ignored if the input is a Uint8Array.
-   * @default null
-   */
-  encoding?: 'base64' | 'hex' | null;
-}
-
-/**
- * These less-complex types are decoded as tokens at this level.
- */
-export type DecodeValue =
-  Simple | Symbol | Uint8Array | bigint | boolean | number | string |
-  null | undefined;
-
-/**
- * Information about a decoded CBOR data item.  3-element tuple, containing:
- * - Major type.
- * - Additional Information (int if < 23, else length as 24-27, 31 as stream).
- * - Decoded token value.
- * - Offset into the input where this item started.
- */
-export type MtAiValue =
-  [mt: number, ai: number, val: DecodeValue, offset: number];
 
 export type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
 

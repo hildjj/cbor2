@@ -1,8 +1,9 @@
-import {DecodeStream, type DecodeStreamOptions, type MtAiValue} from './decodeStream.js';
+import type {ContainerOptions, MtAiValue, Parent, RequiredContainerOptions} from './options.js';
 import type {KeySorter, KeyValueEncoded} from './sorts.js';
 import {MT, NUMBYTES} from './constants.js';
 import {u8concat, u8toHex} from './utils.js';
 import {CBORnumber} from './number.js';
+import {DecodeStream} from './decodeStream.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
 import {encode} from './encoder.js';
@@ -16,76 +17,6 @@ const LENGTH_FOR_AI = new Map([
 ]);
 
 const EMPTY_BUF = new Uint8Array(0);
-
-/**
- * Decoding options.
- */
-export interface ContainerOptions extends DecodeStreamOptions {
-  /**
-   * What type to create when a container is needed?
-   * @default CBORcontainer
-   */
-  ParentType?: typeof CBORcontainer;
-
-  /**
-   * Should numbers be created as boxed CBORNumber instances, which retain
-   * their type information for round-tripping?
-   * @default false
-   */
-  boxed?: boolean;
-
-  /**
-   * If there are duplicate keys in a map, should we throw an exception? Note:
-   * this is more compute-intensive than expected at the moment, but that will
-   * be fixed eventually.
-   * @default false
-   */
-  rejectDuplicateKeys?: boolean;
-
-  /**
-   * If non-null, keys being decoded MUST be in this order.  Note that this is a
-   * superset of rejectDuplicateKeys, and is slightly more efficient.
-   * @default null
-   */
-  sortKeys?: KeySorter | null;
-
-  /**
-   * If negative zero (-0) is received, throw an error.
-   * @default false
-   */
-  rejectNegativeZero?: boolean;
-
-  /**
-   * Reject NaNs that are not encoded as 0x7e00.
-   * @default false
-   */
-  rejectLongLoundNaN?: boolean;
-
-  /**
-   * Reject negative integers in the range [CBOR_NEGATIVE_INT_MAX ...
-   * STANDARD_NEGATIVE_INT_MAX - 1].
-   * @default false
-   */
-  reject65bitNegative?: boolean;
-
-  /**
-   * Reject numbers that could have been encoded in a smaller encoding.
-   * @default false
-   */
-  rejectLongNumbers?: boolean;
-
-  /**
-   * Reject any attempt to decode streaming CBOR.
-   * @default false
-   */
-  rejectStreaming?: boolean;
-
-  /**
-   * Reject simple values other than true, false, undefined, and null.
-   * @default false
-   */
-  rejectSimple?: boolean;
-}
 
 // TODO: Decode on dCBOR approach
 // export const dCBORdecodeOptions: ContainerOptions = {
@@ -109,7 +40,7 @@ export interface ContainerOptions extends DecodeStreamOptions {
  * This is used in various decoding applications to keep track of state.
  */
 export class CBORcontainer {
-  public static defaultOptions: Required<ContainerOptions> = {
+  public static defaultOptions: RequiredContainerOptions = {
     ...DecodeStream.defaultOptions,
     ParentType: CBORcontainer,
     boxed: false,
@@ -123,22 +54,22 @@ export class CBORcontainer {
     sortKeys: null,
   };
 
-  public parent: CBORcontainer | undefined;
+  public parent: Parent | undefined;
   public mt: number;
   public ai: number;
   public left: number;
   public offset: number;
   public count = 0;
   public children: Tag | unknown[] = [];
-  #opts: Required<ContainerOptions>;
+  #opts: RequiredContainerOptions;
   #encodedChildren: Uint8Array[] | null = null;
 
   // Only call new from create() and super().
-  protected constructor(
+  public constructor(
     mav: MtAiValue,
     left: number,
-    parent: CBORcontainer | undefined,
-    opts: Required<ContainerOptions>
+    parent: Parent | undefined,
+    opts: RequiredContainerOptions
   ) {
     [this.mt, this.ai, , this.offset] = mav;
     this.left = left;
@@ -177,8 +108,8 @@ export class CBORcontainer {
    */
   public static create(
     mav: MtAiValue,
-    parent: CBORcontainer | undefined,
-    opts: Required<ContainerOptions>,
+    parent: Parent | undefined,
+    opts: RequiredContainerOptions,
     stream: DecodeStream
   ): unknown {
     const [mt, ai, value, offset] = mav;
@@ -351,7 +282,7 @@ export class CBORcontainer {
       case MT.UTF8_STRING:
         return (this.children as string[]).join('');
       case MT.TAG:
-        return (this.children as Tag).decode();
+        return (this.children as Tag).decode(this.#opts);
     }
     throw new TypeError(`Invalid mt on convert: ${this.mt}`);
   }

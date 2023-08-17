@@ -1,4 +1,5 @@
-import {CBORcontainer, type ContainerOptions} from './container.js';
+import type {ContainerOptions, Parent} from './options.js';
+import {CBORcontainer} from './container.js';
 import {DecodeStream} from './decodeStream.js';
 import {SYMS} from './constants.js';
 
@@ -21,7 +22,7 @@ export function decode<T = unknown>(
   const stream = (typeof src === 'string') ?
     new DecodeStream(src, opts) :
     new DecodeStream(src, opts);
-  let parent: CBORcontainer | undefined = undefined;
+  let parent: Parent | undefined = undefined;
   let ret: unknown = SYMS.NOT_FOUND;
 
   for (const mav of stream) {

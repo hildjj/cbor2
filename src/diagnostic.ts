@@ -10,8 +10,9 @@
  * ```
  */
 
-import {CBORcontainer, type ContainerOptions} from './container.js';
 import {MT, SYMS} from './constants.js';
+import {CBORcontainer} from './container.js';
+import type {ContainerOptions} from './options.js';
 import {DecodeStream} from './decodeStream.js';
 import {u8toHex} from './utils.js';
 

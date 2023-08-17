@@ -1,7 +1,8 @@
+import type {RequiredContainerOptions} from './options.js';
 import type {RequiredEncodeOptions} from './encoder.js';
 import type {Writer} from './writer.js';
 
-export type TagDecoder = (tag: Tag) => unknown;
+export type TagDecoder = (tag: Tag, opts: RequiredContainerOptions) => unknown;
 
 /**
  * A CBOR tagged value.
@@ -45,12 +46,13 @@ export class Tag {
   /**
    * Convert this tagged value to a useful data type, if possible.
    *
+   * @param options Options for decoding.
    * @returns The converted value.
    */
-  public decode(): unknown {
+  public decode(options: RequiredContainerOptions): unknown {
     const decoder = Tag.#tags.get(this.tag);
     if (decoder) {
-      return decoder(this);
+      return decoder(this, options);
     }
     return this;
   }
