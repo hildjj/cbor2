@@ -1,5 +1,5 @@
 import {DecodeStream, type DecodeStreamOptions, type MtAiValue} from './decodeStream.js';
-import {type KeySorter, type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
+import type {KeySorter, KeyValueEncoded} from './sorts.js';
 import {MT, NUMBYTES} from './constants.js';
 import {u8concat, u8toHex} from './utils.js';
 import {CBORnumber} from './number.js';
@@ -87,15 +87,16 @@ export interface ContainerOptions extends DecodeStreamOptions {
   rejectSimple?: boolean;
 }
 
-export const dCBORdecodeOptions: ContainerOptions = {
-  reject65bitNegative: true,
-  rejectLongLoundNaN: true,
-  rejectLongNumbers: true,
-  rejectNegativeZero: true,
-  rejectSimple: true,
-  rejectStreaming: true,
-  sortKeys: sortCoreDeterministic,
-};
+// TODO: Decode on dCBOR approach
+// export const dCBORdecodeOptions: ContainerOptions = {
+//   reject65bitNegative: true,
+//   rejectLongLoundNaN: true,
+//   rejectLongNumbers: true,
+//   rejectNegativeZero: true,
+//   rejectSimple: true,
+//   rejectStreaming: true,
+//   sortKeys: sortCoreDeterministic,
+// };
 
 /**
  * A CBOR data item that can contain other items.  One of:

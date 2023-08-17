@@ -2,7 +2,7 @@ import '../lib/types.js';
 import * as cases from './cases.js';
 import {MT, SYMS} from '../lib/constants.js';
 import {
-  clearEncoder, dCBORencodeOptions, encode, registerEncoder, writeInt,
+  clearEncoder, encode, registerEncoder, writeInt,
 } from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
@@ -10,6 +10,16 @@ import assert from 'node:assert/strict';
 import {sortLengthFirstDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
 import util from 'node:util';
+
+export const dCBORencodeOptions = {
+  // Default: collapseBigInts: true,
+  checkDuplicateKeys: true,
+  avoidSimple: true,
+  avoidNegativeZero: true,
+  simplifyNaN: true,
+  avoid65bitNegative: true,
+  // Default: sortKeys: sortCoreDeterministic,
+};
 
 const BE = isBigEndian();
 

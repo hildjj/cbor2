@@ -1,10 +1,20 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
 import assert from 'node:assert/strict';
-import {dCBORdecodeOptions} from '../lib/container.js';
 import {decode} from '../lib/decoder.js';
 import {hexToU8} from '../lib/utils.js';
+import {sortCoreDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
+
+const dCBORdecodeOptions = {
+  reject65bitNegative: true,
+  rejectLongLoundNaN: true,
+  rejectLongNumbers: true,
+  rejectNegativeZero: true,
+  rejectSimple: true,
+  rejectStreaming: true,
+  sortKeys: sortCoreDeterministic,
+};
 
 function testAll(list, opts) {
   let count = 0;

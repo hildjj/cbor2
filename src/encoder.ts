@@ -81,15 +81,16 @@ export interface EncodeOptions extends WriterOptions {
   sortKeys?: KeySorter | null;
 }
 
-export const dCBORencodeOptions: EncodeOptions = {
-  // Default: collapseBigInts: true,
-  checkDuplicateKeys: true,
-  avoidSimple: true,
-  avoidNegativeZero: true,
-  simplifyNaN: true,
-  avoid65bitNegative: true,
-  // Default: sortKeys: sortCoreDeterministic,
-};
+// TODO: Decode on dCBOR approach
+// export const dCBORencodeOptions: EncodeOptions = {
+//   // Default: collapseBigInts: true,
+//   checkDuplicateKeys: true,
+//   avoidSimple: true,
+//   avoidNegativeZero: true,
+//   simplifyNaN: true,
+//   avoid65bitNegative: true,
+//   // Default: sortKeys: sortCoreDeterministic,
+// };
 
 export type RequiredEncodeOptions = Required<EncodeOptions>;
 
