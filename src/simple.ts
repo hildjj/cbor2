@@ -1,5 +1,6 @@
-import {type DoneEncoding, type RequiredEncodeOptions, writeInt} from './encoder.js';
+import {type DoneEncoding, writeInt} from './encoder.js';
 import {MT, SYMS} from './constants.js';
+import {RequiredEncodeOptions} from './options.js';
 import type {Writer} from './writer.js';
 
 /**

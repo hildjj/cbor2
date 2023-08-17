@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
-import {type KeySorter, type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
+import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
+import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
-import {Writer, type WriterOptions, WriterOptionsDefault} from './writer.js';
+import {Writer} from './writer.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
@@ -24,63 +25,6 @@ const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
 
-export interface EncodeOptions extends WriterOptions {
-  /**
-   * How to write TypedArrays?
-   * Null to use the current platform's endian-ness.
-   * True to always use little-endian.
-   * False to always use big-endian.
-   * @default null
-   */
-  forceEndian?: boolean | null;
-
-  /**
-   * Should bigints that can fit into normal integers be collapsed into
-   * normal integers?
-   * @default true
-   */
-  collapseBigInts?: boolean;
-
-  /**
-   * Check that Maps do not contain keys that encode to the same bytes as
-   * one another.
-   * @default false
-   */
-  checkDuplicateKeys?: boolean;
-
-  /**
-   * If true, error instead of encoding an instance of Simple.
-   * @default false
-   */
-  avoidSimple?: boolean;
-
-  /**
-   * If true, encode -0 as 0.
-   * @default false
-   */
-  avoidNegativeZero?: boolean;
-
-  /**
-   * Simplify all NaNs to 0xf97e00, even if the NaN has a payload or is
-   * signalling.
-   * @default false
-   */
-  simplifyNaN?: boolean;
-
-  /**
-   * Do not encode numbers in the range  [CBOR_NEGATIVE_INT_MAX ...
-   * STANDARD_NEGATIVE_INT_MAX - 1] as MT 1.
-   * @default false
-   */
-  avoid65bitNegative?: boolean;
-
-  /**
-   * How should the key/value pairs be sorted before an object or Map
-   * gets created?
-   */
-  sortKeys?: KeySorter | null;
-}
-
 // TODO: Decode on dCBOR approach
 // export const dCBORencodeOptions: EncodeOptions = {
 //   // Default: collapseBigInts: true,
@@ -92,10 +36,8 @@ export interface EncodeOptions extends WriterOptions {
 //   // Default: sortKeys: sortCoreDeterministic,
 // };
 
-export type RequiredEncodeOptions = Required<EncodeOptions>;
-
 export const EncodeOptionsDefault: RequiredEncodeOptions = {
-  ...WriterOptionsDefault,
+  ...Writer.defaultOptions,
   forceEndian: null,
   collapseBigInts: true,
   checkDuplicateKeys: false,

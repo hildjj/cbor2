@@ -10,20 +10,18 @@
  * @module
  */
 
-import {MT, SYMS, TAG} from './constants.js';
-// eslint-disable-next-line sort-imports -- two types messes up sort-imports
 import {
   type DoneEncoding,
-  type RequiredEncodeOptions,
   encode,
   registerEncoder,
   writeInt,
   writeTag,
   writeUnknown,
 } from './encoder.js';
+import {MT, SYMS, TAG} from './constants.js';
+import type {RequiredDecodeOptions, RequiredEncodeOptions} from './options.js';
 import {base64ToBytes, base64UrlToBytes, hexToU8, isBigEndian, u8toHex} from './utils.js';
 import {KeyValueEncoded} from './sorts.js';
-import type {RequiredContainerOptions} from './options.js';
 import {Tag} from './tag.js';
 import type {Writer} from './writer.js';
 import {decode} from './decoder.js';
@@ -96,7 +94,7 @@ registerEncoder(Date,
 function u8toBigInt(
   neg: boolean,
   tag: Tag,
-  opts: RequiredContainerOptions
+  opts: RequiredDecodeOptions
 ): bigint {
   assertU8(tag.contents);
   let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);

@@ -1,9 +1,9 @@
-import type {ContainerOptions, MtAiValue, Parent, RequiredContainerOptions} from './options.js';
-import type {KeySorter, KeyValueEncoded} from './sorts.js';
 import {MT, NUMBYTES} from './constants.js';
+import type {MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
 import {u8concat, u8toHex} from './utils.js';
 import {CBORnumber} from './number.js';
 import {DecodeStream} from './decodeStream.js';
+import type {KeyValueEncoded} from './sorts.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
 import {encode} from './encoder.js';
@@ -40,7 +40,7 @@ const EMPTY_BUF = new Uint8Array(0);
  * This is used in various decoding applications to keep track of state.
  */
 export class CBORcontainer {
-  public static defaultOptions: RequiredContainerOptions = {
+  public static defaultOptions: RequiredDecodeOptions = {
     ...DecodeStream.defaultOptions,
     ParentType: CBORcontainer,
     boxed: false,
@@ -61,7 +61,7 @@ export class CBORcontainer {
   public offset: number;
   public count = 0;
   public children: Tag | unknown[] = [];
-  #opts: RequiredContainerOptions;
+  #opts: RequiredDecodeOptions;
   #encodedChildren: Uint8Array[] | null = null;
 
   // Only call new from create() and super().
@@ -69,7 +69,7 @@ export class CBORcontainer {
     mav: MtAiValue,
     left: number,
     parent: Parent | undefined,
-    opts: RequiredContainerOptions
+    opts: RequiredDecodeOptions
   ) {
     [this.mt, this.ai, , this.offset] = mav;
     this.left = left;
@@ -109,7 +109,7 @@ export class CBORcontainer {
   public static create(
     mav: MtAiValue,
     parent: Parent | undefined,
-    opts: RequiredContainerOptions,
+    opts: RequiredDecodeOptions,
     stream: DecodeStream
   ): unknown {
     const [mt, ai, value, offset] = mav;

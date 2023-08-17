@@ -12,7 +12,7 @@
 
 import {MT, SYMS} from './constants.js';
 import {CBORcontainer} from './container.js';
-import type {ContainerOptions} from './options.js';
+import type {DecodeOptions} from './options.js';
 import {DecodeStream} from './decodeStream.js';
 import {u8toHex} from './utils.js';
 
@@ -65,9 +65,9 @@ function sized(ai: number, value: number): string {
  */
 export function diagnose(
   src: Uint8Array | string,
-  options?: ContainerOptions
+  options?: DecodeOptions
 ): string {
-  const opts: Required<ContainerOptions> = {
+  const opts: Required<DecodeOptions> = {
     ...CBORcontainer.defaultOptions,
     ...options,
     ParentType: DiagContainer,

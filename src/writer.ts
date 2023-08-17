@@ -1,22 +1,20 @@
-export interface WriterOptions {
-  chunkSize?: number;
-}
-
-export const WriterOptionsDefault: Required<WriterOptions> = {
-  chunkSize: 4096,
-};
+import type {RequiredWriterOptions, WriterOptions} from './options.js';
 
 // Don't inherit from stream.Writable, so it's more portable.
 export class Writer {
-  #opts: Required<WriterOptions>;
+  public static defaultOptions: RequiredWriterOptions = {
+    chunkSize: 4096,
+  };
+
+  #opts: RequiredWriterOptions;
   #chunks: Uint8Array[] = [];
   #dv: DataView | null = null; // View over last chunk.
   #offset = 0;
   #length = 0;
 
-  public constructor(opts = {}) {
+  public constructor(opts: WriterOptions = {}) {
     this.#opts = {
-      ...WriterOptionsDefault,
+      ...Writer.defaultOptions,
       ...opts,
     };
     if (this.#opts.chunkSize < 8) {

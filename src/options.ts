@@ -51,12 +51,12 @@ export interface ParentConstructor {
     mav: MtAiValue,
     left: number,
     parent: Parent | undefined,
-    opts: RequiredContainerOptions
+    opts: RequiredDecodeOptions
   ): Parent;
 }
 
 export interface Tg {
-  decode(options: RequiredContainerOptions): unknown;
+  decode(options: RequiredDecodeOptions): unknown;
 }
 
 export interface Parent {
@@ -73,7 +73,7 @@ export interface Parent {
 /**
  * Decoding options.
  */
-export interface ContainerOptions extends DecodeStreamOptions {
+export interface DecodeOptions extends DecodeStreamOptions {
   /**
    * What type to create when a container is needed?
    * @default CBORcontainer
@@ -140,4 +140,69 @@ export interface ContainerOptions extends DecodeStreamOptions {
   rejectSimple?: boolean;
 }
 
-export type RequiredContainerOptions = Required<ContainerOptions>;
+export type RequiredDecodeOptions = Required<DecodeOptions>;
+
+export interface WriterOptions {
+  chunkSize?: number;
+}
+
+export type RequiredWriterOptions = Required<WriterOptions>;
+
+export interface EncodeOptions extends WriterOptions {
+  /**
+   * How to write TypedArrays?
+   * Null to use the current platform's endian-ness.
+   * True to always use little-endian.
+   * False to always use big-endian.
+   * @default null
+   */
+  forceEndian?: boolean | null;
+
+  /**
+   * Should bigints that can fit into normal integers be collapsed into
+   * normal integers?
+   * @default true
+   */
+  collapseBigInts?: boolean;
+
+  /**
+   * Check that Maps do not contain keys that encode to the same bytes as
+   * one another.
+   * @default false
+   */
+  checkDuplicateKeys?: boolean;
+
+  /**
+   * If true, error instead of encoding an instance of Simple.
+   * @default false
+   */
+  avoidSimple?: boolean;
+
+  /**
+   * If true, encode -0 as 0.
+   * @default false
+   */
+  avoidNegativeZero?: boolean;
+
+  /**
+   * Simplify all NaNs to 0xf97e00, even if the NaN has a payload or is
+   * signalling.
+   * @default false
+   */
+  simplifyNaN?: boolean;
+
+  /**
+   * Do not encode numbers in the range  [CBOR_NEGATIVE_INT_MAX ...
+   * STANDARD_NEGATIVE_INT_MAX - 1] as MT 1.
+   * @default false
+   */
+  avoid65bitNegative?: boolean;
+
+  /**
+   * How should the key/value pairs be sorted before an object or Map
+   * gets created?
+   */
+  sortKeys?: KeySorter | null;
+}
+
+export type RequiredEncodeOptions = Required<EncodeOptions>;
