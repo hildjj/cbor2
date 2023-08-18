@@ -115,3 +115,16 @@ test('encodings', () => {
 
   assert.throws(() => decode('', {encoding: 'INVALID'}));
 });
+
+test('encode rejections', () => {
+  failAll([
+    '0xf97c00',
+    '0xf97e00',
+    '0xfada000000',
+    '0xfb7fefffffffffffff',
+  ], {rejectFloats: true});
+
+  failAll([
+    '0xc243000002',
+  ], {rejectBigInts: true});
+});

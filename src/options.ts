@@ -96,6 +96,20 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectDuplicateKeys?: boolean;
 
   /**
+   * If there are bigint (tag 2/3) in the incoming data, exit with an error.
+   * @default false
+   */
+  rejectBigInts?: boolean;
+
+  /**
+   * Reject any floating point numbers.  This might be used in profiles that
+   * are not expecting floats to prevent one from being coerced to an
+   * integer-looking number without the receiver knowing.
+   * @default false
+   */
+  rejectFloats?: boolean;
+
+  /**
    * If non-null, keys being decoded MUST be in this order.  Note that this is a
    * superset of rejectDuplicateKeys, and is slightly more efficient.
    * @default null
@@ -171,6 +185,18 @@ export interface EncodeOptions extends WriterOptions {
    * @default false
    */
   checkDuplicateKeys?: boolean;
+
+  /**
+   * Do not encode bigints that cannot be reduced to integers.
+   * @default false
+   */
+  avoidBigInts?: boolean;
+
+  /**
+   * Do not encode floating point numbers that cannot be reduced to integers.
+   * @default false
+   */
+  avoidFloats?: boolean;
 
   /**
    * If true, error instead of encoding an instance of Simple.

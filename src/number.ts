@@ -1,6 +1,9 @@
-import {MT, NUMBYTES, SYMS} from './constants.js';
+import {type DoneEncoding, writeBigInt} from './encoder.js';
+import {MT, NUMBYTES, SYMS, TAG} from './constants.js';
+import type {RequiredEncodeOptions} from './options.js';
 import type {Writer} from './writer.js';
 import {halfToUint} from './float.js';
+import {hexToU8} from './utils.js';
 
 /**
  * A wrapper around JavaScripts boxed Number type which maintains the major
@@ -69,7 +72,7 @@ export class CBORnumber extends Number {
           case NUMBYTES.TWO: {
             const v = halfToUint(val);
             if (v == null) {
-              throw new Error('Half does not fit');
+              throw new Error(`Half does not fit: ${val}`);
             } else {
               w.writeUint16(v);
             }
@@ -89,4 +92,54 @@ export class CBORnumber extends Number {
 
     return SYMS.DONE;
   }
+}
+
+function bigIntToCBOR(
+  this: BigInt,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): DoneEncoding | [number, unknown] {
+  // BigInt isn't a real constructor, so we can't subclass it like we can
+  // Number.
+
+  /* eslint-disable no-invalid-this */
+  const val = this.valueOf();
+  if (SYMS.BIGINT_LEN in this) {
+    if (opts.avoidBigInts) {
+      throw new Error(`Attempt to encode unwanted bigint: ${val}`);
+    }
+
+    // No reduction ever for boxed and be-symbol'd bigints.
+    const orig_len = this[SYMS.BIGINT_LEN] as number;
+    const neg = val < 0n;
+    const pos = neg ? -val - 1n : val;
+    const s = pos.toString(16);
+    const len = Math.max(
+      s.length + (s.length % 2 ? 1 : 0),
+      2 * orig_len
+    );
+    const buf = hexToU8(s.padStart(len, '0'));
+    return [neg ? TAG.NEG_BIGINT : TAG.POS_BIGINT, buf];
+  }
+
+  // Deliberately damaged box.
+  writeBigInt(val, w, opts);
+  return SYMS.DONE;
+  /* eslint-enable no-invalid-this */
+}
+
+/**
+ * Create a box for a bigint, tagged appropriately so it will round-trip
+ * exactly the same length that it came in.  The box should be usable anywhere
+ * that you would do math on unboxed bigints.
+ *
+ * @param bi Bigint.
+ * @param len Length of the original buffer holding the bigint.
+ * @returns Box.
+ */
+export function boxedBigInt(bi: bigint, len: number): BigInt {
+  const bio = Object(bi);
+  bio[SYMS.BIGINT_LEN] = len;
+  bio.toCBOR = bigIntToCBOR;
+  return bio;
 }

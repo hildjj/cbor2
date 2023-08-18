@@ -20,35 +20,36 @@ import {
 } from './encoder.js';
 import {MT, SYMS, TAG} from './constants.js';
 import type {RequiredDecodeOptions, RequiredEncodeOptions} from './options.js';
-import {base64ToBytes, base64UrlToBytes, hexToU8, isBigEndian, u8toHex} from './utils.js';
+import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
 import {KeyValueEncoded} from './sorts.js';
 import {Tag} from './tag.js';
 import type {Writer} from './writer.js';
+import {boxedBigInt} from './number.js';
 import {decode} from './decoder.js';
 
 const LE = !isBigEndian();
 
 function assertNumber(contents: any): asserts contents is number {
   if (typeof contents !== 'number') {
-    throw new Error('Expected number');
+    throw new Error(`Expected number: ${contents}`);
   }
 }
 
 function assertString(contents: any): asserts contents is string {
   if (typeof contents !== 'string') {
-    throw new Error('Expected string');
+    throw new Error(`Expected string: ${contents}`);
   }
 }
 
 function assertU8(contents: any): asserts contents is Uint8Array {
   if (!(contents instanceof Uint8Array)) {
-    throw new Error('Expected Uint8Array');
+    throw new Error(`Expected Uint8Array: ${contents}`);
   }
 }
 
 function assertArray(contents: any): asserts contents is any[] {
   if (!Array.isArray(contents)) {
-    throw new Error('Expected Array');
+    throw new Error(`Expected Array: ${contents}`);
   }
 }
 
@@ -95,42 +96,22 @@ function u8toBigInt(
   neg: boolean,
   tag: Tag,
   opts: RequiredDecodeOptions
-): bigint {
+): BigInt | bigint {
   assertU8(tag.contents);
+  if (opts.rejectBigInts) {
+    throw new Error(`Decoding unwanted big integer: ${tag}(h'${u8toHex(tag.contents)}')`);
+  }
   let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
   if (neg) {
     bi = -1n - bi;
   }
   if (opts.boxed) {
-    const bio = Object(bi);
-    bio[SYMS.BIGINT_LEN] = tag.contents.length;
-    return bio;
+    return boxedBigInt(bi, tag.contents.length);
   }
   return bi;
 }
 Tag.registerDecoder(TAG.POS_BIGINT, u8toBigInt.bind(null, false));
 Tag.registerDecoder(TAG.NEG_BIGINT, u8toBigInt.bind(null, true));
-// @ts-expect-error -- I know, `new BigInt` is impossible
-registerEncoder(BigInt, (
-  obj: BigInt,
-  w: Writer,
-  opts: RequiredEncodeOptions
-): DoneEncoding | unknown => {
-  const val = obj.valueOf();
-  if (SYMS.BIGINT_LEN in obj) {
-    const neg = val < 0n;
-    const pos = neg ? -val - 1n : val;
-
-    writeTag(neg ? TAG.NEG_BIGINT : TAG.POS_BIGINT, w);
-    const s = pos.toString(16).padStart(2 * (obj[SYMS.BIGINT_LEN] as number));
-    const buf = hexToU8(s);
-    writeInt(buf.length, w, MT.BYTE_STRING);
-    w.write(buf);
-    return SYMS.DONE;
-  }
-
-  return val;
-});
 
 // 24: Encoded CBOR data item; see Section 3.4.5.1
 Tag.registerDecoder(TAG.CBOR, (tag: Tag): any => {
@@ -186,7 +167,7 @@ Tag.registerDecoder(21065, (tag: Tag): RegExp => {
 Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
   assertArray(tag.contents);
   if (tag.contents.length < 1 || tag.contents.length > 2) {
-    throw new Error('Invalid RegExp Array');
+    throw new Error(`Invalid RegExp Array: ${tag.contents}`);
   }
   return new RegExp(tag.contents[0], tag.contents[1]);
 });

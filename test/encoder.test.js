@@ -7,6 +7,7 @@ import {
 import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
+import {boxedBigInt} from '../lib/number.js';
 import {sortLengthFirstDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
 import util from 'node:util';
@@ -152,4 +153,24 @@ test('encode dCBOR', () => {
     [-0x8000000000000000n, '', '0x3b7fffffffffffffff'],
     [-0x8000000000000001n, '', '0xc3488000000000000000'],
   ], dCBORencodeOptions);
+});
+
+test('damaged bigint box', () => {
+  const bi = boxedBigInt(2n, 3);
+  delete bi[SYMS.BIGINT_LEN];
+  testAll([
+    [bi, '', '0x02'],
+  ]);
+});
+
+test('encode rejections', () => {
+  failAll([
+    2n,
+    -2n,
+    boxedBigInt(2n, 3),
+  ], {collapseBigInts: false, avoidBigInts: true});
+  failAll([
+    2.1,
+    -2.1,
+  ], {avoidFloats: true});
 });

@@ -45,7 +45,9 @@ export class CBORcontainer {
     ParentType: CBORcontainer,
     boxed: false,
     reject65bitNegative: false,
+    rejectBigInts: false,
     rejectDuplicateKeys: false,
+    rejectFloats: false,
     rejectLongLoundNaN: false,
     rejectLongNumbers: false,
     rejectNegativeZero: false,
@@ -136,6 +138,9 @@ export class CBORcontainer {
         return value;
       case MT.SIMPLE_FLOAT:
         if (ai > NUMBYTES.ONE) {
+          if (opts.rejectFloats) {
+            throw new Error(`Decoding unwanted floating point number: ${value}`);
+          }
           if (opts.rejectNegativeZero && Object.is(value, -0)) {
             throw new Error('Decoding negative zero');
           }
@@ -149,7 +154,7 @@ export class CBORcontainer {
             // No opts needed.
             const buf = encode(value, {chunkSize: 9});
             if ((buf[0] >> 5) !== mt) {
-              throw new Error('Should have been encoded as int, not float');
+              throw new Error(`Should have been encoded as int, not float: ${value}`);
             }
             // Known safe:
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

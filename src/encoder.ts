@@ -41,6 +41,8 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   forceEndian: null,
   collapseBigInts: true,
   checkDuplicateKeys: false,
+  avoidBigInts: false,
+  avoidFloats: false,
   avoidSimple: false,
   avoidNegativeZero: false,
   simplifyNaN: false,
@@ -125,11 +127,16 @@ export interface ToJSON {
  * @param val Floating point number.
  * @param w Writer.
  * @param opts Encoding options.
+ * @throws On unwanted float.
  */
 export function writeFloat(
-  val: number, w: Writer,
+  val: number,
+  w: Writer,
   opts: RequiredEncodeOptions
 ): void {
+  if (opts.avoidFloats) {
+    throw new Error(`Attempt to encode an unwanted floating point number: ${val}`);
+  }
   if (opts.simplifyNaN && isNaN(val)) {
     w.writeUint8(HALF);
     w.writeUint16(0x7e00);
@@ -166,7 +173,7 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
   const neg = val < 0;
   const pos = neg ? -val - 1 : val;
   if (neg && mt) {
-    throw new TypeError('Negative size');
+    throw new TypeError(`Negative size: ${val}`);
   }
 
   mt ??= neg ? MT.NEG_INT : MT.POS_INT;
@@ -190,7 +197,15 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
   }
 }
 
-function writeBigInt(
+/**
+ * Intended for internal use.
+ *
+ * @param val Bigint to write.
+ * @param w Writer.
+ * @param opts Options.
+ * @throws On unwanted bigint.
+ */
+export function writeBigInt(
   val: bigint,
   w: Writer,
   opts: RequiredEncodeOptions
@@ -213,6 +228,10 @@ function writeBigInt(
       w.writeBigUint64(pos);
       return;
     }
+  }
+
+  if (opts.avoidBigInts) {
+    throw new Error(`Attempt to encode unwanted bigint: ${val}`);
   }
 
   const tag = neg ? TAG.NEG_BIGINT : TAG.POS_BIGINT;

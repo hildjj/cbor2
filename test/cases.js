@@ -1,5 +1,5 @@
+import {CBORnumber, boxedBigInt} from '../lib/number.js';
 import {MT, NUMBYTES} from '../lib/constants.js';
-import {CBORnumber} from '../lib/number.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
 import {hexToU8} from '../lib/utils.js';
@@ -686,6 +686,12 @@ export const goodBoxed = [
   [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.EIGHT),
     '-12_3',
     '0x3b000000000000000b'],
+  [boxedBigInt(2n, 3), "2(h'000002')", '0xc243000002'],
+  [boxedBigInt(-2n, 3), "3(h'000001')", '0xc343000001'],
+  [boxedBigInt(2n, 4), "2(h'00000002')", '0xc24400000002'],
+  [boxedBigInt(-2n, 4), "3(h'00000001')", '0xc34400000001'],
+  [boxedBigInt(16n, 4), "2(h'00000010')", '0xc24400000010'],
+  [boxedBigInt(-17n, 4), "3(h'00000010')", '0xc34400000010'],
 ];
 
 export const badBoxed = [
