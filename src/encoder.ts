@@ -28,11 +28,12 @@ const TE = new TextEncoder();
 // TODO: Decode on dCBOR approach
 // export const dCBORencodeOptions: EncodeOptions = {
 //   // Default: collapseBigInts: true,
-//   checkDuplicateKeys: true,
-//   avoidSimple: true,
-//   avoidNegativeZero: true,
-//   simplifyNaN: true,
 //   avoid65bitNegative: true,
+//   avoidNegativeZero: true,
+//   avoidSimple: true,
+//   avoidUndefined: true,
+//   checkDuplicateKeys: true,
+//   simplifyNaN: true,
 //   // Default: sortKeys: sortCoreDeterministic,
 // };
 
@@ -45,6 +46,7 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   avoidFloats: false,
   avoidSimple: false,
   avoidNegativeZero: false,
+  avoidUndefined: false,
   simplifyNaN: false,
   avoid65bitNegative: false,
   sortKeys: sortCoreDeterministic,
@@ -401,7 +403,12 @@ export function writeUnknown(
     case 'bigint': writeBigInt(val, w, opts); break;
     case 'string': writeString(val, w); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;
-    case 'undefined': w.writeUint8(UNDEFINED); break;
+    case 'undefined':
+      if (opts.avoidUndefined) {
+        throw new Error('Attempt to encode unwanted undefined.');
+      }
+      w.writeUint8(UNDEFINED);
+      break;
     case 'object': writeObject(val, w, opts); break;
     case 'symbol':
       // TODO: Add pluggable support for symbols

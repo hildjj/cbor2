@@ -14,11 +14,12 @@ import util from 'node:util';
 
 export const dCBORencodeOptions = {
   // Default: collapseBigInts: true,
-  checkDuplicateKeys: true,
-  avoidSimple: true,
-  avoidNegativeZero: true,
-  simplifyNaN: true,
   avoid65bitNegative: true,
+  avoidNegativeZero: true,
+  avoidSimple: true,
+  avoidUndefined: true,
+  checkDuplicateKeys: true,
+  simplifyNaN: true,
   // Default: sortKeys: sortCoreDeterministic,
 };
 

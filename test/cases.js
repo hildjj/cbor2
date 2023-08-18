@@ -960,6 +960,7 @@ export const encodeGood = [
 export const encodeBadDCBOR = [
   new Map([[[], 0], [[], 1]]),
   new Simple(0),
+  undefined,
 ];
 
 export const collapseBigIntegers = [
@@ -1035,8 +1036,9 @@ export const decodeBadDcbor = [
   '0xfb7ff0000000000000',
   '0xfbfff0000000000000',
   '0xfa7fc00000', // Long NaNs
-  '0xfa7ff8000000000000',
+  '0xfb7ff8000000000000',
   '0xf97e01', // Signalling NaN
+  '0xfb7ff8000000000001',
   '0x3b8000000000000000', // 65bit neg
   // Should be smaller
   '0x1817',
@@ -1056,6 +1058,8 @@ export const decodeBadDcbor = [
   '0xbfff',
   // Simple
   '0xe0',
+  // Undefined
+  '0xf7',
 ];
 
 const HEX = /0x(?<hex>[0-9a-f]+)$/i;

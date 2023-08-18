@@ -13,6 +13,7 @@ const dCBORdecodeOptions = {
   rejectNegativeZero: true,
   rejectSimple: true,
   rejectStreaming: true,
+  rejectUndefined: true,
   sortKeys: sortCoreDeterministic,
 };
 

@@ -152,6 +152,12 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * @default false
    */
   rejectSimple?: boolean;
+
+  /**
+   * Reject the `undefined` simple value.  Usually used with rejectSimple.
+   * @default false
+   */
+  rejectUndefined?: boolean;
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
@@ -209,6 +215,12 @@ export interface EncodeOptions extends WriterOptions {
    * @default false
    */
   avoidNegativeZero?: boolean;
+
+  /**
+   * If true, error instead of encoding `undefined`.
+   * @default false
+   */
+  avoidUndefined?: boolean;
 
   /**
    * Simplify all NaNs to 0xf97e00, even if the NaN has a payload or is

@@ -53,6 +53,7 @@ export class CBORcontainer {
     rejectNegativeZero: false,
     rejectSimple: false,
     rejectStreaming: false,
+    rejectUndefined: false,
     sortKeys: null,
   };
 
@@ -165,9 +166,16 @@ export class CBORcontainer {
           if (opts.boxed) {
             return new CBORnumber(value as number, mt, ai);
           }
-        } else if (opts.rejectSimple) {
-          if (value instanceof Simple) {
-            throw new Error(`Invalid simple value: ${value}`);
+        } else {
+          if (opts.rejectSimple) {
+            if (value instanceof Simple) {
+              throw new Error(`Invalid simple value: ${value}`);
+            }
+          }
+          if (opts.rejectUndefined) {
+            if (value === undefined) {
+              throw new Error('Unexpected undefined');
+            }
           }
         }
         return value;
