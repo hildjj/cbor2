@@ -12,7 +12,12 @@ export function parseHalf(buf: Uint8Array, offset = 0): number {
   if (!exp) {
     return sign * 5.9604644775390625e-8 * mant;
   } else if (exp === 0x1f) {
-    return sign * (mant ? NaN : Infinity);
+    if (mant) {
+      // Always simplify NaNs, since non-simple NaNs are different in different
+      // JS engines.
+      return NaN;
+    }
+    return sign * Infinity;
   }
   return sign * (2 ** (exp - 25)) * (1024 + mant);
 }
@@ -21,15 +26,15 @@ export function parseHalf(buf: Uint8Array, offset = 0): number {
  * Return a big-endian unsigned integer that has the same internal layout
  * as the given number as a float16, if it fits.  Otherwise returns null.
  *
- * @param half The number to convert to a half-precision float.
+ * @param half The number to convert to a half-precision float.  Must fit into
+ *   at least a float32.
  * @returns Number on success, otherwise null.  Make sure to check with
  *   `=== null`, in case this returns 0, which is valid.
  */
 export function halfToUint(half: number): number | null {
   // Translation of cn-cbor's C code (from Carsten Borman):
 
-  const u32 = new Uint8Array(4);
-  const dvu32 = new DataView(u32.buffer, u32.byteOffset, u32.byteLength);
+  const dvu32 = new DataView(new ArrayBuffer(4));
   dvu32.setFloat32(0, half, false);
   const u = dvu32.getUint32(0, false);
 
@@ -57,12 +62,9 @@ export function halfToUint(half: number): number | null {
     }
     s16 += ((mant + 0x800000) >> (126 - exp));
   } else if (exp === 255) {
-    // NaN and Infinities
-    if (mant === 0) { // +/- Infinity
-      s16 += 0x7c00; // Keep sign
-    } else { // NaN
-      s16 = 0x7e00;
-    }
+    // NaN and Infinities.
+    s16 |= 0x7c00;
+    s16 |= mant >> 13;
   } else {
     // Outside of half range.
     return null;

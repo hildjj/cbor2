@@ -20,7 +20,7 @@ const EMPTY_BUF = new Uint8Array(0);
 
 // TODO: Decode on dCBOR approach
 // export const dCBORdecodeOptions: ContainerOptions = {
-//   reject65bitNegative: true,
+//   rejectLargeNegatives: true,
 //   rejectLongLoundNaN: true,
 //   rejectLongNumbers: true,
 //   rejectNegativeZero: true,
@@ -44,10 +44,11 @@ export class CBORcontainer {
     ...DecodeStream.defaultOptions,
     ParentType: CBORcontainer,
     boxed: false,
-    reject65bitNegative: false,
+    rejectLargeNegatives: false,
     rejectBigInts: false,
     rejectDuplicateKeys: false,
     rejectFloats: false,
+    rejectInts: false,
     rejectLongLoundNaN: false,
     rejectLongNumbers: false,
     rejectNegativeZero: false,
@@ -119,6 +120,9 @@ export class CBORcontainer {
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
+        if (opts.rejectInts) {
+          throw new Error(`Unexpected integer: ${value}`);
+        }
         if (opts.rejectLongNumbers && (ai > NUMBYTES.ZERO)) {
           // No opts needed
           const buf = encode(value, {chunkSize: 9});
@@ -129,7 +133,7 @@ export class CBORcontainer {
             throw new Error(`Int should have been encoded shorter: ${value}`);
           }
         }
-        if (opts.reject65bitNegative &&
+        if (opts.rejectLargeNegatives &&
             (value as number < -0x8000000000000000n)) {
           throw new Error(`Invalid 65bit negative number: ${value}`);
         }

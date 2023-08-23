@@ -21,6 +21,20 @@ h3 {
   margin: 0 10px 5px 10px;
 }
 
+h4 {
+  margin: 0 10px 5px 10px;
+}
+
+li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+li * {
+  margin: 3px;
+}
+
 textarea {
   margin: 0 10px 0 10px;
 }

@@ -58,7 +58,7 @@ registerEncoder(Map, (obj: unknown, w: Writer, opts: RequiredEncodeOptions) => {
   const kve = [...m.entries()].map<KeyValueEncoded>(
     e => [e[0], e[1], encode(e[0], opts)]
   );
-  if (opts.checkDuplicateKeys) {
+  if (opts.rejectDuplicateKeys) {
     const dups = new Set<string>();
     for (const [_k, _v, e] of kve) {
       const hex = u8toHex(e);
@@ -101,9 +101,17 @@ function u8toBigInt(
   if (opts.rejectBigInts) {
     throw new Error(`Decoding unwanted big integer: ${tag}(h'${u8toHex(tag.contents)}')`);
   }
+  if (opts.rejectLongNumbers && tag.contents[0] === 0) {
+    throw new Error(`Decoding overly-large bigint: ${tag}(h'${u8toHex(tag.contents)}`);
+  }
   let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
   if (neg) {
     bi = -1n - bi;
+  }
+  if (opts.rejectLongNumbers &&
+    (bi >= Number.MIN_SAFE_INTEGER) &&
+    (bi <= Number.MAX_SAFE_INTEGER)) {
+    throw new Error(`Decoding bigint that could have been int: ${bi}n`);
   }
   if (opts.boxed) {
     return boxedBigInt(bi, tag.contents.length);

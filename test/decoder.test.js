@@ -7,7 +7,7 @@ import {sortCoreDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
 
 const dCBORdecodeOptions = {
-  reject65bitNegative: true,
+  rejectLargeNegatives: true,
   rejectLongLoundNaN: true,
   rejectLongNumbers: true,
   rejectNegativeZero: true,
@@ -128,4 +128,9 @@ test('encode rejections', () => {
   failAll([
     '0xc243000002',
   ], {rejectBigInts: true});
+
+  failAll([
+    '0x00',
+    '0x20',
+  ], {rejectInts: true});
 });

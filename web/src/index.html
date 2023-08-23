@@ -24,7 +24,6 @@
       <textarea id="input-text" rows="30" cols="50" autofocus>{
   "type": "here"
 }</textarea>
-      <div class="power"><input type="checkbox">dCBOR</input></div>
     </div>
     <div class="output">
       <h3>Output</h3>
@@ -44,6 +43,132 @@
         Powered by <a href="https://github.com/hildjj/cbor2/">cbor2</a>.
         <a href="https://github.com/hildjj/cbor2/tree/main/web">Source</a>
       </div>
+    </div>
+    <div class="options">
+      <h3>Options</h3>
+      <div class="cmd">&nbsp;</div>
+      <h4>Encoding</h4>
+      <ul id="encodingOpts">
+        <li>
+          <input type="checkbox" id="avoidInts">
+          <label for="avoidInts">avoidInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="collapseBigInts" checked>
+          <label for="collapseBigInts">collapseBigInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="float64">
+          <label for="float64">float64</label>
+        </li>
+        <li>
+          <label for="forceEndian">forceEndian</label>
+          <select id="forceEndian">
+            <option selected>null</option>
+            <option>true</option>
+            <option>false</option>
+          </select>
+        </li>
+        <li>
+          <input type="checkbox" id="ignoreBoxes">
+          <label for="ignoreBoxes">ignoreBoxes</label>
+        </li>
+        <li>
+          <input type="checkbox" id="largeNegativeAsBigInt">
+          <label for="largeNegativeAsBigInt">largeNegativeAsBigInt</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectBigInts">
+          <label for="rejectBigInts">rejectBigInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectCustomSimples">
+          <label for="rejectCustomSimples">rejectCustomSimples</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectDuplicateKeys">
+          <label for="rejectDuplicateKeys">rejectDuplicateKeys</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectFloats">
+          <label for="rejectFloats">rejectFloats</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectUndefined">
+          <label for="rejectUndefined">rejectUndefined</label>
+        </li>
+        <li>
+          <input type="checkbox" id="simplifyNegativeZero">
+          <label for="simplifyNegativeZero">simplifyNegativeZero</label>
+        </li>
+        <li>
+          <label for="sortKeysEncode">sortKeys</label>
+          <select id="sortKeysEncode">
+            <option selected>null</option>
+            <option>coreDeterministic</option>
+            <option>lengthFirstDeterministic</option>
+          </select>
+        </li>
+      </ul>
+      <h4>Decoding</h4>
+      <ul id="decodingOpts">
+        <li>
+          <input type="checkbox" id="boxed">
+          <label for="boxed">boxed</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectLargeNegatives">
+          <label for="rejectLargeNegatives">rejectLargeNegatives</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectBigInts">
+          <label for="rejectBigInts">rejectBigInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectDuplicateKeys">
+          <label for="rejectDuplicateKeys">rejectDuplicateKeys</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectFloats">
+          <label for="rejectFloats">rejectFloats</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectInts">
+          <label for="rejectInts">rejectInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectLongLoundNaN">
+          <label for="rejectLongLoundNaN">rejectLongLoundNaN</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectLongNumbers">
+          <label for="rejectLongNumbers">rejectLongNumbers</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectNegativeZero">
+          <label for="rejectNegativeZero">rejectNegativeZero</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectSimple">
+          <label for="rejectSimple">rejectSimple</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectStreaming">
+          <label for="rejectStreaming">rejectStreaming</label>
+        </li>
+        <li>
+          <input type="checkbox" id="rejectUndefined">
+          <label for="rejectUndefined">rejectUndefined</label>
+        </li>
+        <li>
+          <label for="sortKeysDecode">sortKeys</label>
+          <select id="sortKeysDecode">
+            <option selected>null</option>
+            <option>coreDeterministic</option>
+            <option>lengthFirstDeterministic</option>
+          </select>
+        </li>
+      </ul>
     </div>
   </div>
 </body>

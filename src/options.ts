@@ -88,18 +88,25 @@ export interface DecodeOptions extends DecodeStreamOptions {
   boxed?: boolean;
 
   /**
-   * If there are duplicate keys in a map, should we throw an exception? Note:
-   * this is more compute-intensive than expected at the moment, but that will
-   * be fixed eventually.
+   * Reject negative integers in the range [CBOR_NEGATIVE_INT_MAX ...
+   * STANDARD_NEGATIVE_INT_MAX - 1].
    * @default false
    */
-  rejectDuplicateKeys?: boolean;
+  rejectLargeNegatives?: boolean;
 
   /**
    * If there are bigint (tag 2/3) in the incoming data, exit with an error.
    * @default false
    */
   rejectBigInts?: boolean;
+
+  /**
+   * If there are duplicate keys in a map, should we throw an exception? Note:
+   * this is more compute-intensive than expected at the moment, but that will
+   * be fixed eventually.
+   * @default false
+   */
+  rejectDuplicateKeys?: boolean;
 
   /**
    * Reject any floating point numbers.  This might be used in profiles that
@@ -110,17 +117,11 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectFloats?: boolean;
 
   /**
-   * If non-null, keys being decoded MUST be in this order.  Note that this is a
-   * superset of rejectDuplicateKeys, and is slightly more efficient.
-   * @default null
-   */
-  sortKeys?: KeySorter | null;
-
-  /**
-   * If negative zero (-0) is received, throw an error.
+   * Reject any mt 0/1 numbers.  This might be used in profiles that expect
+   * all numbers to be encoded as floating point.
    * @default false
    */
-  rejectNegativeZero?: boolean;
+  rejectInts?: boolean;
 
   /**
    * Reject NaNs that are not encoded as 0x7e00.
@@ -129,23 +130,16 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectLongLoundNaN?: boolean;
 
   /**
-   * Reject negative integers in the range [CBOR_NEGATIVE_INT_MAX ...
-   * STANDARD_NEGATIVE_INT_MAX - 1].
-   * @default false
-   */
-  reject65bitNegative?: boolean;
-
-  /**
    * Reject numbers that could have been encoded in a smaller encoding.
    * @default false
    */
   rejectLongNumbers?: boolean;
 
   /**
-   * Reject any attempt to decode streaming CBOR.
+   * If negative zero (-0) is received, throw an error.
    * @default false
    */
-  rejectStreaming?: boolean;
+  rejectNegativeZero?: boolean;
 
   /**
    * Reject simple values other than true, false, undefined, and null.
@@ -154,10 +148,23 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectSimple?: boolean;
 
   /**
+   * Reject any attempt to decode streaming CBOR.
+   * @default false
+   */
+  rejectStreaming?: boolean;
+
+  /**
    * Reject the `undefined` simple value.  Usually used with rejectSimple.
    * @default false
    */
   rejectUndefined?: boolean;
+
+  /**
+   * If non-null, keys being decoded MUST be in this order.  Note that this is a
+   * superset of rejectDuplicateKeys, and is slightly more efficient.
+   * @default null
+   */
+  sortKeys?: KeySorter | null;
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
@@ -170,13 +177,10 @@ export type RequiredWriterOptions = Required<WriterOptions>;
 
 export interface EncodeOptions extends WriterOptions {
   /**
-   * How to write TypedArrays?
-   * Null to use the current platform's endian-ness.
-   * True to always use little-endian.
-   * False to always use big-endian.
-   * @default null
+   * Encode all integers as floating point numbers of the correct size.
+   * @default false
    */
-  forceEndian?: boolean | null;
+  avoidInts?: boolean;
 
   /**
    * Should bigints that can fit into normal integers be collapsed into
@@ -186,59 +190,75 @@ export interface EncodeOptions extends WriterOptions {
   collapseBigInts?: boolean;
 
   /**
-   * Check that Maps do not contain keys that encode to the same bytes as
-   * one another.
+   * When writing floats, always use the 64-bit version.  Often combined with
+   * `avoidInts`.
    * @default false
    */
-  checkDuplicateKeys?: boolean;
+  float64?: boolean;
 
   /**
-   * Do not encode bigints that cannot be reduced to integers.
-   * @default false
+   * How to write TypedArrays?
+   * Null to use the current platform's endian-ness.
+   * True to always use little-endian.
+   * False to always use big-endian.
+   * @default null
    */
-  avoidBigInts?: boolean;
+  forceEndian?: boolean | null;
 
   /**
-   * Do not encode floating point numbers that cannot be reduced to integers.
+   * Ignore sizes on boxed numbers; they might be overly-large.
    * @default false
    */
-  avoidFloats?: boolean;
-
-  /**
-   * If true, error instead of encoding an instance of Simple.
-   * @default false
-   */
-  avoidSimple?: boolean;
-
-  /**
-   * If true, encode -0 as 0.
-   * @default false
-   */
-  avoidNegativeZero?: boolean;
-
-  /**
-   * If true, error instead of encoding `undefined`.
-   * @default false
-   */
-  avoidUndefined?: boolean;
-
-  /**
-   * Simplify all NaNs to 0xf97e00, even if the NaN has a payload or is
-   * signalling.
-   * @default false
-   */
-  simplifyNaN?: boolean;
+  ignoreBoxes?: boolean;
 
   /**
    * Do not encode numbers in the range  [CBOR_NEGATIVE_INT_MAX ...
    * STANDARD_NEGATIVE_INT_MAX - 1] as MT 1.
    * @default false
    */
-  avoid65bitNegative?: boolean;
+  largeNegativeAsBigInt?: boolean;
+
+  /**
+   * Do not encode bigints that cannot be reduced to integers.
+   * @default false
+   */
+  rejectBigInts?: boolean;
+
+  /**
+   * If true, error instead of encoding an instance of Simple.
+   * @default false
+   */
+  rejectCustomSimples?: boolean;
+
+  /**
+   * Check that Maps do not contain keys that encode to the same bytes as
+   * one another.  This is possible in a Map with object keys.
+   * @default false
+   */
+  rejectDuplicateKeys?: boolean;
+
+  /**
+   * Do not encode floating point numbers that cannot be reduced to integers.
+   * @default false
+   */
+  rejectFloats?: boolean;
+
+  /**
+   * If true, error instead of encoding `undefined`.
+   * @default false
+   */
+  rejectUndefined?: boolean;
+
+  /**
+   * If true, encode -0 as 0.
+   * @default false
+   */
+  simplifyNegativeZero?: boolean;
 
   /**
    * How should the key/value pairs be sorted before an object or Map
-   * gets created?
+   * gets created?  If null, no sorting is performed.
+   * @default null
    */
   sortKeys?: KeySorter | null;
 }

@@ -1,4 +1,4 @@
-import {type DoneEncoding, writeBigInt} from './encoder.js';
+import {type DoneEncoding, writeBigInt, writeNumber} from './encoder.js';
 import {MT, NUMBYTES, SYMS, TAG} from './constants.js';
 import type {RequiredEncodeOptions} from './options.js';
 import type {Writer} from './writer.js';
@@ -34,11 +34,15 @@ export class CBORnumber extends Number {
     this.#ai = ai;
   }
 
-  public toCBOR(w: Writer): typeof SYMS.DONE {
+  public toCBOR(w: Writer, opts: RequiredEncodeOptions): typeof SYMS.DONE {
+    let val = this.valueOf();
+    if (opts.ignoreBoxes) {
+      writeNumber(val, w, opts);
+      return SYMS.DONE;
+    }
     if (this.#ai !== NUMBYTES.ZERO) {
       w.writeUint8((this.#mt << 5) | this.#ai);
     }
-    let val = this.valueOf();
     switch (this.#mt) {
       case MT.NEG_INT:
         val = -1 - val;
@@ -104,8 +108,8 @@ function bigIntToCBOR(
 
   /* eslint-disable no-invalid-this */
   const val = this.valueOf();
-  if (SYMS.BIGINT_LEN in this) {
-    if (opts.avoidBigInts) {
+  if (!opts.ignoreBoxes && (SYMS.BIGINT_LEN in this)) {
+    if (opts.rejectBigInts) {
       throw new Error(`Attempt to encode unwanted bigint: ${val}`);
     }
 
@@ -122,7 +126,6 @@ function bigIntToCBOR(
     return [neg ? TAG.NEG_BIGINT : TAG.POS_BIGINT, buf];
   }
 
-  // Deliberately damaged box.
   writeBigInt(val, w, opts);
   return SYMS.DONE;
   /* eslint-enable no-invalid-this */

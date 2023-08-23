@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
-import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
+import type {KeyValueEncoded} from './sorts.js';
 import {Writer} from './writer.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
@@ -28,28 +28,30 @@ const TE = new TextEncoder();
 // TODO: Decode on dCBOR approach
 // export const dCBORencodeOptions: EncodeOptions = {
 //   // Default: collapseBigInts: true,
-//   avoid65bitNegative: true,
-//   avoidNegativeZero: true,
-//   avoidSimple: true,
-//   avoidUndefined: true,
-//   checkDuplicateKeys: true,
-//   simplifyNaN: true,
-//   // Default: sortKeys: sortCoreDeterministic,
+//   ignoreBoxes: true,
+//   largeNegativeAsBigInt: true,
+//   rejectCustomSimples: true,
+//   rejectDuplicateKeys: true,
+//   rejectUndefined: true,
+//   simplifyNegativeZero: true,
+//   sortKeys: sortCoreDeterministic,
 // };
 
 export const EncodeOptionsDefault: RequiredEncodeOptions = {
   ...Writer.defaultOptions,
-  forceEndian: null,
+  avoidInts: false,
   collapseBigInts: true,
-  checkDuplicateKeys: false,
-  avoidBigInts: false,
-  avoidFloats: false,
-  avoidSimple: false,
-  avoidNegativeZero: false,
-  avoidUndefined: false,
-  simplifyNaN: false,
-  avoid65bitNegative: false,
-  sortKeys: sortCoreDeterministic,
+  float64: false,
+  forceEndian: null,
+  ignoreBoxes: false,
+  largeNegativeAsBigInt: false,
+  rejectBigInts: false,
+  rejectCustomSimples: false,
+  rejectDuplicateKeys: false,
+  rejectFloats: false,
+  rejectUndefined: false,
+  simplifyNegativeZero: false,
+  sortKeys: null,
 };
 
 /**
@@ -136,13 +138,17 @@ export function writeFloat(
   w: Writer,
   opts: RequiredEncodeOptions
 ): void {
-  if (opts.avoidFloats) {
+  if (opts.rejectFloats) {
     throw new Error(`Attempt to encode an unwanted floating point number: ${val}`);
   }
-  if (opts.simplifyNaN && isNaN(val)) {
+  if (isNaN(val)) {
+    // NaNs always get simplified, because ECMA-262 says that implementations
+    // don't have to be careful with signalling NaNs or those with payloads,
+    // and v8/SpiderMonkey make different choices.  v8 has some support,
+    // but mangles 32-bit signaling NaNs.
     w.writeUint8(HALF);
     w.writeUint16(0x7e00);
-  } else if (isNaN(val) || (Math.fround(val) === val)) {
+  } else if (!opts.float64 && (Math.fround(val) === val)) {
     // It's at least as small as f32.
     const half = halfToUint(val);
     if (half === null) {
@@ -216,7 +222,7 @@ export function writeBigInt(
   const pos = neg ? -val - 1n : val;
 
   if (opts.collapseBigInts &&
-      (!opts.avoid65bitNegative || (val >= -0x8000000000000000n))) {
+      (!opts.largeNegativeAsBigInt || (val >= -0x8000000000000000n))) {
     if (pos <= 0xffffffffn) {
       // Always collapse small bigints
       writeInt(Number(val), w);
@@ -232,7 +238,7 @@ export function writeBigInt(
     }
   }
 
-  if (opts.avoidBigInts) {
+  if (opts.rejectBigInts) {
     throw new Error(`Attempt to encode unwanted bigint: ${val}`);
   }
 
@@ -261,12 +267,16 @@ export function writeNumber(
   opts: RequiredEncodeOptions
 ): void {
   if (Object.is(val, -0)) {
-    if (opts.avoidNegativeZero) {
-      writeInt(0, w);
+    if (opts.simplifyNegativeZero) {
+      if (opts.avoidInts) {
+        writeFloat(0, w, opts);
+      } else {
+        writeInt(0, w);
+      }
     } else {
       writeFloat(val, w, opts);
     }
-  } else if (Number.isSafeInteger(val)) {
+  } else if (!opts.avoidInts && Number.isSafeInteger(val)) {
     writeInt(val, w);
   } else {
     writeFloat(val, w, opts);
@@ -404,7 +414,7 @@ export function writeUnknown(
     case 'string': writeString(val, w); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;
     case 'undefined':
-      if (opts.avoidUndefined) {
+      if (opts.rejectUndefined) {
         throw new Error('Attempt to encode unwanted undefined.');
       }
       w.writeUint8(UNDEFINED);

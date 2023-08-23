@@ -1,26 +1,26 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
-import {MT, SYMS} from '../lib/constants.js';
+import {CBORnumber, boxedBigInt} from '../lib/number.js';
+import {MT, NUMBYTES, SYMS} from '../lib/constants.js';
 import {
   clearEncoder, encode, registerEncoder, writeInt,
 } from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
+import {sortCoreDeterministic, sortLengthFirstDeterministic} from '../lib/sorts.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
-import {boxedBigInt} from '../lib/number.js';
-import {sortLengthFirstDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
 import util from 'node:util';
 
 export const dCBORencodeOptions = {
   // Default: collapseBigInts: true,
-  avoid65bitNegative: true,
-  avoidNegativeZero: true,
-  avoidSimple: true,
-  avoidUndefined: true,
-  checkDuplicateKeys: true,
-  simplifyNaN: true,
-  // Default: sortKeys: sortCoreDeterministic,
+  ignoreBoxes: true,
+  largeNegativeAsBigInt: true,
+  rejectCustomSimples: true,
+  rejectDuplicateKeys: true,
+  rejectUndefined: true,
+  simplifyNegativeZero: true,
+  sortKeys: sortCoreDeterministic,
 };
 
 const BE = isBigEndian();
@@ -158,6 +158,10 @@ test('encode dCBOR', () => {
 
 test('damaged bigint box', () => {
   const bi = boxedBigInt(2n, 3);
+  testAll([
+    [bi, '', '0x02'],
+    [new CBORnumber(2, 0, NUMBYTES.EIGHT), '', '0x02'],
+  ], {ignoreBoxes: true});
   delete bi[SYMS.BIGINT_LEN];
   testAll([
     [bi, '', '0x02'],
@@ -169,9 +173,23 @@ test('encode rejections', () => {
     2n,
     -2n,
     boxedBigInt(2n, 3),
-  ], {collapseBigInts: false, avoidBigInts: true});
+  ], {collapseBigInts: false, rejectBigInts: true});
   failAll([
     2.1,
     -2.1,
-  ], {avoidFloats: true});
+  ], {rejectFloats: true});
+});
+
+test('encode avoiding ints', () => {
+  testAll([
+    [0, '', '0xf90000'],
+    [-0, '', '0xf98000'],
+    [2, '', '0xf94000'],
+    [-2, '', '0xf9c000'],
+  ], {avoidInts: true});
+
+  testAll([
+    [0, '', '0xf90000'],
+    [-0, '', '0xf90000'],
+  ], {avoidInts: true, simplifyNegativeZero: true});
 });

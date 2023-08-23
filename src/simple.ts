@@ -14,7 +14,7 @@ export class Simple {
   }
 
   public toCBOR(w: Writer, opts: RequiredEncodeOptions): DoneEncoding {
-    if (opts.avoidSimple) {
+    if (opts.rejectCustomSimples) {
       throw new Error(`Cannot encode non-standard Simple value: ${this.value}`);
     }
     writeInt(this.value, w, MT.SIMPLE_FLOAT);
