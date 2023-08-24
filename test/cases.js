@@ -1,7 +1,6 @@
-import {CBORnumber, boxedBigInt} from '../lib/number.js';
-import {MT, NUMBYTES} from '../lib/constants.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
+import {box} from '../lib/box.js';
 import {hexToU8} from '../lib/utils.js';
 
 export class TempClass {
@@ -662,44 +661,40 @@ export const goodEndian = [
 ];
 
 export const goodBoxed = [
-  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.TWO),
+  [box(12, hexToU8('f94a00')),
     '12_1',
     '0xf94a00'],
-  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.FOUR),
+  [box(12, hexToU8('fa41400000')),
     '12_2',
     '0xfa41400000'],
-  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.EIGHT),
+  [box(12, hexToU8('fb4028000000000000')),
     '12_3',
     '0xfb4028000000000000'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.ZERO),
+  [box(-12, hexToU8('2b')),
     '-12',
     '0x2b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.ONE),
+  [box(-12, hexToU8('380b')),
     '-12_0',
     '0x380b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.TWO),
+  [box(-12, hexToU8('39000b')),
     '-12_1',
     '0x39000b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.FOUR),
+  [box(-12, hexToU8('3a0000000b')),
     '-12_2',
     '0x3a0000000b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.EIGHT),
+  [box(-12, hexToU8('3b000000000000000b')),
     '-12_3',
     '0x3b000000000000000b'],
-  [boxedBigInt(2n, 3), "2(h'000002')", '0xc243000002'],
-  [boxedBigInt(-2n, 3), "3(h'000001')", '0xc343000001'],
-  [boxedBigInt(2n, 4), "2(h'00000002')", '0xc24400000002'],
-  [boxedBigInt(-2n, 4), "3(h'00000001')", '0xc34400000001'],
-  [boxedBigInt(16n, 4), "2(h'00000010')", '0xc24400000010'],
-  [boxedBigInt(-17n, 4), "3(h'00000010')", '0xc34400000010'],
+  [box(2n, hexToU8('c243000002')), "2(h'000002')", '0xc243000002'],
+  [box(-2n, hexToU8('c343000001')), "3(h'000001')", '0xc343000001'],
+  [box(2n, hexToU8('c24400000002')), "2(h'00000002')", '0xc24400000002'],
+  [box(-2n, hexToU8('c34400000001')), "3(h'00000001')", '0xc34400000001'],
+  [box(16n, hexToU8('c24400000010')), "2(h'00000010')", '0xc24400000010'],
+  [box(-17n, hexToU8('c34400000010')), "3(h'00000010')", '0xc34400000010'],
+  [[box('streaming', hexToU8('7f657374726561646d696e67ff'))], '[(_ "strea", "ming")]', '0x817f657374726561646d696e67ff'],
 ];
 
 export const badBoxed = [
-  new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.ZERO),
-  new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.ONE),
-  new CBORnumber(1.1944212019443512e-7, MT.SIMPLE_FLOAT, NUMBYTES.TWO),
-  new CBORnumber(12, MT.POS_INT, 28),
-  new CBORnumber(12, MT.ARRAY, NUMBYTES.ZERO),
 ];
 
 export const decodeGood = [
@@ -1020,6 +1015,7 @@ export const decodeBadTags = [
   '0xd9524a80', // RegExp array too short
   '0xd9524a820000', // RegExp invalid flags
   '0xd9524900', // I-regex not string
+  '0xc1a1616100', // Time with bad obj
 ];
 
 export const decodeBadDcbor = [

@@ -57,7 +57,7 @@ export class DecodeStream {
     );
   }
 
-  public toHere(begin?: number | undefined): Uint8Array {
+  public toHere(begin: number): Uint8Array {
     return this.#src.subarray(begin, this.#offset);
   }
 

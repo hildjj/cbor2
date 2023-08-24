@@ -1,10 +1,12 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
+import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
 import {decode} from '../lib/decoder.js';
 import {hexToU8} from '../lib/utils.js';
 import {sortCoreDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
+import {unbox} from '../lib/box.js';
 
 const dCBORdecodeOptions = {
   rejectLargeNegatives: true,
@@ -117,7 +119,7 @@ test('encodings', () => {
   assert.throws(() => decode('', {encoding: 'INVALID'}));
 });
 
-test('encode rejections', () => {
+test('decode rejections', () => {
   failAll([
     '0xf97c00',
     '0xf97e00',
@@ -133,4 +135,26 @@ test('encode rejections', () => {
     '0x00',
     '0x20',
   ], {rejectInts: true});
+
+  failAll([
+    '0xa27f6161ff007f6161ff00', // Duplicate streaming keys
+  ], {rejectDuplicateKeys: true});
+});
+
+test('unbox decoded', () => {
+  for (const [hex, unboxed] of [
+    ['80', []],
+    ['8100', [0]],
+    ['a10001', new Map([[0, 1]])],
+    ['a1616102', {a: 2}],
+    ['6161', 'a'],
+    ['f4', false],
+    ['c24102', 2n],
+    ['c1fb41d9399f93ed6042', new Date(1692827215709)],
+  ]) {
+    const d = decode(hexToU8(hex), {boxed: true});
+    assert.deepEqual(unbox(d), unboxed);
+  }
+  assert.equal(unbox(1), 1);
+  assert.deepEqual(unbox(new Tag(1, Object(0))), new Tag(1, 0));
 });

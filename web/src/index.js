@@ -1,6 +1,6 @@
 import './style.css';
+import {Tag, decode, diagnose, encode} from 'cbor2';
 import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
-import {decode, diagnose, encode} from 'cbor2';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
 
@@ -32,7 +32,7 @@ const encodeOpts = {
   collapseBigInts: true,
   float64: false,
   forceEndian: null,
-  ignoreBoxes: false,
+  ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
   rejectBigInts: false,
   rejectCustomSimples: false,
@@ -70,9 +70,14 @@ function input() {
       return hexToU8(txt);
     case 'base64':
       return base64ToBytes(txt);
-    case 'js':
-      // eslint-disable-next-line no-eval
-      return encode(eval(`(${txt});`), encodeOpts);
+    case 'js': {
+      if (txt.trim().length > 0) {
+        // eslint-disable-next-line no-new-func
+        const fun = new Function('Tag', `"use strict";return ${txt}`);
+        return encode(fun(Tag), encodeOpts);
+      }
+      return new Uint8Array(0);
+    }
     default:
       throw new Error(`Unknown input: "${inp}"`);
   }
@@ -134,7 +139,8 @@ function convert() {
 }
 
 function changeEncodeOption({target}) {
-  encodeOpts[target.id] = target.checked;
+  const opt = target.id.replace(/Encode$/, '');
+  encodeOpts[opt] = target.checked;
   convert();
 }
 

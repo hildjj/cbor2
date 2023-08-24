@@ -1,7 +1,7 @@
 import {MT, NUMBYTES} from './constants.js';
 import type {MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
+import {box, getEncoded, saveEncoded} from './box.js';
 import {u8concat, u8toHex} from './utils.js';
-import {CBORnumber} from './number.js';
 import {DecodeStream} from './decodeStream.js';
 import type {KeyValueEncoded} from './sorts.js';
 import {Simple} from './simple.js';
@@ -28,6 +28,13 @@ const EMPTY_BUF = new Uint8Array(0);
 //   rejectStreaming: true,
 //   sortKeys: sortCoreDeterministic,
 // };
+
+function isObjectKey(s: unknown): boolean {
+  if (typeof s === 'string') {
+    return true;
+  }
+  return Boolean(s && (typeof s === 'object') && (s.constructor === String));
+}
 
 /**
  * A CBOR data item that can contain other items.  One of:
@@ -137,8 +144,8 @@ export class CBORcontainer {
             (value as number < -0x8000000000000000n)) {
           throw new Error(`Invalid 65bit negative number: ${value}`);
         }
-        if (opts.boxed && (typeof value === 'number')) {
-          return new CBORnumber(value, mt, ai);
+        if (opts.boxed) {
+          return box(value, stream.toHere(offset));
         }
         return value;
       case MT.SIMPLE_FLOAT:
@@ -168,7 +175,7 @@ export class CBORcontainer {
             }
           }
           if (opts.boxed) {
-            return new CBORnumber(value as number, mt, ai);
+            return box(value as number, stream.toHere(offset));
           }
         } else {
           if (opts.rejectSimple) {
@@ -187,6 +194,9 @@ export class CBORcontainer {
       case MT.UTF8_STRING:
         if (value === Infinity) {
           return new opts.ParentType(mav, Infinity, parent, opts);
+        }
+        if (opts.boxed) {
+          return box(value, stream.toHere(offset));
         }
         return value;
       case MT.ARRAY:
@@ -213,11 +223,14 @@ export class CBORcontainer {
    */
   public push(child: unknown, stream: DecodeStream, offset: number): number {
     this.children.push(child);
+
     if (this.#encodedChildren) {
+      const buf = getEncoded(child) || stream.toHere(offset);
+
       // For simple children, this will be the encoded form of the child.
       // For complex children, this will be just the beginning (MT/AI/LEN)
       // and will be replaced in replaceLast.
-      this.#encodedChildren.push(stream.toHere(offset));
+      this.#encodedChildren.push(buf);
     }
     return --this.left;
   }
@@ -234,34 +247,41 @@ export class CBORcontainer {
    */
   public replaceLast(
     child: unknown,
-    item: CBORcontainer, stream:
-    DecodeStream
+    item: Parent,
+    stream: DecodeStream
   ): unknown {
+    let ret: unknown = undefined;
+    let last = -Infinity;
     if (this.children instanceof Tag) {
-      const ret = this.children.contents;
+      last = 0;
+      ret = this.children.contents;
       this.children.contents = child;
-      return ret;
+    } else {
+      last = this.children.length - 1;
+      ret = this.children[last];
+      this.children[last] = child;
     }
-    const last = this.children.length - 1;
 
     if (this.#encodedChildren) {
-      this.#encodedChildren[last] = stream.toHere(item.offset);
+      const buf = getEncoded(child) || stream.toHere(item.offset);
+      this.#encodedChildren[last] = buf;
     }
-    const ret = this.children[last];
-    this.children[last] = child;
     return ret;
   }
 
   /**
    * Converts the childen to the most appropriate form known.
    *
+   * @param stream Stream that we are reading from.
    * @returns Anything BUT a CBORcontainer.
    * @throws Invalid major type.  Only possible in testing.
    */
-  public convert(): unknown {
+  public convert(stream: DecodeStream): unknown {
+    let ret: unknown = undefined;
     switch (this.mt) {
       case MT.ARRAY:
-        return this.children;
+        ret = this.children;
+        break;
       case MT.MAP: {
         // Are all of the keys strings?
         // Note that __proto__ gets special handling as a key in fromEntries,
@@ -289,19 +309,29 @@ export class CBORcontainer {
         }
 
         // Extra array elements are ignored in both branches.
-        return pu.every(([k]) => typeof k === 'string') ?
+        ret = pu.every(([k]) => isObjectKey(k)) ?
           Object.fromEntries(pu) :
           new Map<unknown, unknown>(pu as unknown as [unknown, unknown][]);
+        break;
       }
       case MT.BYTE_STRING: {
         return u8concat(this.children as Uint8Array[]);
       }
-      case MT.UTF8_STRING:
-        return (this.children as string[]).join('');
+      case MT.UTF8_STRING: {
+        const str = (this.children as string[]).join('');
+        ret = this.#opts.boxed ? Object(str) : str;
+        break;
+      }
       case MT.TAG:
-        return (this.children as Tag).decode(this.#opts);
+        ret = (this.children as Tag).decode(this.#opts);
+        break;
+      default:
+        throw new TypeError(`Invalid mt on convert: ${this.mt}`);
     }
-    throw new TypeError(`Invalid mt on convert: ${this.mt}`);
+    if (ret && (typeof ret === 'object')) {
+      saveEncoded(ret, stream.toHere(this.offset));
+    }
+    return ret;
   }
 
   #pairs(): KeyValueEncoded[] {

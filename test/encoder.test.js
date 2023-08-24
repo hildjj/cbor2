@@ -1,7 +1,6 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
-import {CBORnumber, boxedBigInt} from '../lib/number.js';
-import {MT, NUMBYTES, SYMS} from '../lib/constants.js';
+import {MT, SYMS} from '../lib/constants.js';
 import {
   clearEncoder, encode, registerEncoder, writeInt,
 } from '../lib/encoder.js';
@@ -14,7 +13,7 @@ import util from 'node:util';
 
 export const dCBORencodeOptions = {
   // Default: collapseBigInts: true,
-  ignoreBoxes: true,
+  ignoreOriginalEncoding: true,
   largeNegativeAsBigInt: true,
   rejectCustomSimples: true,
   rejectDuplicateKeys: true,
@@ -156,23 +155,10 @@ test('encode dCBOR', () => {
   ], dCBORencodeOptions);
 });
 
-test('damaged bigint box', () => {
-  const bi = boxedBigInt(2n, 3);
-  testAll([
-    [bi, '', '0x02'],
-    [new CBORnumber(2, 0, NUMBYTES.EIGHT), '', '0x02'],
-  ], {ignoreBoxes: true});
-  delete bi[SYMS.BIGINT_LEN];
-  testAll([
-    [bi, '', '0x02'],
-  ]);
-});
-
 test('encode rejections', () => {
   failAll([
     2n,
     -2n,
-    boxedBigInt(2n, 3),
   ], {collapseBigInts: false, rejectBigInts: true});
   failAll([
     2.1,

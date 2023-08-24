@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
+import {type DoneEncoding, ToCBOR, Writer} from './writer.js';
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import type {KeyValueEncoded} from './sorts.js';
-import {Writer} from './writer.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
@@ -14,6 +14,7 @@ export const {
    * done.
    */
   DONE,
+  ENCODED,
 } = SYMS;
 
 const HALF = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.TWO;
@@ -28,7 +29,7 @@ const TE = new TextEncoder();
 // TODO: Decode on dCBOR approach
 // export const dCBORencodeOptions: EncodeOptions = {
 //   // Default: collapseBigInts: true,
-//   ignoreBoxes: true,
+//   ignoreOriginalEncoding: true,
 //   largeNegativeAsBigInt: true,
 //   rejectCustomSimples: true,
 //   rejectDuplicateKeys: true,
@@ -43,7 +44,7 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   collapseBigInts: true,
   float64: false,
   forceEndian: null,
-  ignoreBoxes: false,
+  ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
   rejectBigInts: false,
   rejectCustomSimples: false,
@@ -98,21 +99,6 @@ export function clearEncoder(
   const old = TYPES.get(typ);
   TYPES.delete(typ);
   return old;
-}
-
-export type DoneEncoding = typeof SYMS.DONE;
-
-export interface ToCBOR {
-  /**
-   * If an object implements this interface, this method will be used to
-   * serialize the object when encoding.  Return DONE if you don't want
-   * any further serialization to take place.
-   *
-   * @param w Writer.
-   * @param opts Options.
-   */
-  toCBOR(w: Writer, opts: RequiredEncodeOptions):
-    DoneEncoding | [number, unknown];
 }
 
 export interface ToJSON {
@@ -354,11 +340,16 @@ function writeObject(
     return;
   }
 
+  if (!opts.ignoreOriginalEncoding && (SYMS.ENCODED in obj)) {
+    w.write(obj[SYMS.ENCODED] as Uint8Array);
+    return;
+  }
+
   const encoder = TYPES.get(obj.constructor);
   if (encoder) {
     const res = encoder(obj, w, opts);
     if (res !== SYMS.DONE) {
-      if (typeof res[0] === 'number') {
+      if (isFinite(res[0])) {
         writeTag(res[0], w);
       }
       writeUnknown(res[1], w, opts);
@@ -368,11 +359,15 @@ function writeObject(
 
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
     const res = (obj as ToCBOR).toCBOR(w, opts);
-    if (res !== SYMS.DONE) {
-      writeTag(res[0], w);
-      writeUnknown(res[1], w, opts);
+    if (res !== undefined) {
+      if (res !== SYMS.DONE) {
+        if (isFinite(res[0])) {
+          writeTag(res[0], w);
+        }
+        writeUnknown(res[1], w, opts);
+      }
+      return;
     }
-    return;
   }
 
   if (typeof (obj as ToJSON).toJSON === 'function') {

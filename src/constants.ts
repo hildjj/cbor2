@@ -98,7 +98,7 @@ export class SYMS {
   public static readonly NOT_FOUND = Symbol.for('github.com/hildjj/cbor2/notFound');
 
   /**
-   * Number of bytes received for a BigInt, for round-tripping.
+   * Original CBOR encoding for round-tripping and crypto.
    */
-  public static readonly BIGINT_LEN = Symbol.for('github.com/hildjj/cbor2/BigIntLen');
+  public static readonly ENCODED = Symbol.for('github.com/hildjj/cbor2/cbor-encoded');
 }

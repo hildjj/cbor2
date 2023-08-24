@@ -9,28 +9,30 @@
  *
  * @module
  */
-
+import type {DoneEncoding, Writer} from './writer.js';
+import {MT, SYMS, TAG} from './constants.js';
+import type {RequiredDecodeOptions, RequiredEncodeOptions} from './options.js';
+import {type ValueOf, box} from './box.js';
+import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
 import {
-  type DoneEncoding,
   encode,
   registerEncoder,
   writeInt,
   writeTag,
   writeUnknown,
 } from './encoder.js';
-import {MT, SYMS, TAG} from './constants.js';
-import type {RequiredDecodeOptions, RequiredEncodeOptions} from './options.js';
-import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
 import {KeyValueEncoded} from './sorts.js';
 import {Tag} from './tag.js';
-import type {Writer} from './writer.js';
-import {boxedBigInt} from './number.js';
 import {decode} from './decoder.js';
 
 const LE = !isBigEndian();
 
 function assertNumber(contents: any): asserts contents is number {
-  if (typeof contents !== 'number') {
+  if ((typeof contents === 'object') && contents) {
+    if (contents.constructor !== Number) {
+      throw new Error(`Expected number: ${contents}`);
+    }
+  } else if (typeof contents !== 'number') {
     throw new Error(`Expected number: ${contents}`);
   }
 }
@@ -114,7 +116,7 @@ function u8toBigInt(
     throw new Error(`Decoding bigint that could have been int: ${bi}n`);
   }
   if (opts.boxed) {
-    return boxedBigInt(bi, tag.contents.length);
+    return box(bi, tag.contents) as BigInt;
   }
   return bi;
 }
@@ -427,17 +429,18 @@ if (typeof SharedArrayBuffer !== 'undefined') {
   registerEncoder(SharedArrayBuffer, intentionallyUnimplemented);
 }
 
-function writeBoxed(
+function writeBoxed<T>(
   obj: unknown,
   w: Writer,
   opts: RequiredEncodeOptions
-): DoneEncoding {
-  const b = obj as Boolean | Number | String;
-  writeUnknown(b.valueOf(), w, opts);
-  return SYMS.DONE;
+): [number, unknown] {
+  return [NaN, (obj as ValueOf<T>).valueOf()];
 }
 
 // These useless types get converted to their unboxed values.
+// They will never have ENCODED stored on them at this point.
 registerEncoder(Boolean, writeBoxed);
 registerEncoder(Number, writeBoxed);
 registerEncoder(String, writeBoxed);
+// @ts-expect-error BigInt doesn't have new() but this still works.
+registerEncoder(BigInt, writeBoxed);

@@ -63,9 +63,10 @@ export interface Parent {
   parent: Parent | undefined;
   children: Tg | unknown[];
   left: number;
+  offset: number;
   push(child: unknown, stream: DS, offset: number): number;
   replaceLast(child: unknown, item: Parent, stream: DS): unknown;
-  convert(): unknown;
+  convert(stream: DS): unknown;
   get done(): boolean;
   get isStreaming(): boolean;
 }
@@ -209,7 +210,7 @@ export interface EncodeOptions extends WriterOptions {
    * Ignore sizes on boxed numbers; they might be overly-large.
    * @default false
    */
-  ignoreBoxes?: boolean;
+  ignoreOriginalEncoding?: boolean;
 
   /**
    * Do not encode numbers in the range  [CBOR_NEGATIVE_INT_MAX ...

@@ -1,7 +1,7 @@
-import {type DoneEncoding, writeInt} from './encoder.js';
+import type {DoneEncoding, Writer} from './writer.js';
 import {MT, SYMS} from './constants.js';
 import {RequiredEncodeOptions} from './options.js';
-import type {Writer} from './writer.js';
+import {writeInt} from './encoder.js';
 
 /**
  * A CBOR "Simple" value that is not one of the pre-standardized set.

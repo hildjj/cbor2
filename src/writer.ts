@@ -1,4 +1,5 @@
-import type {RequiredWriterOptions, WriterOptions} from './options.js';
+import type {RequiredEncodeOptions, RequiredWriterOptions, WriterOptions} from './options.js';
+import type {SYMS} from './constants.js';
 
 // Don't inherit from stream.Writable, so it's more portable.
 export class Writer {
@@ -156,4 +157,19 @@ export class Writer {
     this.#offset += sz;
     this.#length += sz;
   }
+}
+
+export type DoneEncoding = typeof SYMS.DONE;
+
+export interface ToCBOR {
+  /**
+   * If an object implements this interface, this method will be used to
+   * serialize the object when encoding.  Return DONE if you don't want
+   * any further serialization to take place.
+   *
+   * @param w Writer.
+   * @param opts Options.
+   */
+  toCBOR(w: Writer, opts: RequiredEncodeOptions):
+    DoneEncoding | [number, unknown] | undefined;
 }

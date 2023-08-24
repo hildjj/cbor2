@@ -19,9 +19,7 @@ export function decode<T = unknown>(
     ...CBORcontainer.defaultOptions,
     ...options,
   };
-  const stream = (typeof src === 'string') ?
-    new DecodeStream(src, opts) :
-    new DecodeStream(src, opts);
+  const stream = new DecodeStream(src, opts);
   let parent: Parent | undefined = undefined;
   let ret: unknown = SYMS.NOT_FOUND;
 
@@ -45,7 +43,7 @@ export function decode<T = unknown>(
     // Convert all finished parents in the chain to the correct type, replacing
     // in *their* parents as necessary.
     while (parent?.done) {
-      ret = parent.convert();
+      ret = parent.convert(stream);
 
       const p = parent.parent;
       p?.replaceLast(ret, parent, stream);
