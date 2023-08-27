@@ -151,10 +151,15 @@ test('unbox decoded', () => {
     ['f4', false],
     ['c24102', 2n],
     ['c1fb41d9399f93ed6042', new Date(1692827215709)],
+    ['c07818323032332d30382d32375431353a31383a35302e3839385a', new Date(1693149530898)],
   ]) {
     const d = decode(hexToU8(hex), {boxed: true});
     assert.deepEqual(unbox(d), unboxed);
   }
+  failAll([
+    '0xc000',
+  ], {boxed: true});
   assert.equal(unbox(1), 1);
   assert.deepEqual(unbox(new Tag(1, Object(0))), new Tag(1, 0));
+  assert.deepEqual(unbox({a: 1}), {a: 1});
 });

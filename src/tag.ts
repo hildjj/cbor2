@@ -1,5 +1,4 @@
-import type {RequiredDecodeOptions, RequiredEncodeOptions} from './options.js';
-import type {Writer} from './writer.js';
+import type {RequiredDecodeOptions} from './options.js';
 
 export type TagDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
 
@@ -56,14 +55,14 @@ export class Tag {
     return this;
   }
 
-  public toCBOR(w: Writer, opts: RequiredEncodeOptions): [number, unknown] {
+  public toCBOR(): [number, unknown] {
     return [this.tag, this.contents];
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](
-    depth: number,
+    _depth: number,
     inspectOptions: object,
-    inspect: (val: any, opts: object) => any
+    inspect: (val: unknown, opts: object) => unknown
   ): string {
     return `${this.tag}(${inspect(this.contents, inspectOptions)})`;
   }

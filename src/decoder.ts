@@ -19,6 +19,9 @@ export function decode<T = unknown>(
     ...CBORcontainer.defaultOptions,
     ...options,
   };
+  if (opts.boxed) {
+    opts.saveOriginal = true;
+  }
   const stream = new DecodeStream(src, opts);
   let parent: Parent | undefined = undefined;
   let ret: unknown = SYMS.NOT_FOUND;

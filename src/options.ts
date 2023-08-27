@@ -82,8 +82,14 @@ export interface DecodeOptions extends DecodeStreamOptions {
   ParentType?: ParentConstructor;
 
   /**
-   * Should numbers be created as boxed CBORNumber instances, which retain
-   * their type information for round-tripping?
+   * Should numbers and strings be created as boxed instances, which retain
+   * their original encoding for round-tripping?  If this is true,
+   * saveOriginal is also set to true.  Think of this as "saveOriginal +
+   * extras".  The thought is that most use cases for saveOriginal will want
+   * the original encoding of an object or array, and won't care about the
+   * original encoding of strings and numbers.  Turning this on also has the
+   * side-effect of making all CBOR maps decode as JS Map objects, rather than
+   * plain Objects.
    * @default false
    */
   boxed?: boolean;
@@ -159,6 +165,14 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * @default false
    */
   rejectUndefined?: boolean;
+
+  /**
+   * Save the original bytes associated with every object as a property of
+   * that object.  Use `getEncoded(obj)` to retrieve the associated bytes.
+   * If you need the original encoded form of primitive items such as numbers
+   * and strings, set `boxed: true` as well.
+   */
+  saveOriginal?: boolean;
 
   /**
    * If non-null, keys being decoded MUST be in this order.  Note that this is a

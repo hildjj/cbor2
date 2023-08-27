@@ -27,7 +27,7 @@ import {decode} from './decoder.js';
 
 const LE = !isBigEndian();
 
-function assertNumber(contents: any): asserts contents is number {
+function assertNumber(contents: unknown): asserts contents is number {
   if ((typeof contents === 'object') && contents) {
     if (contents.constructor !== Number) {
       throw new Error(`Expected number: ${contents}`);
@@ -37,19 +37,23 @@ function assertNumber(contents: any): asserts contents is number {
   }
 }
 
-function assertString(contents: any): asserts contents is string {
-  if (typeof contents !== 'string') {
+function assertString(contents: unknown): asserts contents is string {
+  if ((typeof contents === 'object') && contents) {
+    if (contents.constructor !== String) {
+      throw new Error(`Expected string: ${contents}`);
+    }
+  } else if (typeof contents !== 'string') {
     throw new Error(`Expected string: ${contents}`);
   }
 }
 
-function assertU8(contents: any): asserts contents is Uint8Array {
+function assertU8(contents: unknown): asserts contents is Uint8Array {
   if (!(contents instanceof Uint8Array)) {
     throw new Error(`Expected Uint8Array: ${contents}`);
   }
 }
 
-function assertArray(contents: any): asserts contents is any[] {
+function assertArray(contents: unknown): asserts contents is any[] {
   if (!Array.isArray(contents)) {
     throw new Error(`Expected Array: ${contents}`);
   }
@@ -124,7 +128,7 @@ Tag.registerDecoder(TAG.POS_BIGINT, u8toBigInt.bind(null, false));
 Tag.registerDecoder(TAG.NEG_BIGINT, u8toBigInt.bind(null, true));
 
 // 24: Encoded CBOR data item; see Section 3.4.5.1
-Tag.registerDecoder(TAG.CBOR, (tag: Tag): any => {
+Tag.registerDecoder(TAG.CBOR, (tag: Tag): unknown => {
   assertU8(tag.contents);
   return decode(tag.contents);
 });
@@ -405,17 +409,17 @@ Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
   return JSON.parse(tag.contents);
 });
 
-Tag.registerDecoder(TAG.SELF_DESCRIBED, (tag: Tag): any => tag.contents);
+Tag.registerDecoder(TAG.SELF_DESCRIBED, (tag: Tag): unknown => tag.contents);
 
-Tag.registerDecoder(TAG.INVALID_16, (tag: Tag) => {
+Tag.registerDecoder(TAG.INVALID_16, () => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_16}`);
 });
 
-Tag.registerDecoder(TAG.INVALID_32, (tag: Tag) => {
+Tag.registerDecoder(TAG.INVALID_32, () => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_32}`);
 });
 
-Tag.registerDecoder(TAG.INVALID_64, (tag: Tag) => {
+Tag.registerDecoder(TAG.INVALID_64, () => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
 });
 
@@ -430,9 +434,7 @@ if (typeof SharedArrayBuffer !== 'undefined') {
 }
 
 function writeBoxed<T>(
-  obj: unknown,
-  w: Writer,
-  opts: RequiredEncodeOptions
+  obj: unknown
 ): [number, unknown] {
   return [NaN, (obj as ValueOf<T>).valueOf()];
 }

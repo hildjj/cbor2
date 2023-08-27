@@ -18,7 +18,7 @@ const LENGTH_FOR_AI = new Map([
 
 const EMPTY_BUF = new Uint8Array(0);
 
-// TODO: Decode on dCBOR approach
+// Decide on dCBOR approach
 // export const dCBORdecodeOptions: ContainerOptions = {
 //   rejectLargeNegatives: true,
 //   rejectLongLoundNaN: true,
@@ -28,13 +28,6 @@ const EMPTY_BUF = new Uint8Array(0);
 //   rejectStreaming: true,
 //   sortKeys: sortCoreDeterministic,
 // };
-
-function isObjectKey(s: unknown): boolean {
-  if (typeof s === 'string') {
-    return true;
-  }
-  return Boolean(s && (typeof s === 'object') && (s.constructor === String));
-}
 
 /**
  * A CBOR data item that can contain other items.  One of:
@@ -62,6 +55,7 @@ export class CBORcontainer {
     rejectSimple: false,
     rejectStreaming: false,
     rejectUndefined: false,
+    saveOriginal: false,
     sortKeys: null,
   };
 
@@ -309,7 +303,7 @@ export class CBORcontainer {
         }
 
         // Extra array elements are ignored in both branches.
-        ret = pu.every(([k]) => isObjectKey(k)) ?
+        ret = !this.#opts.boxed && pu.every(([k]) => typeof k === 'string') ?
           Object.fromEntries(pu) :
           new Map<unknown, unknown>(pu as unknown as [unknown, unknown][]);
         break;
@@ -319,7 +313,9 @@ export class CBORcontainer {
       }
       case MT.UTF8_STRING: {
         const str = (this.children as string[]).join('');
-        ret = this.#opts.boxed ? Object(str) : str;
+        ret = this.#opts.boxed ?
+          box(str, stream.toHere(this.offset)) :
+          str;
         break;
       }
       case MT.TAG:
@@ -328,7 +324,7 @@ export class CBORcontainer {
       default:
         throw new TypeError(`Invalid mt on convert: ${this.mt}`);
     }
-    if (ret && (typeof ret === 'object')) {
+    if (this.#opts.saveOriginal && ret && (typeof ret === 'object')) {
       saveEncoded(ret, stream.toHere(this.offset));
     }
     return ret;

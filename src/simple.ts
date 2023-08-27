@@ -26,9 +26,9 @@ export class Simple {
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](
-    depth: number,
+    _depth: number,
     inspectOptions: object,
-    inspect: (val: any, opts: object) => any
+    inspect: (val: unknown, opts: object) => unknown
   ): string {
     return `simple(${inspect(this.value, inspectOptions)})`;
   }

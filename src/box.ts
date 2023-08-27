@@ -68,12 +68,16 @@ export function unbox(obj: unknown): unknown {
     case Boolean:
     case Number:
     case String:
+    case Symbol:
       return obj.valueOf();
     case Array:
       return (obj as object[]).map(x => unbox(x));
     case Map: {
-      const entries = [...(obj as Map<object, object>).entries()];
-      return new Map(entries.map(([k, v]) => [unbox(k), unbox(v)]));
+      const entries = unbox([...(obj as Map<object, object>).entries()]) as
+        [[unknown, unknown]];
+      return (entries.every(([k]) => typeof k === 'string')) ?
+        Object.fromEntries(entries) :
+        new Map(entries);
     }
     case Tag:
       return new Tag(
@@ -81,6 +85,8 @@ export function unbox(obj: unknown): unknown {
         unbox((obj as Tag).contents)
       );
     case Object: {
+      // This shouldn't actually occur in most paths, but it's here for
+      // completeness.
       const ret: {
         [key: string]: unknown;
       } = {};

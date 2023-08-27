@@ -108,7 +108,7 @@ test('vectors', () => {
       if (v.roundtrip) {
         if (failRoundtrip.has(v.hex)) {
           // Start over
-          const boxedInfo = applesauce(v, {boxed: true});
+          const boxedInfo = applesauce(v, {boxed: true, saveOriginal: true});
           assert.deepEqual(u8toHex(boxedInfo.encoded), v.hex);
         } else {
           assert.deepEqual(u8toHex(info.encoded), v.hex);

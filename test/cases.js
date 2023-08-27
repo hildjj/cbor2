@@ -740,7 +740,7 @@ export const decodeGood = [
     0001            -- 5.960464477539063e-8
 0xf90001`],
   [9223372036854775807n, '9223372036854775807_3', `
-  1b                -- Positive number, next 8 bytes
+  1b              failAll(cases.decodeBad);  -- Positive number, next 8 bytes
     7fffffffffffffff -- 9223372036854775807
 0x1b7fffffffffffffff`],
   [-9223372036854775808n, '-9223372036854775808_3', `

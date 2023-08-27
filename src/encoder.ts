@@ -26,7 +26,7 @@ const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
 
-// TODO: Decode on dCBOR approach
+// Decide on dCBOR approach
 // export const dCBORencodeOptions: EncodeOptions = {
 //   // Default: collapseBigInts: true,
 //   ignoreOriginalEncoding: true,
@@ -58,7 +58,7 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
 /**
  * Any class.
  */
-export type AbstractClassType = abstract new (...args: any) => any;
+export type AbstractClassType = abstract new (...args: any) => unknown;
 export type TypeEncoder = (
   obj: unknown,
   w: Writer,
@@ -106,7 +106,7 @@ export interface ToJSON {
    * Used by the JSON.stringify method to enable the transformation of an
    * object's data for JavaScript Object Notation (JSON) serialization.
    */
-  toJSON(key?: any): string;
+  toJSON(key?: unknown): string;
 }
 
 /**
@@ -307,7 +307,7 @@ export function writeArray(
   w: Writer,
   opts: RequiredEncodeOptions
 ): DoneEncoding {
-  const a = obj as any[];
+  const a = obj as unknown[];
   writeInt(a.length, w, MT.ARRAY);
   for (const i of a) { // Iterator gives undefined for holes.
     writeUnknown(i, w, opts);
@@ -416,7 +416,6 @@ export function writeUnknown(
       break;
     case 'object': writeObject(val, w, opts); break;
     case 'symbol':
-      // TODO: Add pluggable support for symbols
       throw new TypeError(`Unknown symbol: ${val.toString()}`);
     default:
       throw new TypeError(
