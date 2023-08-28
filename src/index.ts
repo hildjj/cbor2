@@ -10,15 +10,25 @@
  */
 
 import './types.js';
-export {CBORnumber} from './number.js';
-export {
-  DecodeStream,
-  type DecodeStreamOptions,
-  type DecodeValue,
-  type MtAiValue,
-  type ValueGenerator,
-} from './decodeStream.js';
+export type {DecodeStream, ValueGenerator} from './decodeStream.js';
+export type {
+  Decodeable,
+  DecodeOptions,
+  DecodeStreamOptions,
+  DecodeValue,
+  EncodeOptions,
+  MtAiValue,
+  Parent,
+  ParentConstructor,
+  RequiredDecodeOptions,
+  RequiredEncodeOptions,
+  Sliceable,
+  WriterOptions,
+} from './options.js';
 export {decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
 export {encode} from './encoder.js';
-export type {Writer, WriterOptions} from './writer.js';
+export {Simple} from './simple.js';
+export {Tag} from './tag.js';
+export type {TaggedValue, ToCBOR, Writer} from './writer.js';
+export {unbox, getEncoded} from './box.js';

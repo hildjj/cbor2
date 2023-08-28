@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
+import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
-import {Writer, type WriterOptions, WriterOptionsDefault} from './writer.js';
+import {TaggedValue, ToCBOR, Writer} from './writer.js';
+import type {KeyValueEncoded} from './sorts.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
-/**
- * Return this from toCBOR to signal that no further processing should be done.
- */
-export const {DONE} = SYMS;
+export const {
+  ENCODED,
+} = SYMS;
 
 const HALF = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.TWO;
 const FLOAT = (MT.SIMPLE_FLOAT << 5) | NUMBYTES.FOUR;
@@ -19,114 +20,49 @@ const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
 
-export type KeySorter = (kv: [unknown, unknown][]) => void;
-
-/**
- * Sort according to RFC 8949, section 4.2.1
- * (https://www.rfc-editor.org/rfc/rfc8949.html#name-core-deterministic-encoding).
- *
- * @param kv Object entries, an array of arrays each of which has a key, value
- *   pair.
- */
-export function sortCoreDeterministic(kv: [unknown, unknown][]): void {
-  const cache = new Map<unknown, Uint8Array>();
-  function enc(u: unknown): Uint8Array {
-    let u8 = cache.get(u);
-    if (!u8) {
-      u8 = encode(u);
-      cache.set(u, u8);
-    }
-    return u8;
-  }
-  kv.sort(([a], [b]) => {
-    const [a8, b8] = [enc(a), enc(b)];
-    const len = Math.min(a8.length, b8.length);
-    for (let i = 0; i < len; i++) {
-      const diff = a8[i] - b8[i];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-    return 0;
-  });
-}
-
-/**
- * Sort according to RFC 8949, section 4.2.3
- * (https://www.rfc-editor.org/rfc/rfc8949.html#name-length-first-map-key-orderi).
- *
- * @param kv Object entries, an array of arrays each of which has a key, value
- *   pair.
- */
-export function sortLengthFirstDeterministic(kv: [unknown, unknown][]): void {
-  const cache = new Map<unknown, Uint8Array>();
-  function enc(u: unknown): Uint8Array {
-    let u8 = cache.get(u);
-    if (!u8) {
-      u8 = encode(u);
-      cache.set(u, u8);
-    }
-    return u8;
-  }
-  kv.sort(([a], [b]) => {
-    const [a8, b8] = [enc(a), enc(b)];
-    const diffLen = a8.length - b8.length;
-    if (diffLen !== 0) {
-      return diffLen;
-    }
-    const len = Math.min(a8.length, b8.length);
-    for (let i = 0; i < len; i++) {
-      const diff = a8[i] - b8[i];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-    return 0;
-  });
-}
-
-export interface EncodeOptions extends WriterOptions {
-  /**
-   * How to write TypedArrays?
-   * Null to use the current platform's endian-ness.
-   * True to always use little-endian.
-   * False to always use big-endian.
-   * @default null
-   */
-  forceEndian?: boolean | null;
-
-  /**
-   * Should bigints that can fit into normal integers be collapsed into
-   * normal integers?
-   * @default true
-   */
-  collapseBigInts?: boolean;
-
-  /**
-   * How should the key/value pairs be sorted before an object or Map
-   * gets created?
-   */
-  sortKeys?: KeySorter;
-}
-
-export type RequiredEncodeOptions = Required<EncodeOptions>;
+// Decide on dCBOR approach
+// export const dCBORencodeOptions: EncodeOptions = {
+//   // Default: collapseBigInts: true,
+//   ignoreOriginalEncoding: true,
+//   largeNegativeAsBigInt: true,
+//   rejectCustomSimples: true,
+//   rejectDuplicateKeys: true,
+//   rejectUndefined: true,
+//   simplifyNegativeZero: true,
+//   sortKeys: sortCoreDeterministic,
+// };
 
 export const EncodeOptionsDefault: RequiredEncodeOptions = {
-  ...WriterOptionsDefault,
-  forceEndian: null,
+  ...Writer.defaultOptions,
+  avoidInts: false,
   collapseBigInts: true,
-  sortKeys: sortCoreDeterministic,
+  float64: false,
+  forceEndian: null,
+  ignoreOriginalEncoding: false,
+  largeNegativeAsBigInt: false,
+  rejectBigInts: false,
+  rejectCustomSimples: false,
+  rejectDuplicateKeys: false,
+  rejectFloats: false,
+  rejectUndefined: false,
+  simplifyNegativeZero: false,
+  sortKeys: null,
 };
 
-export type AbstractClassType = abstract new (...args: any) => any;
-export type TypeEncoder = (
-  obj: unknown,
+/**
+ * Any class.  Ish.
+ */
+export type AbstractClassType<T extends abstract new (...args: any) => any> =
+  abstract new (...args: any) => InstanceType<T>;
+
+export type TypeEncoder<T> = (
+  obj: T,
   w: Writer,
   opts: RequiredEncodeOptions
-) => DoneEncoding | [number, unknown];
+) => TaggedValue | undefined;
 
 // Only add ones here that have to be in for compliance.
-const TYPES = new Map<InstanceType<AbstractClassType>, TypeEncoder>([
+const TYPES = new Map<unknown, unknown>([
   [Array, writeArray],
   [Uint8Array, writeUint8Array],
 ]);
@@ -138,11 +74,11 @@ const TYPES = new Map<InstanceType<AbstractClassType>, TypeEncoder>([
  * @param encoder Converter function for that type.
  * @returns Previous converter for that type, or unknown.
  */
-export function registerEncoder(
-  typ: AbstractClassType,
-  encoder: TypeEncoder
-): TypeEncoder | undefined {
-  const old = TYPES.get(typ);
+export function registerEncoder<T extends AbstractClassType<T>>(
+  typ: T,
+  encoder: TypeEncoder<InstanceType<T>>
+): TypeEncoder<T> | undefined {
+  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
   TYPES.set(typ, encoder);
   return old;
 }
@@ -153,27 +89,12 @@ export function registerEncoder(
  * @param typ Type constructor, e.e.g "Array".
  * @returns Previous converter for that type, or unknown.
  */
-export function clearEncoder(
-  typ: AbstractClassType
-): TypeEncoder | undefined {
-  const old = TYPES.get(typ);
+export function clearEncoder<T extends AbstractClassType<T>>(
+  typ: T
+): TypeEncoder<T> | undefined {
+  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
   TYPES.delete(typ);
   return old;
-}
-
-export type DoneEncoding = typeof SYMS.DONE;
-
-export interface ToCBOR {
-  /**
-   * If an object implements this interface, this method will be used to
-   * serialize the object when encoding.  Return DONE if you don't want
-   * any further serialization to take place.
-   *
-   * @param w Writer.
-   * @param opts Options.
-   */
-  toCBOR(w: Writer, opts: RequiredEncodeOptions):
-    DoneEncoding | [number, unknown];
 }
 
 export interface ToJSON {
@@ -181,7 +102,7 @@ export interface ToJSON {
    * Used by the JSON.stringify method to enable the transformation of an
    * object's data for JavaScript Object Notation (JSON) serialization.
    */
-  toJSON(key?: any): string;
+  toJSON(key?: unknown): string;
 }
 
 /**
@@ -191,9 +112,25 @@ export interface ToJSON {
  *
  * @param val Floating point number.
  * @param w Writer.
+ * @param opts Encoding options.
+ * @throws On unwanted float.
  */
-export function writeFloat(val: number, w: Writer): void {
-  if (isNaN(val) || (Math.fround(val) === val)) {
+export function writeFloat(
+  val: number,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  if (opts.rejectFloats) {
+    throw new Error(`Attempt to encode an unwanted floating point number: ${val}`);
+  }
+  if (isNaN(val)) {
+    // NaNs always get simplified, because ECMA-262 says that implementations
+    // don't have to be careful with signalling NaNs or those with payloads,
+    // and v8/SpiderMonkey make different choices.  v8 has some support,
+    // but mangles 32-bit signaling NaNs.
+    w.writeUint8(HALF);
+    w.writeUint16(0x7e00);
+  } else if (!opts.float64 && (Math.fround(val) === val)) {
     // It's at least as small as f32.
     const half = halfToUint(val);
     if (half === null) {
@@ -226,7 +163,7 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
   const neg = val < 0;
   const pos = neg ? -val - 1 : val;
   if (neg && mt) {
-    throw new TypeError('Negative size');
+    throw new TypeError(`Negative size: ${val}`);
   }
 
   mt ??= neg ? MT.NEG_INT : MT.POS_INT;
@@ -250,7 +187,15 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
   }
 }
 
-function writeBigInt(
+/**
+ * Intended for internal use.
+ *
+ * @param val Bigint to write.
+ * @param w Writer.
+ * @param opts Options.
+ * @throws On unwanted bigint.
+ */
+export function writeBigInt(
   val: bigint,
   w: Writer,
   opts: RequiredEncodeOptions
@@ -258,7 +203,8 @@ function writeBigInt(
   const neg = val < 0n;
   const pos = neg ? -val - 1n : val;
 
-  if (opts.collapseBigInts) {
+  if (opts.collapseBigInts &&
+      (!opts.largeNegativeAsBigInt || (val >= -0x8000000000000000n))) {
     if (pos <= 0xffffffffn) {
       // Always collapse small bigints
       writeInt(Number(val), w);
@@ -272,6 +218,10 @@ function writeBigInt(
       w.writeBigUint64(pos);
       return;
     }
+  }
+
+  if (opts.rejectBigInts) {
+    throw new Error(`Attempt to encode unwanted bigint: ${val}`);
   }
 
   const tag = neg ? TAG.NEG_BIGINT : TAG.POS_BIGINT;
@@ -292,12 +242,26 @@ function writeBigInt(
  *
  * @param val Number.
  * @param w Writer.
+ * @param opts Encoding options.
  */
-export function writeNumber(val: number, w: Writer): void {
-  if ((Object.is(val, -0)) || !Number.isSafeInteger(val)) {
-    writeFloat(val, w);
-  } else {
+export function writeNumber(
+  val: number, w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  if (Object.is(val, -0)) {
+    if (opts.simplifyNegativeZero) {
+      if (opts.avoidInts) {
+        writeFloat(0, w, opts);
+      } else {
+        writeInt(0, w);
+      }
+    } else {
+      writeFloat(val, w, opts);
+    }
+  } else if (!opts.avoidInts && Number.isSafeInteger(val)) {
     writeInt(val, w);
+  } else {
+    writeFloat(val, w, opts);
   }
 }
 
@@ -332,19 +296,17 @@ export function writeString(val: string, w: Writer): void {
  * @param obj Array.
  * @param w Writer.
  * @param opts Options.
- * @returns DONE.
  */
 export function writeArray(
   obj: unknown,
   w: Writer,
   opts: RequiredEncodeOptions
-): DoneEncoding {
-  const a = obj as any[];
+): undefined {
+  const a = obj as unknown[];
   writeInt(a.length, w, MT.ARRAY);
   for (const i of a) { // Iterator gives undefined for holes.
     writeUnknown(i, w, opts);
   }
-  return SYMS.DONE;
 }
 
 /**
@@ -353,13 +315,11 @@ export function writeArray(
  *
  * @param obj Buffer.
  * @param w Writer.
- * @returns DONE.
  */
-export function writeUint8Array(obj: unknown, w: Writer): DoneEncoding {
+export function writeUint8Array(obj: unknown, w: Writer): undefined {
   const u = obj as Uint8Array;
   writeInt(u.length, w, MT.BYTE_STRING);
   w.write(u);
-  return SYMS.DONE;
 }
 
 function writeObject(
@@ -372,11 +332,17 @@ function writeObject(
     return;
   }
 
-  const encoder = TYPES.get(obj.constructor);
+  if (!opts.ignoreOriginalEncoding && (SYMS.ENCODED in obj)) {
+    w.write(obj[SYMS.ENCODED] as Uint8Array);
+    return;
+  }
+
+  const encoder = TYPES.get(obj.constructor) as
+    TypeEncoder<unknown> | undefined;
   if (encoder) {
     const res = encoder(obj, w, opts);
-    if (res !== SYMS.DONE) {
-      if (typeof res[0] === 'number') {
+    if (res) {
+      if (isFinite(res[0])) {
         writeTag(res[0], w);
       }
       writeUnknown(res[1], w, opts);
@@ -386,8 +352,10 @@ function writeObject(
 
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
     const res = (obj as ToCBOR).toCBOR(w, opts);
-    if (res !== SYMS.DONE) {
-      writeTag(res[0], w);
+    if (res) {
+      if (isFinite(res[0])) {
+        writeTag(res[0], w);
+      }
       writeUnknown(res[1], w, opts);
     }
     return;
@@ -398,12 +366,17 @@ function writeObject(
     return;
   }
 
-  const entries = Object.entries(obj);
-  opts.sortKeys(entries);
+  // Note: keys will never be duplicated here.
+  const entries = Object.entries(obj).map<KeyValueEncoded>(
+    e => [e[0], e[1], encode(e[0], opts)]
+  );
+  if (opts.sortKeys) {
+    entries.sort(opts.sortKeys);
+  }
   writeInt(entries.length, w, MT.MAP);
 
-  for (const [k, v] of entries) {
-    writeString(k, w);
+  for (const [_k, v, e] of entries) {
+    w.write(e);
     writeUnknown(v, w, opts);
   }
 }
@@ -422,14 +395,18 @@ export function writeUnknown(
   opts: RequiredEncodeOptions
 ): void {
   switch (typeof val) {
-    case 'number': writeNumber(val, w); break;
+    case 'number': writeNumber(val, w, opts); break;
     case 'bigint': writeBigInt(val, w, opts); break;
     case 'string': writeString(val, w); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;
-    case 'undefined': w.writeUint8(UNDEFINED); break;
+    case 'undefined':
+      if (opts.rejectUndefined) {
+        throw new Error('Attempt to encode unwanted undefined.');
+      }
+      w.writeUint8(UNDEFINED);
+      break;
     case 'object': writeObject(val, w, opts); break;
     case 'symbol':
-      // TODO: Add pluggable support for symbols
       throw new TypeError(`Unknown symbol: ${val.toString()}`);
     default:
       throw new TypeError(

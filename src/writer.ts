@@ -1,22 +1,24 @@
-export interface WriterOptions {
-  chunkSize?: number;
-}
-
-export const WriterOptionsDefault: Required<WriterOptions> = {
-  chunkSize: 4096,
-};
+import type {
+  RequiredEncodeOptions,
+  RequiredWriterOptions,
+  WriterOptions,
+} from './options.js';
 
 // Don't inherit from stream.Writable, so it's more portable.
 export class Writer {
-  #opts: Required<WriterOptions>;
+  public static defaultOptions: RequiredWriterOptions = {
+    chunkSize: 4096,
+  };
+
+  #opts: RequiredWriterOptions;
   #chunks: Uint8Array[] = [];
   #dv: DataView | null = null; // View over last chunk.
   #offset = 0;
   #length = 0;
 
-  public constructor(opts = {}) {
+  public constructor(opts: WriterOptions = {}) {
     this.#opts = {
-      ...WriterOptionsDefault,
+      ...Writer.defaultOptions,
       ...opts,
     };
     if (this.#opts.chunkSize < 8) {
@@ -133,7 +135,7 @@ export class Writer {
   // Always push a new chunk right after trimming.
   #trim(): void {
     if (this.#offset === 0) {
-      this.#chunks.pop(); // TODO: save until next #alloc?
+      this.#chunks.pop();
       return;
     }
     const last = this.#chunks.length - 1;
@@ -158,4 +160,25 @@ export class Writer {
     this.#offset += sz;
     this.#length += sz;
   }
+}
+
+/**
+ * A potentially-tagged value.  If the tag is NaN, it will not be used.
+ * Otherwise, it must be an integer that will be written as a CBOR tag
+ * before the value is encoded.
+ */
+export type TaggedValue = [tag: number, value: unknown];
+
+export interface ToCBOR {
+  /**
+   * If an object implements this interface, this method will be used to
+   * serialize the object when encoding.  Return undefined if you don't want
+   * any further serialization to take place.  Return an array of [tag, value]
+   * if you would like default serialization, where if tag is not NaN, a
+   * CBOR tag will be written before the value.
+   *
+   * @param w Writer.
+   * @param opts Options.
+   */
+  toCBOR(w: Writer, opts: RequiredEncodeOptions): TaggedValue | undefined;
 }

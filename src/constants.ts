@@ -86,14 +86,7 @@ export class SYMS {
   public static readonly BREAK = Symbol.for('github.com/hildjj/cbor2/break');
 
   /**
-   * Return from toCBOR to signal that we are done encoding, and that the
-   * return value should be ignored.
+   * Original CBOR encoding for round-tripping and crypto.
    */
-  public static readonly DONE = Symbol.for('github.com/hildjj/cbor2/done');
-
-  /**
-   * Nothing was found when decoding an item.  This should never be seen, since
-   * an exception should be thrown for short input first.
-   */
-  public static readonly NOT_FOUND = Symbol.for('github.com/hildjj/cbor2/notFound');
+  public static readonly ENCODED = Symbol.for('github.com/hildjj/cbor2/cbor-encoded');
 }

@@ -1,4 +1,5 @@
-import {CBORcontainer, type ContainerOptions} from './container.js';
+import type {DecodeOptions, Parent} from './options.js';
+import {CBORcontainer} from './container.js';
 import {DecodeStream} from './decodeStream.js';
 import {SYMS} from './constants.js';
 
@@ -12,20 +13,21 @@ import {SYMS} from './constants.js';
  */
 export function decode<T = unknown>(
   src: Uint8Array | string,
-  options?: ContainerOptions
+  options?: DecodeOptions
 ): T {
-  const opts: Required<ContainerOptions> = {
+  const opts: Required<DecodeOptions> = {
     ...CBORcontainer.defaultOptions,
     ...options,
   };
-  const stream = (typeof src === 'string') ?
-    new DecodeStream(src, opts) :
-    new DecodeStream(src, opts);
-  let parent: CBORcontainer | undefined = undefined;
-  let ret: unknown = SYMS.NOT_FOUND;
+  if (opts.boxed) {
+    opts.saveOriginal = true;
+  }
+  const stream = new DecodeStream(src, opts);
+  let parent: Parent | undefined = undefined;
+  let ret: unknown = undefined;
 
   for (const mav of stream) {
-    ret = CBORcontainer.create(mav, parent, opts);
+    ret = CBORcontainer.create(mav, parent, opts, stream);
 
     if (mav[2] === SYMS.BREAK) {
       if (parent?.isStreaming) {
@@ -34,7 +36,7 @@ export function decode<T = unknown>(
         throw new Error('Unexpected BREAK');
       }
     } else if (parent) {
-      parent.push(ret);
+      parent.push(ret, stream, mav[3]);
     }
 
     if (ret instanceof CBORcontainer) {
@@ -44,10 +46,10 @@ export function decode<T = unknown>(
     // Convert all finished parents in the chain to the correct type, replacing
     // in *their* parents as necessary.
     while (parent?.done) {
-      ret = parent?.convert();
+      ret = parent.convert(stream);
 
-      const p = parent?.parent;
-      p?.replaceLast(ret);
+      const p = parent.parent;
+      p?.replaceLast(ret, parent, stream);
       parent = p;
     }
   }

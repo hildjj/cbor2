@@ -57,16 +57,19 @@ The following types are supported for encoding:
 - boolean
 - number (including -0, NaN, and ±Infinity)
 - string
-- Array, Set (encoded as Array)
-- Object (including null), Map
+- bigint
+- Array
+- Set
+- Object (including null)
+- Map
 - undefined
-- Buffer
 - Date,
 - RegExp
 - URL
-- TypedArrays
-- Map, Set
-- bigint
+- TypedArrays: Uint8Array is mapped to a CBOR byte array, others are tagged
+- Boxed primitive types: String, Number, BigInt, Boolean
+- cbor2.Simple
+- cbor2.Tag
 
 Decoding supports the above types, including the following CBOR tag numbers:
 
@@ -80,7 +83,7 @@ Decoding supports the above types, including the following CBOR tag numbers:
 | 32  | URL                 |
 | 33  | Tagged              |
 | 34  | Tagged              |
-| 35  | RegExp              |
+| 35  | RegExp (deprecated) |
 | 64  | Uint8Array          |
 | 65  | Uint16Array         |
 | 66  | Uint32Array         |
@@ -102,7 +105,8 @@ Decoding supports the above types, including the following CBOR tag numbers:
 | 86  | Float64Array        |
 | 258 | Set                 |
 | 262 | any                 |
-| 279 | RegExp              |
+| 21065 | RegExp            |
+| 21066 | RegExp            |
 | 55799 | any               |
 | 0xffff | Error            |
 | 0xffffffff | Error        |
@@ -117,7 +121,9 @@ There are several ways to add a new encoder:
 This is the easiest approach, if you can modify the class being encoded.  Add
 a `toCBOR()` method to your class, which should return a two-element array
 containing the tag number and data item that encodes your class.  If the tag
-number is `undefined`, no tag will be written.
+number is `NaN`, no tag will be written.  If you return undefined, nothing
+will be written.  In this case you will likely write custom bytes to the Writer
+instance that is passed in, perhaps using the encoding options.
 
 For example:
 
@@ -128,7 +134,7 @@ class Foo {
     this.two = two;
   }
 
-  toCBOR() {
+  toCBOR(_writer, _options) {
     return [64000, [this.one, this.two]];
   }
 }
@@ -158,7 +164,7 @@ class Bar {
     this.three = 3;
   }
 }
-registerEncoder(Bar, b => [undefined, b.three]);
+registerEncoder(Bar, (b, _writer, _options) => [NaN, b.three]);
 ```
 
 ## Adding new decoders

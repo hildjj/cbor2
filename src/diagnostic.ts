@@ -10,8 +10,9 @@
  * ```
  */
 
-import {CBORcontainer, type ContainerOptions} from './container.js';
 import {MT, SYMS} from './constants.js';
+import {CBORcontainer} from './container.js';
+import type {DecodeOptions} from './options.js';
 import {DecodeStream} from './decodeStream.js';
 import {u8toHex} from './utils.js';
 
@@ -64,9 +65,9 @@ function sized(ai: number, value: number): string {
  */
 export function diagnose(
   src: Uint8Array | string,
-  options?: ContainerOptions
+  options?: DecodeOptions
 ): string {
-  const opts: Required<ContainerOptions> = {
+  const opts: Required<DecodeOptions> = {
     ...CBORcontainer.defaultOptions,
     ...options,
     ParentType: DiagContainer,
@@ -74,7 +75,7 @@ export function diagnose(
 
   const stream = new DecodeStream(src, opts);
   let parent: DiagContainer | undefined = undefined;
-  let ret: any = SYMS.NOT_FOUND;
+  let ret: any = undefined;
   let str = '';
 
   for (const mav of stream) {
@@ -86,7 +87,7 @@ export function diagnose(
         str += ', ';
       }
     }
-    ret = CBORcontainer.create(mav, parent, opts);
+    ret = CBORcontainer.create(mav, parent, opts, stream);
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:

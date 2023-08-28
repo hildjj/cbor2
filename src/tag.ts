@@ -1,12 +1,12 @@
-import type {RequiredEncodeOptions} from './encoder.js';
-import type {Writer} from './writer.js';
+import type {Decodeable, RequiredDecodeOptions} from './options.js';
+import {ToCBOR} from './writer.js';
 
-export type TagDecoder = (tag: Tag) => unknown;
+export type TagDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
 
 /**
  * A CBOR tagged value.
  */
-export class Tag {
+export class Tag implements ToCBOR, Decodeable {
   static #tags = new Map<bigint | number, TagDecoder>();
   public readonly tag: number;
   public contents: unknown;
@@ -45,24 +45,25 @@ export class Tag {
   /**
    * Convert this tagged value to a useful data type, if possible.
    *
+   * @param options Options for decoding.
    * @returns The converted value.
    */
-  public decode(): unknown {
+  public decode(options: RequiredDecodeOptions): unknown {
     const decoder = Tag.#tags.get(this.tag);
     if (decoder) {
-      return decoder(this);
+      return decoder(this, options);
     }
     return this;
   }
 
-  public toCBOR(w: Writer, opts: RequiredEncodeOptions): [number, unknown] {
+  public toCBOR(): [number, unknown] {
     return [this.tag, this.contents];
   }
 
   public [Symbol.for('nodejs.util.inspect.custom')](
-    depth: number,
+    _depth: number,
     inspectOptions: object,
-    inspect: (val: any, opts: object) => any
+    inspect: (val: unknown, opts: object) => unknown
   ): string {
     return `${this.tag}(${inspect(this.contents, inspectOptions)})`;
   }

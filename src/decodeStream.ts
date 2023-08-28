@@ -1,3 +1,4 @@
+import type {DecodeStreamOptions, DecodeValue, MtAiValue, Sliceable} from './options.js';
 import {
   MT,
   NUMBYTES,
@@ -10,41 +11,6 @@ import {parseHalf} from './float.js';
 
 const TD = new TextDecoder('utf8', {fatal: true, ignoreBOM: true});
 
-/**
- * Options for decoding.
- */
-export interface DecodeStreamOptions {
-  /**
-   * Maximum allowed depth to parse into CBOR structures.  This limit is
-   * security-relevant for untrusted inputs.  May be set to Infinity for
-   * trusted inputs, but be careful!
-   * @default 1024
-   */
-  maxDepth?: number;
-
-  /**
-   * If the input is a string, how should it be decoded into a byte stream?
-   * Ignored if the input is a Uint8Array.
-   * @default null
-   */
-  encoding?: 'base64' | 'hex' | null;
-}
-
-/**
- * These less-complex types are decoded as tokens at this level.
- */
-export type DecodeValue =
-  Simple | Symbol | Uint8Array | bigint | boolean | number | string |
-  null | undefined;
-
-/**
- * Information about a decoded CBOR data item.  3-element tuple, containing:
- * - Major type.
- * - Additional Information (int if < 23, else length as 24-27, 31 as stream).
- * - Decoded token value.
- */
-export type MtAiValue = [mt: number, ai: number, val: DecodeValue];
-
 export type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
 
 /**
@@ -52,7 +18,7 @@ export type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
  * bytes.  Currently requires a full single CBOR value, with no extra bytes in
  * the input.
  */
-export class DecodeStream {
+export class DecodeStream implements Sliceable {
   public static defaultOptions: Required<DecodeStreamOptions> = {
     maxDepth: 1024,
     encoding: 'hex',
@@ -91,6 +57,10 @@ export class DecodeStream {
     );
   }
 
+  public toHere(begin: number): Uint8Array {
+    return this.#src.subarray(begin, this.#offset);
+  }
+
   /**
    * Get the stream of events describing the CBOR item.
    *
@@ -123,6 +93,7 @@ export class DecodeStream {
       throw new Error(`Maximum depth ${this.#opts.maxDepth} exceeded`);
     }
 
+    const prevOffset = this.#offset;
     // Will throw when out of data
     const octet = this.#view.getUint8(this.#offset++);
     const mt = octet >> 5;
@@ -183,7 +154,7 @@ export class DecodeStream {
           case MT.TAG:
             throw new Error(`Invalid indefinite encoding for MT ${mt}`);
           case MT.SIMPLE_FLOAT:
-            yield [mt, ai, SYMS.BREAK];
+            yield [mt, ai, SYMS.BREAK, prevOffset];
             return;
         }
         val = Infinity;
@@ -194,31 +165,31 @@ export class DecodeStream {
 
     switch (mt) {
       case MT.POS_INT:
-        yield [mt, ai, val];
+        yield [mt, ai, val, prevOffset];
         break;
       case MT.NEG_INT:
-        yield [mt, ai, (typeof val === 'bigint') ? -1n - val : -1 - Number(val)];
+        yield [mt, ai, (typeof val === 'bigint') ? -1n - val : -1 - Number(val), prevOffset];
         break;
       case MT.BYTE_STRING:
         if (val === Infinity) {
-          yield *this.#stream(mt, depth);
+          yield *this.#stream(mt, depth, prevOffset);
         } else {
-          yield [mt, ai, this.#read(val as number)];
+          yield [mt, ai, this.#read(val as number), prevOffset];
         }
         break;
       case MT.UTF8_STRING:
         if (val === Infinity) {
-          yield *this.#stream(mt, depth);
+          yield *this.#stream(mt, depth, prevOffset);
         } else {
-          yield [mt, ai, TD.decode(this.#read(val as number))];
+          yield [mt, ai, TD.decode(this.#read(val as number)), prevOffset];
         }
         break;
       case MT.ARRAY:
         if (val === Infinity) {
-          yield *this.#stream(mt, depth, false);
+          yield *this.#stream(mt, depth, prevOffset, false);
         } else {
           const nval = Number(val);
-          yield [mt, ai, nval];
+          yield [mt, ai, nval, prevOffset];
           for (let i = 0; i < nval; i++) {
             yield *this.#nextVal(depth + 1);
           }
@@ -226,10 +197,10 @@ export class DecodeStream {
         break;
       case MT.MAP:
         if (val === Infinity) {
-          yield *this.#stream(mt, depth, false);
+          yield *this.#stream(mt, depth, prevOffset, false);
         } else {
           const nval = Number(val);
-          yield [mt, ai, nval];
+          yield [mt, ai, nval, prevOffset];
           for (let i = 0; i < nval; i++) {
             yield *this.#nextVal(depth);
             yield *this.#nextVal(depth);
@@ -237,7 +208,7 @@ export class DecodeStream {
         }
         break;
       case MT.TAG:
-        yield [mt, ai, val];
+        yield [mt, ai, val, prevOffset];
         yield *this.#nextVal(depth);
         break;
       case MT.SIMPLE_FLOAT:
@@ -250,7 +221,7 @@ export class DecodeStream {
             default: val = new Simple(Number(val));
           }
         }
-        yield [mt, ai, val];
+        yield [mt, ai, val, prevOffset];
         break;
     }
   }
@@ -263,8 +234,13 @@ export class DecodeStream {
     return a;
   }
 
-  *#stream(mt: number, depth: number, check = true): ValueGenerator {
-    yield [mt, NUMBYTES.INDEFINITE, Infinity];
+  *#stream(
+    mt: number,
+    depth: number,
+    prevOffset: number,
+    check = true
+  ): ValueGenerator {
+    yield [mt, NUMBYTES.INDEFINITE, Infinity, prevOffset];
 
     while (true) {
       const child = this.#nextVal(depth);

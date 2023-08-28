@@ -1,26 +1,33 @@
-import {DecodeStream, type DecodeStreamOptions, type MtAiValue} from './decodeStream.js';
-import {CBORnumber} from './number.js';
-import {MT} from './constants.js';
+import {MT, NUMBYTES} from './constants.js';
+import type {MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
+import {box, getEncoded, saveEncoded} from './box.js';
+import {u8concat, u8toHex} from './utils.js';
+import {DecodeStream} from './decodeStream.js';
+import type {KeyValueEncoded} from './sorts.js';
+import {Simple} from './simple.js';
 import {Tag} from './tag.js';
-import {u8concat} from './utils.js';
+import {encode} from './encoder.js';
 
-function *pairs(
-  a: unknown[]
-): Generator<[unknown, unknown], undefined, undefined> {
-  const len = a.length;
-  let i = 0;
-  for (; i < len; i += 2) {
-    yield [a[i], a[i + 1]];
-  }
-  if (i !== len) {
-    throw new Error('Missing map value');
-  }
-}
+const LENGTH_FOR_AI = new Map([
+  [NUMBYTES.ZERO, 1],
+  [NUMBYTES.ONE, 2],
+  [NUMBYTES.TWO, 3],
+  [NUMBYTES.FOUR, 5],
+  [NUMBYTES.EIGHT, 9],
+]);
 
-export interface ContainerOptions extends DecodeStreamOptions {
-  ParentType?: typeof CBORcontainer;
-  boxed?: boolean;
-}
+const EMPTY_BUF = new Uint8Array(0);
+
+// Decide on dCBOR approach
+// export const dCBORdecodeOptions: ContainerOptions = {
+//   rejectLargeNegatives: true,
+//   rejectLongLoundNaN: true,
+//   rejectLongNumbers: true,
+//   rejectNegativeZero: true,
+//   rejectSimple: true,
+//   rejectStreaming: true,
+//   sortKeys: sortCoreDeterministic,
+// };
 
 /**
  * A CBOR data item that can contain other items.  One of:
@@ -33,28 +40,55 @@ export interface ContainerOptions extends DecodeStreamOptions {
  * This is used in various decoding applications to keep track of state.
  */
 export class CBORcontainer {
-  public static defaultOptions: Required<ContainerOptions> = {
+  public static defaultOptions: RequiredDecodeOptions = {
     ...DecodeStream.defaultOptions,
     ParentType: CBORcontainer,
     boxed: false,
+    rejectLargeNegatives: false,
+    rejectBigInts: false,
+    rejectDuplicateKeys: false,
+    rejectFloats: false,
+    rejectInts: false,
+    rejectLongLoundNaN: false,
+    rejectLongNumbers: false,
+    rejectNegativeZero: false,
+    rejectSimple: false,
+    rejectStreaming: false,
+    rejectUndefined: false,
+    saveOriginal: false,
+    sortKeys: null,
   };
 
-  public parent: CBORcontainer | undefined;
+  public parent: Parent | undefined;
   public mt: number;
   public ai: number;
   public left: number;
+  public offset: number;
+  public count = 0;
   public children: Tag | unknown[] = [];
+  #opts: RequiredDecodeOptions;
+  #encodedChildren: Uint8Array[] | null = null;
 
+  // Only call new from create() and super().
   public constructor(
-    mt: number,
-    ai: number,
+    mav: MtAiValue,
     left: number,
-    parent: CBORcontainer | undefined
+    parent: Parent | undefined,
+    opts: RequiredDecodeOptions
   ) {
-    this.mt = mt;
-    this.ai = ai;
+    [this.mt, this.ai, , this.offset] = mav;
     this.left = left;
     this.parent = parent;
+    this.#opts = opts;
+
+    if (this.mt === MT.MAP) {
+      if (this.#opts.sortKeys || this.#opts.rejectDuplicateKeys) {
+        this.#encodedChildren = [];
+      }
+    }
+    if (this.#opts.rejectStreaming && (this.ai === NUMBYTES.INDEFINITE)) {
+      throw new Error('Streaming not supported');
+    }
   }
 
   public get isStreaming(): boolean {
@@ -73,35 +107,98 @@ export class CBORcontainer {
    *   token.
    * @param parent If this item is inside another item, the direct parent.
    * @param opts Options controlling creation.
+   * @param stream The stream being decoded from.
    * @returns ParentType instance or value.
    * @throws Invalid major type, which should only occur from tests.
    */
   public static create(
     mav: MtAiValue,
-    parent: CBORcontainer | undefined,
-    opts: Required<ContainerOptions>
+    parent: Parent | undefined,
+    opts: RequiredDecodeOptions,
+    stream: DecodeStream
   ): unknown {
-    const [mt, ai, value] = mav;
+    const [mt, ai, value, offset] = mav;
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
+        if (opts.rejectInts) {
+          throw new Error(`Unexpected integer: ${value}`);
+        }
+        if (opts.rejectLongNumbers && (ai > NUMBYTES.ZERO)) {
+          // No opts needed
+          const buf = encode(value, {chunkSize: 9});
+
+          // Known safe:
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          if (buf.length < LENGTH_FOR_AI.get(ai)!) {
+            throw new Error(`Int should have been encoded shorter: ${value}`);
+          }
+        }
+        if (opts.rejectLargeNegatives &&
+            (value as number < -0x8000000000000000n)) {
+          throw new Error(`Invalid 65bit negative number: ${value}`);
+        }
+        if (opts.boxed) {
+          return box(value, stream.toHere(offset));
+        }
+        return value;
       case MT.SIMPLE_FLOAT:
-        if (opts.boxed && (typeof value === 'number')) {
-          return new CBORnumber(value, mt, ai);
+        if (ai > NUMBYTES.ONE) {
+          if (opts.rejectFloats) {
+            throw new Error(`Decoding unwanted floating point number: ${value}`);
+          }
+          if (opts.rejectNegativeZero && Object.is(value, -0)) {
+            throw new Error('Decoding negative zero');
+          }
+          if (opts.rejectLongLoundNaN && isNaN(value as number)) {
+            const buf = stream.toHere(offset);
+            if (buf.length !== 3 || buf[1] !== 0x7e || buf[2] !== 0) {
+              throw new Error(`Invalid NaN encoding: "${u8toHex(buf)}"`);
+            }
+          }
+          if (opts.rejectLongNumbers) {
+            // No opts needed.
+            const buf = encode(value, {chunkSize: 9});
+            if ((buf[0] >> 5) !== mt) {
+              throw new Error(`Should have been encoded as int, not float: ${value}`);
+            }
+            // Known safe:
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if (buf.length < LENGTH_FOR_AI.get(ai)!) {
+              throw new Error(`Int should have been encoded shorter: ${value}`);
+            }
+          }
+          if (opts.boxed) {
+            return box(value as number, stream.toHere(offset));
+          }
+        } else {
+          if (opts.rejectSimple) {
+            if (value instanceof Simple) {
+              throw new Error(`Invalid simple value: ${value}`);
+            }
+          }
+          if (opts.rejectUndefined) {
+            if (value === undefined) {
+              throw new Error('Unexpected undefined');
+            }
+          }
         }
         return value;
       case MT.BYTE_STRING:
       case MT.UTF8_STRING:
         if (value === Infinity) {
-          return new opts.ParentType(mt, ai, Infinity, parent);
+          return new opts.ParentType(mav, Infinity, parent, opts);
+        }
+        if (opts.boxed) {
+          return box(value, stream.toHere(offset));
         }
         return value;
       case MT.ARRAY:
-        return new opts.ParentType(mt, ai, value as number, parent);
+        return new opts.ParentType(mav, value as number, parent, opts);
       case MT.MAP:
-        return new opts.ParentType(mt, ai, (value as number) * 2, parent);
+        return new opts.ParentType(mav, (value as number) * 2, parent, opts);
       case MT.TAG: {
-        const ret = new opts.ParentType(mt, ai, 1, parent);
+        const ret = new opts.ParentType(mav, 1, parent, opts);
         ret.children = new Tag(value as number);
         return ret;
       }
@@ -114,10 +211,21 @@ export class CBORcontainer {
    * still needed.
    *
    * @param child Any child item.
+   * @param stream Stream being read from.
+   * @param offset Offset of start of child in stream.
    * @returns The number of items still needed.
    */
-  public push(child: unknown): number {
+  public push(child: unknown, stream: DecodeStream, offset: number): number {
     this.children.push(child);
+
+    if (this.#encodedChildren) {
+      const buf = getEncoded(child) || stream.toHere(offset);
+
+      // For simple children, this will be the encoded form of the child.
+      // For complex children, this will be just the beginning (MT/AI/LEN)
+      // and will be replaced in replaceLast.
+      this.#encodedChildren.push(buf);
+    }
     return --this.left;
   }
 
@@ -126,47 +234,118 @@ export class CBORcontainer {
    * convert on the most recent child.
    *
    * @param child New child value.
+   * @param item The key or value container.  Used to check for dups.
+   * @param stream The stream being read from.
    * @returns Previous child value.
+   * @throws Duplicate key.
    */
-  public replaceLast(child: unknown): unknown {
+  public replaceLast(
+    child: unknown,
+    item: Parent,
+    stream: DecodeStream
+  ): unknown {
+    let ret: unknown = undefined;
+    let last = -Infinity;
     if (this.children instanceof Tag) {
-      const ret = this.children.contents;
+      last = 0;
+      ret = this.children.contents;
       this.children.contents = child;
-      return ret;
+    } else {
+      last = this.children.length - 1;
+      ret = this.children[last];
+      this.children[last] = child;
     }
-    const last = this.children.length - 1;
-    const ret = this.children[last];
-    this.children[last] = child;
+
+    if (this.#encodedChildren) {
+      const buf = getEncoded(child) || stream.toHere(item.offset);
+      this.#encodedChildren[last] = buf;
+    }
     return ret;
   }
 
   /**
    * Converts the childen to the most appropriate form known.
    *
+   * @param stream Stream that we are reading from.
    * @returns Anything BUT a CBORcontainer.
    * @throws Invalid major type.  Only possible in testing.
    */
-  public convert(): unknown {
+  public convert(stream: DecodeStream): unknown {
+    let ret: unknown = undefined;
     switch (this.mt) {
       case MT.ARRAY:
-        return this.children;
+        ret = this.children;
+        break;
       case MT.MAP: {
         // Are all of the keys strings?
         // Note that __proto__ gets special handling as a key in fromEntries,
         // since it's doing DefineOwnProperty down inside.
-        const cu = this.children as unknown[];
-        return cu.every((v, i) => (i % 2) || (typeof v === 'string')) ?
-          Object.fromEntries(pairs(cu)) :
-          new Map<unknown, unknown>(pairs(cu));
+        const pu = this.#pairs();
+        if (this.#opts.sortKeys) {
+          let lastKey: KeyValueEncoded | undefined = undefined;
+          for (const kve of pu) {
+            if (lastKey) {
+              if (this.#opts.sortKeys(lastKey, kve) >= 0) {
+                throw new Error(`Duplicate or out of order key: "0x${kve[2]}"`);
+              }
+            }
+            lastKey = kve;
+          }
+        } else if (this.#opts.rejectDuplicateKeys) {
+          const ks = new Set<string>();
+          for (const [_k, _v, e] of pu) {
+            const hex = u8toHex(e);
+            if (ks.has(hex)) {
+              throw new Error(`Duplicate key: "0x${hex}"`);
+            }
+            ks.add(hex);
+          }
+        }
+
+        // Extra array elements are ignored in both branches.
+        ret = !this.#opts.boxed && pu.every(([k]) => typeof k === 'string') ?
+          Object.fromEntries(pu) :
+          new Map<unknown, unknown>(pu as unknown as [unknown, unknown][]);
+        break;
       }
       case MT.BYTE_STRING: {
         return u8concat(this.children as Uint8Array[]);
       }
-      case MT.UTF8_STRING:
-        return (this.children as string[]).join('');
+      case MT.UTF8_STRING: {
+        const str = (this.children as string[]).join('');
+        ret = this.#opts.boxed ?
+          box(str, stream.toHere(this.offset)) :
+          str;
+        break;
+      }
       case MT.TAG:
-        return (this.children as Tag).decode();
+        ret = (this.children as Tag).decode(this.#opts);
+        break;
+      default:
+        throw new TypeError(`Invalid mt on convert: ${this.mt}`);
     }
-    throw new TypeError(`Invalid mt on convert: ${this.mt}`);
+    if (this.#opts.saveOriginal && ret && (typeof ret === 'object')) {
+      saveEncoded(ret, stream.toHere(this.offset));
+    }
+    return ret;
+  }
+
+  #pairs(): KeyValueEncoded[] {
+    const ary = this.children as unknown[];
+    const len = ary.length;
+    if (len % 2) {
+      throw new Error('Missing map value');
+    }
+    const ret = new Array<KeyValueEncoded>(len / 2);
+    if (this.#encodedChildren) {
+      for (let i = 0; i < len; i += 2) {
+        ret[i >> 1] = [ary[i], ary[i + 1], this.#encodedChildren[i]];
+      }
+    } else {
+      for (let i = 0; i < len; i += 2) {
+        ret[i >> 1] = [ary[i], ary[i + 1], EMPTY_BUF];
+      }
+    }
+    return ret;
   }
 }

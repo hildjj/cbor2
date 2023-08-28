@@ -1,6 +1,7 @@
 import './style.css';
+import {Tag, decode, diagnose, encode} from 'cbor2';
 import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
-import {decode, diagnose, encode} from 'cbor2';
+import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
 
 const ofmt = document.getElementById('output-fmt');
@@ -26,20 +27,57 @@ function error(e) {
   otxt.value = e.toString();
 }
 
+const encodeOpts = {
+  avoidInts: false,
+  collapseBigInts: true,
+  float64: false,
+  forceEndian: null,
+  ignoreOriginalEncoding: false,
+  largeNegativeAsBigInt: false,
+  rejectBigInts: false,
+  rejectCustomSimples: false,
+  rejectDuplicateKeys: false,
+  rejectFloats: false,
+  rejectUndefined: false,
+  simplifyNegativeZero: false,
+  sortKeys: null,
+};
+
+const decodeOpts = {
+  boxed: false,
+  rejectLargeNegatives: false,
+  rejectBigInts: false,
+  rejectDuplicateKeys: false,
+  rejectFloats: false,
+  rejectInts: false,
+  rejectLongLoundNaN: false,
+  rejectLongNumbers: false,
+  rejectNegativeZero: false,
+  rejectSimple: false,
+  rejectStreaming: false,
+  rejectUndefined: false,
+  sortKeys: null,
+};
+
 // Convert any input to a buffer
 function input() {
   const inp = ifmt.selectedOptions[0].label;
   const txt = itxt.value;
   switch (inp) {
     case 'JSON':
-      return encode(JSON.parse(txt));
+      return encode(JSON.parse(txt), encodeOpts);
     case 'hex':
       return hexToU8(txt);
     case 'base64':
       return base64ToBytes(txt);
-    case 'js':
-      // eslint-disable-next-line no-eval
-      return encode(eval(txt));
+    case 'js': {
+      if (txt.trim().length > 0) {
+        // eslint-disable-next-line no-new-func
+        const fun = new Function('Tag', `"use strict";return ${txt}`);
+        return encode(fun(Tag), encodeOpts);
+      }
+      return new Uint8Array(0);
+    }
     default:
       throw new Error(`Unknown input: "${inp}"`);
   }
@@ -71,8 +109,8 @@ function output(buf, typ) {
         otxt.value = diagnose(buf);
         break;
       case 'js':
-        copy.disabled = true;
-        otxt.value = inspect(decode(buf), {
+        copy.disabled = false;
+        otxt.value = inspect(decode(buf, decodeOpts), {
           depth: Infinity,
           compact: 1,
           maxArrayLength: Infinity,
@@ -81,7 +119,7 @@ function output(buf, typ) {
         break;
       case 'JSON':
         copy.disabled = false;
-        otxt.value = JSON.stringify(decode(buf), null, 2);
+        otxt.value = JSON.stringify(decode(buf, decodeOpts), null, 2);
         break;
       default:
         throw new Error(`Unknown output: "${outp}"`);
@@ -99,6 +137,60 @@ function convert() {
     throw e;
   }
 }
+
+function changeEncodeOption({target}) {
+  const opt = target.id.replace(/Encode$/, '');
+  encodeOpts[opt] = target.checked;
+  convert();
+}
+
+for (const inp of document.querySelectorAll('#encodingOpts input')) {
+  inp.onchange = changeEncodeOption;
+  inp.checked = encodeOpts[inp.id];
+}
+
+const forceEndian = document.querySelector('#forceEndian');
+forceEndian.onchange = () => {
+  encodeOpts.forceEndian = {
+    null: null,
+    true: true,
+    false: false,
+  }[forceEndian.value];
+  convert();
+};
+forceEndian.value = 'null';
+
+const sortKeysEncode = document.querySelector('#sortKeysEncode');
+sortKeysEncode.onchange = () => {
+  encodeOpts.sortKeys = {
+    null: null,
+    coreDeterministic: sortCoreDeterministic,
+    lengthFirstDeterministic: sortLengthFirstDeterministic,
+  }[sortKeysEncode.value];
+  convert();
+};
+sortKeysEncode.value = 'null';
+
+function changeDecodeOption({target}) {
+  decodeOpts[target.id] = target.checked;
+  convert();
+}
+
+for (const inp of document.querySelectorAll('#decodingOpts input')) {
+  inp.onchange = changeDecodeOption;
+  inp.checked = decodeOpts[inp.id];
+}
+
+const sortKeysDecode = document.querySelector('#sortKeysDecode');
+sortKeysDecode.onchange = () => {
+  encodeOpts.sortKeys = {
+    null: null,
+    coreDeterministic: sortCoreDeterministic,
+    lengthFirstDeterministic: sortLengthFirstDeterministic,
+  }[sortKeysDecode.value];
+  convert();
+};
+sortKeysDecode.value = 'null';
 
 ofmt.oninput = convert;
 ifmt.oninput = convert;

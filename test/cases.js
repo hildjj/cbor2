@@ -1,7 +1,6 @@
-import {MT, NUMBYTES} from '../lib/constants.js';
-import {CBORnumber} from '../lib/number.js';
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
+import {box} from '../lib/box.js';
 import {hexToU8} from '../lib/utils.js';
 
 export class TempClass {
@@ -15,8 +14,7 @@ export class TempClass {
   }
 }
 
-// [Decoded, Diagnostic, Commented]
-export const good = [
+export const goodNumbers = [
   [0, '0', `
   00                -- 0
 0x00`],
@@ -80,6 +78,12 @@ export const good = [
   fb                -- Float, next 8 bytes
     0000000000000001 -- 5e-324
 0xfb0000000000000001`],
+];
+
+// [Decoded, Diagnostic, Commented]
+export const good = [
+  ...goodNumbers,
+
   [-0x1c0000000000000001n, '3(h\'1c0000000000000000\')', `
   c3                -- Tag #3
     49              -- Bytes, length: 9
@@ -624,7 +628,7 @@ d9                --  next 2 bytes
   [new Int8Array([-1, 0, 1, -128, 127]),
     '72_0(h\'ff0001807f\')',
     '0xd84845ff0001807f'],
-  [new Map([[[], []], [[], []]]), '{[]: [], []: []}', '0xa280808080'],
+  [new Map([[[], []], [[0], []]]), '{[]: [], [0]: []}', '0xa28080810080'],
 ];
 
 export const goodEndian = [
@@ -657,38 +661,40 @@ export const goodEndian = [
 ];
 
 export const goodBoxed = [
-  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.TWO),
+  [box(12, hexToU8('f94a00')),
     '12_1',
     '0xf94a00'],
-  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.FOUR),
+  [box(12, hexToU8('fa41400000')),
     '12_2',
     '0xfa41400000'],
-  [new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.EIGHT),
+  [box(12, hexToU8('fb4028000000000000')),
     '12_3',
     '0xfb4028000000000000'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.ZERO),
+  [box(-12, hexToU8('2b')),
     '-12',
     '0x2b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.ONE),
+  [box(-12, hexToU8('380b')),
     '-12_0',
     '0x380b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.TWO),
+  [box(-12, hexToU8('39000b')),
     '-12_1',
     '0x39000b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.FOUR),
+  [box(-12, hexToU8('3a0000000b')),
     '-12_2',
     '0x3a0000000b'],
-  [new CBORnumber(-12, MT.NEG_INT, NUMBYTES.EIGHT),
+  [box(-12, hexToU8('3b000000000000000b')),
     '-12_3',
     '0x3b000000000000000b'],
+  [box(2n, hexToU8('c243000002')), "2(h'000002')", '0xc243000002'],
+  [box(-2n, hexToU8('c343000001')), "3(h'000001')", '0xc343000001'],
+  [box(2n, hexToU8('c24400000002')), "2(h'00000002')", '0xc24400000002'],
+  [box(-2n, hexToU8('c34400000001')), "3(h'00000001')", '0xc34400000001'],
+  [box(16n, hexToU8('c24400000010')), "2(h'00000010')", '0xc24400000010'],
+  [box(-17n, hexToU8('c34400000010')), "3(h'00000010')", '0xc34400000010'],
+  [[box('streaming', hexToU8('7f657374726561646d696e67ff'))], '[(_ "strea", "ming")]', '0x817f657374726561646d696e67ff'],
 ];
 
 export const badBoxed = [
-  new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.ZERO),
-  new CBORnumber(12, MT.SIMPLE_FLOAT, NUMBYTES.ONE),
-  new CBORnumber(1.1944212019443512e-7, MT.SIMPLE_FLOAT, NUMBYTES.TWO),
-  new CBORnumber(12, MT.POS_INT, 28),
-  new CBORnumber(12, MT.ARRAY, NUMBYTES.ZERO),
 ];
 
 export const decodeGood = [
@@ -734,7 +740,7 @@ export const decodeGood = [
     0001            -- 5.960464477539063e-8
 0xf90001`],
   [9223372036854775807n, '9223372036854775807_3', `
-  1b                -- Positive number, next 8 bytes
+  1b              failAll(cases.decodeBad);  -- Positive number, next 8 bytes
     7fffffffffffffff -- 9223372036854775807
 0x1b7fffffffffffffff`],
   [-9223372036854775808n, '-9223372036854775808_3', `
@@ -937,11 +943,19 @@ d8                --  next 1 byte
 ];
 
 export const encodeGood = [
+  [new Map([[[], []], [[], []]]), '{[]: [], []: []}', '0xa280808080'],
+
   /* eslint-disable no-new-wrappers */
   [new String('foo'), 'boxed', '0x63666f6f'],
   [new Boolean(true), 'boxed', '0xf5'],
   [new Number(12), 'boxed', '0x0c'],
   /* eslint-enable no-new-wrappers */
+];
+
+export const encodeBadDCBOR = [
+  new Map([[[], 0], [[], 1]]),
+  new Simple(0),
+  undefined,
 ];
 
 export const collapseBigIntegers = [
@@ -1001,6 +1015,49 @@ export const decodeBadTags = [
   '0xd9524a80', // RegExp array too short
   '0xd9524a820000', // RegExp invalid flags
   '0xd9524900', // I-regex not string
+  '0xc1a1616100', // Time with bad obj
+];
+
+export const decodeBadDcbor = [
+  '0xa2616101616102', // {a: 1, a: 2}
+  '0xa200010002',
+  '0xa2f5f4f5f6',
+  '0xa280008001',
+  '0xa20a000a001',
+  '0xa2810000810001',
+  '0xa2616200616101', // {b: 1, a: 2}
+  '0xf98000', // -0
+  '0xfa7f800000', // Long infinities
+  '0xfaff800000',
+  '0xfb7ff0000000000000',
+  '0xfbfff0000000000000',
+  '0xfa7fc00000', // Long NaNs
+  '0xfb7ff8000000000000',
+  '0xf97e01', // Signalling NaN
+  '0xfb7ff8000000000001',
+  '0x3b8000000000000000', // 65bit neg
+  // Should be smaller
+  '0x1817',
+  '0x190017',
+  '0x1a00000017',
+  '0x1b0000000000000017',
+  '0xfa3fa00000', // 1.25_2
+  '0xfb3ff4000000000000', // 1.25_3
+  '0xfb402400000000000000', // 10
+  '0xc2420002',
+  '0xc24102',
+  // Should be int
+  '0xf94900',
+  '0xfa50000000',
+  // No streaming
+  '0x5fff',
+  '0x7fff',
+  '0x9fff',
+  '0xbfff',
+  // Simple
+  '0xe0',
+  // Undefined
+  '0xf7',
 ];
 
 const HEX = /0x(?<hex>[0-9a-f]+)$/i;
@@ -1039,45 +1096,6 @@ export function toString(c) {
   const match = c.match(HEX);
   return match.groups.hex;
 }
-
-//
-// export class EncodeFailer extends cbor.Encoder {
-//   constructor(count) {
-//     super();
-//     if (count == null) {
-//       count = Number.MAX_SAFE_INTEGER;
-//     }
-//     this.count = count;
-//     this.start = count;
-//   }
-
-//   push(fresh, encoding) {
-//     if (this.count-- <= 0) {
-//       super.push(null);
-//       return false;
-//     }
-//     return super.push(fresh, encoding);
-//   }
-
-//   get used() {
-//     return this.start - this.count;
-//   }
-
-//   static tryAll(t, f, canonical) {
-//     let enc = new EncodeFailer();
-//     enc.canonical = canonical;
-//     t.truthy(enc.pushAny(f));
-//     const {used} = enc;
-//     for (let i = 0; i < used; i++) {
-//       enc = new EncodeFailer(i);
-//       enc.canonical = canonical;
-//       t.falsy(enc.pushAny(f));
-//     }
-//     enc = new EncodeFailer(used);
-//     enc.canonical = canonical;
-//     t.truthy(enc.pushAny(f));
-//   }
-// }
 
 // Here to avoid ava's odd injection of Map into the namespace of the tests
 export const goodMap = new Map([
