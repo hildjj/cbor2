@@ -12,22 +12,23 @@
 import './types.js';
 export type {DecodeStream, ValueGenerator} from './decodeStream.js';
 export type {
-  DecodeStreamOptions,
+  Decodeable,
   DecodeOptions,
+  DecodeStreamOptions,
   DecodeValue,
-  DS,
   EncodeOptions,
   MtAiValue,
   Parent,
   ParentConstructor,
   RequiredDecodeOptions,
   RequiredEncodeOptions,
-  Tg,
+  Sliceable,
   WriterOptions,
 } from './options.js';
 export {decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
-export {DONE, encode} from './encoder.js';
+export {encode} from './encoder.js';
+export {Simple} from './simple.js';
 export {Tag} from './tag.js';
-export type {DoneEncoding, Writer} from './writer.js';
+export type {TaggedValue, ToCBOR, Writer} from './writer.js';
 export {unbox, getEncoded} from './box.js';

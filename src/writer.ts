@@ -1,5 +1,8 @@
-import type {RequiredEncodeOptions, RequiredWriterOptions, WriterOptions} from './options.js';
-import type {SYMS} from './constants.js';
+import type {
+  RequiredEncodeOptions,
+  RequiredWriterOptions,
+  WriterOptions,
+} from './options.js';
 
 // Don't inherit from stream.Writable, so it's more portable.
 export class Writer {
@@ -159,17 +162,23 @@ export class Writer {
   }
 }
 
-export type DoneEncoding = typeof SYMS.DONE;
+/**
+ * A potentially-tagged value.  If the tag is NaN, it will not be used.
+ * Otherwise, it must be an integer that will be written as a CBOR tag
+ * before the value is encoded.
+ */
+export type TaggedValue = [tag: number, value: unknown];
 
 export interface ToCBOR {
   /**
    * If an object implements this interface, this method will be used to
-   * serialize the object when encoding.  Return DONE if you don't want
-   * any further serialization to take place.
+   * serialize the object when encoding.  Return undefined if you don't want
+   * any further serialization to take place.  Return an array of [tag, value]
+   * if you would like default serialization, where if tag is not NaN, a
+   * CBOR tag will be written before the value.
    *
    * @param w Writer.
    * @param opts Options.
    */
-  toCBOR(w: Writer, opts: RequiredEncodeOptions):
-    DoneEncoding | [number, unknown] | undefined;
+  toCBOR(w: Writer, opts: RequiredEncodeOptions): TaggedValue | undefined;
 }

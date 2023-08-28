@@ -44,7 +44,7 @@ export function saveEncoded(obj: OriginalEncoding, orig: Uint8Array): void {
  *
  * @param value Primitive value.
  * @param orig Original encoding.
- * @returns Object wrapper with toCBOR() method.
+ * @returns Object wrapper with original encoding attached.
  */
 export function box<T>(value: T, orig: Uint8Array): ValueOf<T> {
   const o = Object(value);

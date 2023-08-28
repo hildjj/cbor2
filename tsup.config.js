@@ -16,7 +16,7 @@ export default defineConfig({
   format: 'esm',
   outDir: 'lib',
   sourcemap: false,
-  splitting: true,
+  splitting: false,
   target: 'es2022',
   bundle: false,
 });

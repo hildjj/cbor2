@@ -75,7 +75,7 @@ export function diagnose(
 
   const stream = new DecodeStream(src, opts);
   let parent: DiagContainer | undefined = undefined;
-  let ret: any = SYMS.NOT_FOUND;
+  let ret: any = undefined;
   let str = '';
 
   for (const mav of stream) {

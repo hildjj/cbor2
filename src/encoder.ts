@@ -1,19 +1,13 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
-import {type DoneEncoding, ToCBOR, Writer} from './writer.js';
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
+import {TaggedValue, ToCBOR, Writer} from './writer.js';
 import type {KeyValueEncoded} from './sorts.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
 export const {
-
-  /**
-   * Return this from toCBOR to signal that no further processing should be
-   * done.
-   */
-  DONE,
   ENCODED,
 } = SYMS;
 
@@ -56,17 +50,19 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
 };
 
 /**
- * Any class.
+ * Any class.  Ish.
  */
-export type AbstractClassType = abstract new (...args: any) => unknown;
-export type TypeEncoder = (
-  obj: unknown,
+export type AbstractClassType<T extends abstract new (...args: any) => any> =
+  abstract new (...args: any) => InstanceType<T>;
+
+export type TypeEncoder<T> = (
+  obj: T,
   w: Writer,
   opts: RequiredEncodeOptions
-) => DoneEncoding | [number, unknown];
+) => TaggedValue | undefined;
 
 // Only add ones here that have to be in for compliance.
-const TYPES = new Map<InstanceType<AbstractClassType>, TypeEncoder>([
+const TYPES = new Map<unknown, unknown>([
   [Array, writeArray],
   [Uint8Array, writeUint8Array],
 ]);
@@ -78,11 +74,11 @@ const TYPES = new Map<InstanceType<AbstractClassType>, TypeEncoder>([
  * @param encoder Converter function for that type.
  * @returns Previous converter for that type, or unknown.
  */
-export function registerEncoder(
-  typ: AbstractClassType,
-  encoder: TypeEncoder
-): TypeEncoder | undefined {
-  const old = TYPES.get(typ);
+export function registerEncoder<T extends AbstractClassType<T>>(
+  typ: T,
+  encoder: TypeEncoder<InstanceType<T>>
+): TypeEncoder<T> | undefined {
+  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
   TYPES.set(typ, encoder);
   return old;
 }
@@ -93,10 +89,10 @@ export function registerEncoder(
  * @param typ Type constructor, e.e.g "Array".
  * @returns Previous converter for that type, or unknown.
  */
-export function clearEncoder(
-  typ: AbstractClassType
-): TypeEncoder | undefined {
-  const old = TYPES.get(typ);
+export function clearEncoder<T extends AbstractClassType<T>>(
+  typ: T
+): TypeEncoder<T> | undefined {
+  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
   TYPES.delete(typ);
   return old;
 }
@@ -300,19 +296,17 @@ export function writeString(val: string, w: Writer): void {
  * @param obj Array.
  * @param w Writer.
  * @param opts Options.
- * @returns DONE.
  */
 export function writeArray(
   obj: unknown,
   w: Writer,
   opts: RequiredEncodeOptions
-): DoneEncoding {
+): undefined {
   const a = obj as unknown[];
   writeInt(a.length, w, MT.ARRAY);
   for (const i of a) { // Iterator gives undefined for holes.
     writeUnknown(i, w, opts);
   }
-  return SYMS.DONE;
 }
 
 /**
@@ -321,13 +315,11 @@ export function writeArray(
  *
  * @param obj Buffer.
  * @param w Writer.
- * @returns DONE.
  */
-export function writeUint8Array(obj: unknown, w: Writer): DoneEncoding {
+export function writeUint8Array(obj: unknown, w: Writer): undefined {
   const u = obj as Uint8Array;
   writeInt(u.length, w, MT.BYTE_STRING);
   w.write(u);
-  return SYMS.DONE;
 }
 
 function writeObject(
@@ -345,10 +337,11 @@ function writeObject(
     return;
   }
 
-  const encoder = TYPES.get(obj.constructor);
+  const encoder = TYPES.get(obj.constructor) as
+    TypeEncoder<unknown> | undefined;
   if (encoder) {
     const res = encoder(obj, w, opts);
-    if (res !== SYMS.DONE) {
+    if (res) {
       if (isFinite(res[0])) {
         writeTag(res[0], w);
       }
@@ -359,15 +352,13 @@ function writeObject(
 
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
     const res = (obj as ToCBOR).toCBOR(w, opts);
-    if (res !== undefined) {
-      if (res !== SYMS.DONE) {
-        if (isFinite(res[0])) {
-          writeTag(res[0], w);
-        }
-        writeUnknown(res[1], w, opts);
+    if (res) {
+      if (isFinite(res[0])) {
+        writeTag(res[0], w);
       }
-      return;
+      writeUnknown(res[1], w, opts);
     }
+    return;
   }
 
   if (typeof (obj as ToJSON).toJSON === 'function') {

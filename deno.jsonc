@@ -1,0 +1,16 @@
+{
+  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+  "tasks": {
+    "test": "deno test --allow-read=test-vectors"
+  },
+  "lint": {
+    "include": ["src/"],
+    "rules": {
+      "tags": ["recommended"],
+      "include": ["ban-untagged-todo"],
+      "exclude": [
+        "ban-types"
+      ]
+    }
+  }
+}

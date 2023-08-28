@@ -1,11 +1,12 @@
-import type {RequiredDecodeOptions} from './options.js';
+import type {Decodeable, RequiredDecodeOptions} from './options.js';
+import {ToCBOR} from './writer.js';
 
 export type TagDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
 
 /**
  * A CBOR tagged value.
  */
-export class Tag {
+export class Tag implements ToCBOR, Decodeable {
   static #tags = new Map<bigint | number, TagDecoder>();
   public readonly tag: number;
   public contents: unknown;

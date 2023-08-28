@@ -1,4 +1,4 @@
-import type {DecodeStreamOptions, DecodeValue, MtAiValue} from './options.js';
+import type {DecodeStreamOptions, DecodeValue, MtAiValue, Sliceable} from './options.js';
 import {
   MT,
   NUMBYTES,
@@ -18,7 +18,7 @@ export type ValueGenerator = Generator<MtAiValue, undefined, undefined>;
  * bytes.  Currently requires a full single CBOR value, with no extra bytes in
  * the input.
  */
-export class DecodeStream {
+export class DecodeStream implements Sliceable {
   public static defaultOptions: Required<DecodeStreamOptions> = {
     maxDepth: 1024,
     encoding: 'hex',

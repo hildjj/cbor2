@@ -24,7 +24,7 @@ export function decode<T = unknown>(
   }
   const stream = new DecodeStream(src, opts);
   let parent: Parent | undefined = undefined;
-  let ret: unknown = SYMS.NOT_FOUND;
+  let ret: unknown = undefined;
 
   for (const mav of stream) {
     ret = CBORcontainer.create(mav, parent, opts, stream);

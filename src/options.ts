@@ -27,7 +27,7 @@ export interface DecodeStreamOptions {
 export type DecodeValue = Simple | Symbol | Uint8Array | bigint | boolean |
   number | string | null | undefined;
 
-export interface DS {
+export interface Sliceable {
   toHere(begin?: number | undefined): Uint8Array;
 }
 
@@ -55,18 +55,18 @@ export interface ParentConstructor {
   ): Parent;
 }
 
-export interface Tg {
+export interface Decodeable {
   decode(options: RequiredDecodeOptions): unknown;
 }
 
 export interface Parent {
   parent: Parent | undefined;
-  children: Tg | unknown[];
+  children: Decodeable | unknown[];
   left: number;
   offset: number;
-  push(child: unknown, stream: DS, offset: number): number;
-  replaceLast(child: unknown, item: Parent, stream: DS): unknown;
-  convert(stream: DS): unknown;
+  push(child: unknown, stream: Sliceable, offset: number): number;
+  replaceLast(child: unknown, item: Parent, stream: Sliceable): unknown;
+  convert(stream: Sliceable): unknown;
   get done(): boolean;
   get isStreaming(): boolean;
 }

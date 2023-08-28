@@ -16,3 +16,5 @@ typedoc.config.cjs
 examples/
 .vscode/
 web/
+deno.lock
+deno.jsonc
