@@ -30,6 +30,10 @@ export class Tag implements ToCBOR, Decodeable {
     return old;
   }
 
+  public *[Symbol.iterator](): Generator<unknown, void, undefined> {
+    yield this.contents;
+  }
+
   /**
    * Makes Tag act like an array, so that no special casing is needed when
    * the tag's contents are available.

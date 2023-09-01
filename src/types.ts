@@ -130,9 +130,12 @@ Tag.registerDecoder(TAG.POS_BIGINT, u8toBigInt.bind(null, false));
 Tag.registerDecoder(TAG.NEG_BIGINT, u8toBigInt.bind(null, true));
 
 // 24: Encoded CBOR data item; see Section 3.4.5.1
-Tag.registerDecoder(TAG.CBOR, (tag: Tag): unknown => {
+Tag.registerDecoder(TAG.CBOR, (
+  tag: Tag,
+  opts: RequiredDecodeOptions
+): unknown => {
   assertU8(tag.contents);
-  return decode(tag.contents);
+  return decode(tag.contents, opts);
 });
 
 Tag.registerDecoder(TAG.URI, (tag: Tag): URL => {

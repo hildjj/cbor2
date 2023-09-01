@@ -1,5 +1,5 @@
-import {KeySorter} from './sorts.js';
-import {Simple} from './simple.js';
+import type {KeySorter} from './sorts.js';
+import type {Simple} from './simple.js';
 
 /**
  * Options for decoding.
@@ -43,6 +43,7 @@ export type MtAiValue = [
   ai: number,
   val: DecodeValue,
   offset: number,
+  len: bigint | number,
 ];
 
 export interface ParentConstructor {

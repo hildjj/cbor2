@@ -4,6 +4,7 @@
   "description": "Encode and parse data in the Concise Binary Object Representation (CBOR) data format (RFC8949).",
   "exports": {
     ".": "./lib/index.js",
+    "./comment": "./lib/comment.js",
     "./decoder": "./lib/decoder.js",
     "./diagnostic": "./lib/diagnostic.js",
     "./encoder": "./lib/encoder.js",
@@ -45,15 +46,15 @@
   "packageManager": "pnpm@8.6.10",
   "devDependencies": {
     "@cto.af/eslint-config": "3.0.1",
-    "@typescript-eslint/eslint-plugin": "6.4.1",
-    "@typescript-eslint/parser": "6.4.1",
+    "@typescript-eslint/eslint-plugin": "6.5.0",
+    "@typescript-eslint/parser": "6.5.0",
     "c8": "8.0.1",
-    "eslint": "8.47.0",
-    "eslint-plugin-jsdoc": "46.5.0",
+    "eslint": "8.48.0",
+    "eslint-plugin-jsdoc": "46.5.1",
     "eslint-plugin-markdown": "3.0.1",
     "rimraf": "^5.0.1",
     "tsup": "7.2.0",
-    "typedoc": "0.24.8"
+    "typedoc": "0.25.0"
   },
   "license": "MIT",
   "engines": {

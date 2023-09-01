@@ -1,5 +1,5 @@
 import './style.css';
-import {Tag, decode, diagnose, encode} from 'cbor2';
+import {Simple, Tag, comment, decode, diagnose, encode} from 'cbor2';
 import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
@@ -67,15 +67,17 @@ function input() {
   switch (inp) {
     case 'JSON':
       return encode(JSON.parse(txt), encodeOpts);
-    case 'hex':
-      return hexToU8(txt);
+    case 'hex': {
+      const hex = txt.replace(/^0x/i, '');
+      return hexToU8(hex);
+    }
     case 'base64':
       return base64ToBytes(txt);
     case 'js': {
       if (txt.trim().length > 0) {
         // eslint-disable-next-line no-new-func
-        const fun = new Function('Tag', `"use strict";return ${txt}`);
-        return encode(fun(Tag), encodeOpts);
+        const fun = new Function('Simple', 'Tag', `"use strict";return ${txt}`);
+        return encode(fun(Simple, Tag), encodeOpts);
       }
       return new Uint8Array(0);
     }
@@ -99,11 +101,7 @@ function output(buf, typ) {
         break;
       case 'commented':
         copy.disabled = true;
-        otxt.value = 'not implemented yet';
-        //
-        // comment(buf).then(txt => {
-        //   otxt.value = txt;
-        // }, error);
+        otxt.value = comment(buf);
         break;
       case 'diagnostic':
         copy.disabled = true;

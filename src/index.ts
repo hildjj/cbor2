@@ -27,6 +27,7 @@ export type {
 } from './options.js';
 export {decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
+export {comment} from './comment.js';
 export {encode} from './encoder.js';
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';

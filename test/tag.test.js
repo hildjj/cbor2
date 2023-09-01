@@ -14,4 +14,6 @@ test('Tag', () => {
   assert.equal(t.decode(), t);
   assert.equal(Tag.registerDecoder(0, t0), undefined);
   assert.notEqual(t.decode(), t);
+
+  assert.deepEqual([...t], ['2023-07-21T22:16:20-0600']);
 });
