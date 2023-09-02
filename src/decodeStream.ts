@@ -234,7 +234,7 @@ export class DecodeStream implements Sliceable {
   #read(size: number): Uint8Array {
     const a = this.#src.subarray(this.#offset, (this.#offset += size));
     if (a.length !== size) {
-      throw new Error('Unexpected nd of stream');
+      throw new Error(`Unexpected end of stream reading ${size} bytes, got ${a.length}`);
     }
     return a;
   }

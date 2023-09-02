@@ -68,7 +68,8 @@ function input() {
     case 'JSON':
       return encode(JSON.parse(txt), encodeOpts);
     case 'hex': {
-      const hex = txt.replace(/^0x/i, '');
+      let hex = txt.replace(/^0x/i, '');
+      hex = hex.replace(/\s+/g, '');
       return hexToU8(hex);
     }
     case 'base64':
@@ -100,7 +101,7 @@ function output(buf, typ) {
         otxt.value = bytesToBase64(buf);
         break;
       case 'commented':
-        copy.disabled = true;
+        copy.disabled = false;
         otxt.value = comment(buf);
         break;
       case 'diagnostic':
@@ -145,7 +146,7 @@ function changeEncodeOption({target}) {
 
 for (const inp of document.querySelectorAll('#encodingOpts input')) {
   inp.onchange = changeEncodeOption;
-  inp.checked = encodeOpts[inp.id];
+  inp.checked = encodeOpts[inp.id.replace(/Encode$/, '')];
 }
 
 const forceEndian = document.querySelector('#forceEndian');
@@ -195,8 +196,16 @@ ofmt.oninput = convert;
 ifmt.oninput = convert;
 copy.onclick = () => {
   // Copy output to input, and guess the new input format
-  itxt.value = otxt.value;
-  const sel = ofmt.selectedOptions[0].label;
+  let txt = otxt.value;
+  let sel = ofmt.selectedOptions[0].label;
+
+  if (ofmt.selectedOptions[0].label === 'commented') {
+    const m = txt.match(/^0x[0-9a-f]+/i);
+    txt = m ? m[0] : '';
+    sel = 'hex';
+  }
+
+  itxt.value = txt;
   for (const o of ifmt.options) {
     if (o.label === sel) {
       ifmt.selectedIndex = o.index;

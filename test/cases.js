@@ -1,6 +1,7 @@
 import {Simple} from '../lib/simple.js';
 import {Tag} from '../lib/tag.js';
 import {box} from '../lib/box.js';
+import {encode} from '../lib/encoder.js';
 import {hexToU8} from '../lib/utils.js';
 
 export class TempClass {
@@ -57,17 +58,17 @@ export const good = [
   ...goodNumbers,
 
   [-0x1c0000000000000001n, '3(h\'1c0000000000000000\')', `0xc3491c0000000000000000
-c3   -- Tag #3
+c3   -- Tag #3: (Negative BigInt) -516508834063867445249n
   49 --   Bytes (Length: 9)
     1c00000000000000
     00\n`],
   [18446744073709551616n, '2(h\'010000000000000000\')', `0xc249010000000000000000
-c2   -- Tag #2
+c2   -- Tag #2: (Positive BigInt) 18446744073709551616n
   49 --   Bytes (Length: 9)
     0100000000000000
     00\n`],
   [-18446744073709551617n, '3(h\'010000000000000000\')', `0xc349010000000000000000
-c3   -- Tag #3
+c3   -- Tag #3: (Negative BigInt) -18446744073709551617n
   49 --   Bytes (Length: 9)
     0100000000000000
     00\n`],
@@ -138,11 +139,11 @@ f8 20 -- Simple: 32\n`],
   [new Simple(255), 'simple(255)_0', `0xf8ff
 f8 ff -- Simple: 255\n`],
   [new Date(1363896240000), '1(1363896240_2)', `0xc11a514b67b0
-c1            -- Tag #1
+c1            -- Tag #1: (Epoch Date) 2013-03-21T20:04:00.000Z
   1a 514b67b0 --   Unsigned: 1363896240\n`],
 
   [new URL('http://www.example.com'), '32_0("http://www.example.com/")', `0xd82077687474703a2f2f7777772e6578616d706c652e636f6d2f
-d8 20 -- Tag #32
+d8 20 -- Tag #32: (URI)
   77  --   UTF8 (Length: 23): "http://www.example.com/"
     687474703a2f2f77
     77772e6578616d70
@@ -368,7 +369,7 @@ fa df000000 -- Float: -9223372036854776000\n`],
 3a 7fffffff -- Negative: -2147483648\n`],
 
   [new Date(0), '1(0)', `0xc100
-c1   -- Tag #1
+c1   -- Tag #1: (Epoch Date) 1970-01-01T00:00:00.000Z
   00 --   Unsigned: 0\n`],
   [new Uint8Array(0), 'h\'\'', `0x40
 40 -- Bytes (Length: 0)\n`],
@@ -378,13 +379,13 @@ c1   -- Tag #1
   [new Simple(0xff), 'simple(255)_0', `0xf8ff
 f8 ff -- Simple: 255\n`],
   [/a/, '21066_1(["a", ""])', `0xd9524a82616160
-d9 524a -- Tag #21066
+d9 524a -- Tag #21066: (RegExp)
   82    --   Array (Length: 2 items)
     61  --     [0] UTF8 (Length: 1): "a"
       61
     60  --     [1] UTF8 (Length: 0): ""\n`],
   [/a/gu, '21066_1(["a", "gu"])', `0xd9524a826161626775
-d9 524a -- Tag #21066
+d9 524a -- Tag #21066: (RegExp)
   82    --   Array (Length: 2 items)
     61  --     [0] UTF8 (Length: 1): "a"
       61
@@ -494,16 +495,16 @@ d9 0100 -- Tag #256
 43 -- Bytes (Length: 3)
   010203\n`],
   [new Uint8ClampedArray([1, 2, 3]), '68_0(h\'010203\')', `0xd84443010203
-d8 44 -- Tag #68
+d8 44 -- Tag #68: (uint8 Typed Array, clamped arithmetic)
   43  --   Bytes (Length: 3)
     010203\n`],
   [new Set([1, 2]), '258_1([1, 2])', `0xd90102820102
-d9 0102 -- Tag #258
+d9 0102 -- Tag #258: (Set)
   82    --   Array (Length: 2 items)
     01  --     [0] Unsigned: 1
     02  --     [1] Unsigned: 2\n`],
   [new Int8Array([-1, 0, 1, -128, 127]), '72_0(h\'ff0001807f\')', `0xd84845ff0001807f
-d8 48 -- Tag #72
+d8 48 -- Tag #72: (sint8 Typed Array)
   45  --   Bytes (Length: 5)
     ff0001807f\n`],
   [new Map([[[], []], [[0], []]]), '{[]: [], [0]: []}', `0xa28080810080
@@ -591,9 +592,17 @@ d7   -- Tag #23
   44 --   Bytes (Length: 4)
     01020304\n`],
   [new Tag(24, hexToU8('6449455446')).decode(), '24_0(h\'6449455446\')', `0xd818456449455446
-d8 18 -- Tag #24
-  45  --   Bytes (Length: 5)
-    6449455446\n`], // TODO: unfurl tag 24
+d8 18 -- Tag #24: Embedded CBOR
+  45   -- Bytes (Length: 5)
+    64 -- UTF8 (Length: 4): "IETF"
+      49455446\n`],
+  [new Tag(24, encode(new Uint8Array(24))), "24_0(h'5818000000000000000000000000000000000000000000000000')", `0xd818581a5818000000000000000000000000000000000000000000000000
+d8 18   -- Tag #24: Embedded CBOR
+  58 1a   -- Bytes (Length: 26)
+    58 18 -- Bytes (Length: 24)
+      0000000000000000
+      0000000000000000
+      0000000000000000\n`],
   [0, '0_1', `0xf90000
 f9 0000 -- Float: 0\n`],
   [-0, '-0_1', `0xf98000
@@ -629,13 +638,13 @@ fb 7ff0000000000001 -- Float: NaN\n`],
   [-9007199254740992, '-9007199254740992_3', `0x3b001fffffffffffff
 3b 001fffffffffffff -- Negative: -9007199254740992\n`],
   [new Date('2013-03-21T20:04:00Z'), '0("2013-03-21T20:04:00Z")', `0xc074323031332d30332d32315432303a30343a30305a
-c0   -- Tag #0
+c0   -- Tag #0: (String Date) 2013-03-21T20:04:00.000Z
   74 --   UTF8 (Length: 20): "2013-03-21T20:04:00Z"
     323031332d30332d
     32315432303a3034
     3a30305a\n`],
   [new Date(1363896240500), '1(1363896240.5_3)', `0xc1fb41d452d9ec200000
-c1                    -- Tag #1
+c1                    -- Tag #1: (Epoch Date) 2013-03-21T20:04:00.500Z
   fb 41d452d9ec200000 --   Float: 1363896240.5\n`],
   [hexToU8(''), "_''", `0x5fff
 5f   -- Bytes (Length: Indefinite)
@@ -760,7 +769,7 @@ bf     -- Map (Length: Indefinite)
       63
     ff --     [key 1] BREAK\n`],
   [new Uint8Array([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99]), '64_0((_ h\'aabbccdd\', h\'eeff99\'))', `0xd8405f44aabbccdd43eeff99ff
-d8 40  -- Tag #64
+d8 40  -- Tag #64: (uint8 Typed Array)
   5f   --   Bytes (Length: Indefinite)
     44 --     [0] Bytes (Length: 4)
       aabbccdd
@@ -768,35 +777,35 @@ d8 40  -- Tag #64
       eeff99
     ff --     [2] BREAK\n`],
   [/a/, '35_0("a")', `0xd8236161
-d8 23 -- Tag #35
+d8 23 -- Tag #35: (RegExp)
   61  --   UTF8 (Length: 1): "a"
     61\n`],
   [/^(?:[^\n\r])$/u, '21065_1(".")', `0xd95249612e
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   61    --   UTF8 (Length: 1): "."
     2e\n`],
   [/^(?:[.])$/u, '21065_1("[.]")', `0xd95249635b2e5d
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   63    --   UTF8 (Length: 3): "[.]"
     5b2e5d\n`],
   [/^(?:\.)$/u, '21065_1("\\\\.")', `0xd95249625c2e
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   62    --   UTF8 (Length: 2): "\\\\."
     5c2e\n`],
   [/^(?:[asd.])$/u, '21065_1("[asd.]")', `0xd95249665b6173642e5d
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   66    --   UTF8 (Length: 6): "[asd.]"
     5b6173642e5d\n`],
   [/^(?:[asd.f][^\n\r])$/u, '21065_1("[asd.f].")', `0xd95249685b6173642e665d2e
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   68    --   UTF8 (Length: 8): "[asd.f]."
     5b6173642e665d2e\n`],
   [/^(?:[as\].])$/u, '21065_1("[as\\\\].]")', `0xd95249675b61735c5d2e5d
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   67    --   UTF8 (Length: 7): "[as\\\\].]"
     5b61735c5d2e5d\n`],
   [/^(?:\[asdf)$/u, '21065_1("\\\\[asdf")', `0xd95249665c5b61736466
-d9 5249 -- Tag #21065
+d9 5249 -- Tag #21065: (I-RegExp)
   66    --   UTF8 (Length: 6): "\\\\[asdf"
     5c5b61736466\n`],
 ];

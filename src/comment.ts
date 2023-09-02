@@ -1,9 +1,15 @@
-import {DecodeOptions, MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
+import type {
+  CommentOptions,
+  MtAiValue, Parent,
+  RequiredCommentOptions,
+  RequiredDecodeOptions,
+} from './options.js';
 import {MT, NUMBYTES, SYMS} from './constants.js';
 import {type OriginalEncoding, getEncoded, saveEncoded} from './box.js';
 import {CBORcontainer} from './container.js';
 import {DecodeStream} from './decodeStream.js';
 import {Simple} from './simple.js';
+import {Tag} from './tag.js';
 import {u8toHex} from './utils.js';
 
 class CommentContainer extends CBORcontainer implements OriginalEncoding {
@@ -22,6 +28,8 @@ class CommentContainer extends CBORcontainer implements OriginalEncoding {
     super(mav, left, parent, opts);
     if (this.parent) {
       this.depth = (this.parent as CommentContainer).depth + 1;
+    } else {
+      this.depth = (opts as RequiredCommentOptions).initialDepth;
     }
     [, , this.value, , this.length] = mav;
   }
@@ -57,7 +65,7 @@ function spaces(num: number): string {
 
 function output(
   container: CommentContainer,
-  maxDepth: number,
+  options: RequiredCommentOptions,
   index?: string
 ): string {
   let ret = '';
@@ -69,7 +77,7 @@ function output(
     ret += ' ';
     ret += u8toHex(enc.subarray(1, numLen + 1));
   }
-  ret = ret.padEnd(maxDepth + 1, ' ');
+  ret = ret.padEnd(options.minCol + 1, ' ');
   ret += '-- ';
   if (index !== undefined) {
     ret += spaces(container.depth * 2);
@@ -77,6 +85,7 @@ function output(
       ret += `[${index}] `;
     }
   }
+  let noChildren = false;
   const [firstChild] = container.children as unknown[];
   switch (container.mt) {
     case MT.POS_INT:
@@ -106,9 +115,21 @@ function output(
     case MT.MAP:
       ret += `Map (Length: ${pl(container.value as bigint | number, 'pair')})`;
       break;
-    case MT.TAG:
+    case MT.TAG: {
       ret += `Tag #${container.value}`;
+      const ct = (container.children as Tag);
+      const [tagChild] =
+        (ct.contents as CommentContainer).children as unknown[][];
+      const t = new Tag(ct.tag, tagChild);
+      saveEncoded(t as OriginalEncoding, enc);
+      const c = t.comment(options, container.depth);
+      if (c) {
+        ret += ': ';
+        ret += c;
+      }
+      noChildren ||= t.noChildren;
       break;
+    }
     case MT.SIMPLE_FLOAT:
       if (firstChild === SYMS.BREAK) {
         ret += 'BREAK';
@@ -129,8 +150,10 @@ function output(
       break;
   }
 
-  ret += '\n';
-  if (container.leaf) {
+  if (noChildren) {
+    // No-op
+  } else if (container.leaf) {
+    ret += '\n';
     if (enc.length > numLen + 1) {
       const ind = spaces((container.depth + 1) * 2);
       for (let i = numLen + 1; i < enc.length; i += 8) {
@@ -140,6 +163,7 @@ function output(
       }
     }
   } else {
+    ret += '\n';
     let i = 0;
     for (const c of container.children) {
       if (isCommentContainer(c)) {
@@ -149,13 +173,20 @@ function output(
         } else if (container.mt === MT.TAG) {
           kv = '';
         }
-        ret += output(c, maxDepth, kv);
+        ret += output(c, options, kv);
       }
       i++;
     }
   }
   return ret;
 }
+
+const CommentOptionsDefault: RequiredCommentOptions = {
+  ...CBORcontainer.defaultOptions,
+  initialDepth: 0,
+  noPrefixHex: false,
+  minCol: 0,
+};
 
 /**
  * Create a string that describes the input CBOR.
@@ -167,10 +198,10 @@ function output(
  */
 export function comment(
   src: Uint8Array | string,
-  options?: DecodeOptions
+  options?: CommentOptions
 ): string {
-  const opts: Required<DecodeOptions> = {
-    ...CBORcontainer.defaultOptions,
+  const opts: RequiredCommentOptions = {
+    ...CommentOptionsDefault,
     ...options,
     ParentType: CommentContainer,
     saveOriginal: true,
@@ -178,12 +209,11 @@ export function comment(
 
   const stream = new DecodeStream(src, opts);
   let parent: Parent | undefined = undefined;
-  let ret: any = undefined;
-  let maxDepth = -Infinity;
+  let root: any = undefined;
 
   // Convert the stream to a tree of CBORcontainer's
   for (const mav of stream) {
-    ret = CBORcontainer.create(mav, parent, opts, stream);
+    root = CBORcontainer.create(mav, parent, opts, stream);
 
     if (mav[2] === SYMS.BREAK) {
       if (parent?.isStreaming) {
@@ -193,33 +223,39 @@ export function comment(
       }
     }
 
-    if (!isCommentContainer(ret)) {
+    if (!isCommentContainer(root)) {
       const c = new CommentContainer(mav, 0, parent, opts);
       c.leaf = true;
-      c.children.push(ret);
+      c.children.push(root);
       saveEncoded(c, stream.toHere(mav[3]));
-      ret = c;
+      root = c;
     }
-    let d = (ret.depth + 1) * 2; // Spaces, plus first byte
-    const nb = ret.numBytes();
+    let d = (root.depth + 1) * 2; // Spaces, plus first byte
+    const nb = root.numBytes();
     if (nb) {
       d += 1; // Space
       d += nb * 2; // Bytes
     }
-    maxDepth = Math.max(maxDepth, d);
+    opts.minCol = Math.max(opts.minCol, d);
     if (parent) {
-      parent.push(ret, stream, mav[3]);
+      parent.push(root, stream, mav[3]);
     }
-    parent = ret;
+    parent = root;
 
     while (parent?.done) {
-      ret = parent;
-      if (!ret.leaf) {
-        saveEncoded(ret, stream.toHere(ret.offset));
+      root = parent;
+      if (!root.leaf) {
+        saveEncoded(root, stream.toHere(root.offset));
       }
       ({parent} = parent);
     }
   }
+  // Cheating:
+  if (options) {
+    options.minCol = opts.minCol;
+  }
 
-  return `0x${u8toHex(stream.toHere(0))}\n${output(ret, maxDepth)}`;
+  let ret = opts.noPrefixHex ? '' : `0x${u8toHex(stream.toHere(0))}\n`;
+  ret += output(root, opts);
+  return ret;
 }

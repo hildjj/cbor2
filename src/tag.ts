@@ -1,7 +1,21 @@
-import type {Decodeable, RequiredDecodeOptions} from './options.js';
+import type {
+  Decodeable,
+  RequiredCommentOptions,
+  RequiredDecodeOptions,
+} from './options.js';
 import {ToCBOR} from './writer.js';
 
-export type TagDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
+export interface Commenter {
+  noChildren?: boolean;
+  comment?(
+    tag: Tag,
+    opts: RequiredCommentOptions,
+    depth: number
+  ): string;
+}
+
+export type BaseDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
+export type TagDecoder = BaseDecoder & Commenter;
 
 /**
  * A CBOR tagged value.
@@ -16,11 +30,29 @@ export class Tag implements ToCBOR, Decodeable {
     this.contents = contents;
   }
 
+  public get noChildren(): boolean {
+    const decoder = Tag.#tags.get(this.tag);
+    return Boolean(decoder?.noChildren);
+  }
+
   public static registerDecoder(
-    tag: bigint | number, decoder: TagDecoder
+    tag: bigint | number,
+    decoder: TagDecoder,
+    description?: string
   ): TagDecoder | undefined {
     const old = this.#tags.get(tag);
     this.#tags.set(tag, decoder);
+    if (old) {
+      if (!('comment' in decoder)) {
+        decoder.comment = old.comment;
+      }
+      if (!('noChildren' in decoder)) {
+        decoder.noChildren = old.noChildren;
+      }
+    }
+    if (description && !decoder.comment) {
+      decoder.comment = (): string => `(${description})`;
+    }
     return old;
   }
 
@@ -58,6 +90,17 @@ export class Tag implements ToCBOR, Decodeable {
       return decoder(this, options);
     }
     return this;
+  }
+
+  public comment(
+    options: RequiredCommentOptions,
+    depth: number
+  ): string | undefined {
+    const decoder = Tag.#tags.get(this.tag);
+    if (decoder?.comment) {
+      return decoder.comment(this, options, depth);
+    }
+    return undefined;
   }
 
   public toCBOR(): [number, unknown] {

@@ -185,6 +185,32 @@ export interface DecodeOptions extends DecodeStreamOptions {
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
 
+/**
+ * Comment options on top of the decode options.
+ */
+export interface CommentOptions extends DecodeOptions {
+  /**
+   * For the root object, how many levels of nesting is it already?
+   * Happens with tag 24.
+   * @default 0
+   */
+  initialDepth?: number;
+
+  /**
+   * If true, don't add the initial 0xHEX line to comment output.
+   * @default false
+   */
+  noPrefixHex?: boolean;
+
+  /**
+   * The '--' separating bytes from description must be in at least this
+   * column.
+   * @default 0
+   */
+  minCol: number;
+}
+export type RequiredCommentOptions = Required<CommentOptions>;
+
 export interface WriterOptions {
   chunkSize?: number;
 }
