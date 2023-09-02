@@ -43,16 +43,19 @@ the API and you want the type converters loaded, please also do
 <li>boolean</li>
 <li>number (including -0, NaN, and ±Infinity)</li>
 <li>string</li>
-<li>Array, Set (encoded as Array)</li>
-<li>Object (including null), Map</li>
+<li>bigint</li>
+<li>Array</li>
+<li>Set</li>
+<li>Object (including null)</li>
+<li>Map</li>
 <li>undefined</li>
-<li>Buffer</li>
 <li>Date,</li>
 <li>RegExp</li>
 <li>URL</li>
-<li>TypedArrays</li>
-<li>Map, Set</li>
-<li>bigint</li>
+<li>TypedArrays: Uint8Array is mapped to a CBOR byte array, others are tagged</li>
+<li>Boxed primitive types: String, Number, BigInt, Boolean</li>
+<li>cbor2.Simple</li>
+<li>cbor2.Tag</li>
 </ul>
 <p>Decoding supports the above types, including the following CBOR tag numbers:</p>
 <table>
@@ -96,7 +99,7 @@ the API and you want the type converters loaded, please also do
 </tr>
 <tr>
 <td>35</td>
-<td>RegExp</td>
+<td>RegExp (deprecated)</td>
 </tr>
 <tr>
 <td>64</td>
@@ -183,7 +186,11 @@ the API and you want the type converters loaded, please also do
 <td>any</td>
 </tr>
 <tr>
-<td>279</td>
+<td>21065</td>
+<td>RegExp</td>
+</tr>
+<tr>
+<td>21066</td>
 <td>RegExp</td>
 </tr>
 <tr>
@@ -207,9 +214,11 @@ the API and you want the type converters loaded, please also do
 <a id="md:tocbor-method" class="tsd-anchor"></a><h3><a href="#md:tocbor-method"><code>toCBOR</code> method</a></h3><p>This is the easiest approach, if you can modify the class being encoded.  Add
 a <code>toCBOR()</code> method to your class, which should return a two-element array
 containing the tag number and data item that encodes your class.  If the tag
-number is <code>undefined</code>, no tag will be written.</p>
+number is <code>NaN</code>, no tag will be written.  If you return undefined, nothing
+will be written.  In this case you will likely write custom bytes to the Writer
+instance that is passed in, perhaps using the encoding options.</p>
 <p>For example:</p>
-<pre><code class="language-js"><span class="hl-3">class</span><span class="hl-1"> </span><span class="hl-9">Foo</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-3">constructor</span><span class="hl-1">(</span><span class="hl-5">one</span><span class="hl-1">, </span><span class="hl-5">two</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">one</span><span class="hl-1"> = </span><span class="hl-5">one</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">two</span><span class="hl-1"> = </span><span class="hl-5">two</span><span class="hl-1">;</span><br/><span class="hl-1">  }</span><br/><br/><span class="hl-1">  </span><span class="hl-0">toCBOR</span><span class="hl-1">() {</span><br/><span class="hl-1">    </span><span class="hl-4">return</span><span class="hl-1"> [</span><span class="hl-8">64000</span><span class="hl-1">, [</span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">one</span><span class="hl-1">, </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">two</span><span class="hl-1">]];</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+<pre><code class="language-js"><span class="hl-3">class</span><span class="hl-1"> </span><span class="hl-9">Foo</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-3">constructor</span><span class="hl-1">(</span><span class="hl-5">one</span><span class="hl-1">, </span><span class="hl-5">two</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">one</span><span class="hl-1"> = </span><span class="hl-5">one</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">two</span><span class="hl-1"> = </span><span class="hl-5">two</span><span class="hl-1">;</span><br/><span class="hl-1">  }</span><br/><br/><span class="hl-1">  </span><span class="hl-0">toCBOR</span><span class="hl-1">(</span><span class="hl-5">_writer</span><span class="hl-1">, </span><span class="hl-5">_options</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-4">return</span><span class="hl-1"> [</span><span class="hl-8">64000</span><span class="hl-1">, [</span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">one</span><span class="hl-1">, </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">two</span><span class="hl-1">]];</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
 </code><button>Copy</button></pre>
 <p>You can also modify an existing type by monkey-patching a <code>toCBOR</code> function
 onto its prototype, but this isn&#39;t recommended.</p>
@@ -220,7 +229,7 @@ object.</p>
 type.  In this case, call <code>registerEncoder(type, encodeFunction)</code>. The
 <code>encodeFunction</code> takes an object instance and returns the same type as
 <code>toCBOR</code> above:</p>
-<pre><code class="language-js"><span class="hl-4">import</span><span class="hl-1"> {</span><span class="hl-5">registerEncoder</span><span class="hl-1">} </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;cbor2/encoder&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-3">class</span><span class="hl-1"> </span><span class="hl-9">Bar</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-3">constructor</span><span class="hl-1">() {</span><br/><span class="hl-1">    </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">three</span><span class="hl-1"> = </span><span class="hl-8">3</span><span class="hl-1">;</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span><br/><span class="hl-0">registerEncoder</span><span class="hl-1">(</span><span class="hl-5">Bar</span><span class="hl-1">, </span><span class="hl-5">b</span><span class="hl-1"> </span><span class="hl-3">=&gt;</span><span class="hl-1"> [</span><span class="hl-3">undefined</span><span class="hl-1">, </span><span class="hl-5">b</span><span class="hl-1">.</span><span class="hl-5">three</span><span class="hl-1">]);</span>
+<pre><code class="language-js"><span class="hl-4">import</span><span class="hl-1"> {</span><span class="hl-5">registerEncoder</span><span class="hl-1">} </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;cbor2/encoder&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-3">class</span><span class="hl-1"> </span><span class="hl-9">Bar</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-3">constructor</span><span class="hl-1">() {</span><br/><span class="hl-1">    </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-5">three</span><span class="hl-1"> = </span><span class="hl-8">3</span><span class="hl-1">;</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span><br/><span class="hl-0">registerEncoder</span><span class="hl-1">(</span><span class="hl-5">Bar</span><span class="hl-1">, (</span><span class="hl-5">b</span><span class="hl-1">, </span><span class="hl-5">_writer</span><span class="hl-1">, </span><span class="hl-5">_options</span><span class="hl-1">) </span><span class="hl-3">=&gt;</span><span class="hl-1"> [</span><span class="hl-3">NaN</span><span class="hl-1">, </span><span class="hl-5">b</span><span class="hl-1">.</span><span class="hl-5">three</span><span class="hl-1">]);</span>
 </code><button>Copy</button></pre>
 <a id="md:adding-new-decoders" class="tsd-anchor"></a><h2><a href="#md:adding-new-decoders">Adding new decoders</a></h2><p>Most of the time, you will want to add support for decoding a new tag type.  If
 the Decoder class encounters a tag it doesn&#39;t support, it will generate a <code>Tag</code>
@@ -287,6 +296,7 @@ for more information.</p>
 <li><a href="modules/encoder.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>encoder</span></a></li>
 <li><a href="modules/index.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>index</span></a></li>
 <li><a href="modules/simple.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>simple</span></a></li>
+<li><a href="modules/sorts.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>sorts</span></a></li>
 <li><a href="modules/tag.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>tag</span></a></li>
 <li><a href="modules/types.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>types</span></a></li>
 <li><a href="modules/utils.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>utils</span></a></li></ul></nav></div></div></div>

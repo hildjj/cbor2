@@ -23,9 +23,13 @@
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
-<li><span class="target">Simple</span></li></ul></section><aside class="tsd-sources">
+<li><span class="target">Simple</span></li></ul></section>
+<section class="tsd-panel">
+<h4>Implements</h4>
+<ul class="tsd-hierarchy">
+<li><a href="../interfaces/index.ToCBOR.html" class="tsd-signature-type tsd-kind-interface">ToCBOR</a></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/simple.ts#L8">simple.ts:8</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/f0b658a/src/simple.ts#L9">simple.ts:9</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -58,31 +62,45 @@
 <h5><span class="tsd-kind-parameter">value</span>: <span class="tsd-signature-type">number</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="simple.Simple.html" class="tsd-signature-type tsd-kind-class">Simple</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/simple.ts#L11">simple.ts:11</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/f0b658a/src/simple.ts#L12">simple.ts:12</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member"><a id="value" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>value</span><a href="#value" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/simple.ts#L9">simple.ts:9</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/f0b658a/src/simple.ts#L10">simple.ts:10</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member"><a id="toCBOR" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>toCBOR</span><a href="#toCBOR" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
-<li class="tsd-signature tsd-anchor-link" id="toCBOR.toCBOR-1"><span class="tsd-kind-call-signature">toCBOR</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">w</span>, <span class="tsd-kind-parameter">val</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type ">DONE</span><a href="#toCBOR.toCBOR-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="toCBOR.toCBOR-1"><span class="tsd-kind-call-signature">toCBOR</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">w</span>, <span class="tsd-kind-parameter">opts</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><a href="#toCBOR.toCBOR-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>If an object implements this interface, this method will be used to
+serialize the object when encoding.  Return undefined if you don&#39;t want
+any further serialization to take place.  Return an array of [tag, value]
+if you would like default serialization, where if tag is not NaN, a
+CBOR tag will be written before the value.</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">w</span>: <span class="tsd-signature-type ">Writer</span></h5></li>
+<h5><span class="tsd-kind-parameter">w</span>: <a href="index.Writer.html" class="tsd-signature-type tsd-kind-class">Writer</a></h5>
+<div class="tsd-comment tsd-typography"><p>Writer.</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li>
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type ">DONE</span></h4><aside class="tsd-sources">
+<h5><span class="tsd-kind-parameter">opts</span>: <span class="tsd-signature-type ">Required</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/index.EncodeOptions.html" class="tsd-signature-type tsd-kind-interface">EncodeOptions</a><span class="tsd-signature-symbol">&gt;</span></h5>
+<div class="tsd-comment tsd-typography"><p>Options.</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<p>Implementation of <a href="../interfaces/index.ToCBOR.html">ToCBOR</a>.<a href="../interfaces/index.ToCBOR.html#toCBOR">toCBOR</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/simple.ts#L15">simple.ts:15</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/f0b658a/src/simple.ts#L16">simple.ts:16</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="toString" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>to<wbr/>String</span><a href="#toString" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -90,7 +108,7 @@
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/29f05ed/src/simple.ts#L20">simple.ts:20</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/hildjj/cbor2/blob/f0b658a/src/simple.ts#L23">simple.ts:23</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -127,6 +145,7 @@
 <div class="tsd-accordion-details">
 <ul class="tsd-nested-navigation">
 <li><a href="simple.Simple.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-128"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-class)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)"></path></g></svg><span>Simple</span></a></li></ul></div></details></li>
+<li><a href="../modules/sorts.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>sorts</span></a></li>
 <li><a href="../modules/tag.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>tag</span></a></li>
 <li><a href="../modules/types.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>types</span></a></li>
 <li><a href="../modules/utils.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>utils</span></a></li></ul></nav></div></div></div>
