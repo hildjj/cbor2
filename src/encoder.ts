@@ -2,7 +2,7 @@
 
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
-import {TaggedValue, ToCBOR, Writer} from './writer.js';
+import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
 import type {KeyValueEncoded} from './sorts.js';
 import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
@@ -272,8 +272,15 @@ export function writeNumber(
  * @param tag Tag number.
  * @param w Stream to write to.
  */
-export function writeTag(tag: number, w: Writer): void {
-  writeInt(tag, w, MT.TAG);
+export function writeTag(tag: TagNumber, w: Writer): void {
+  if (typeof tag === 'number') {
+    writeInt(tag, w, MT.TAG);
+  } else if (tag <= Number.MAX_SAFE_INTEGER) {
+    writeInt(Number(tag), w, MT.TAG);
+  } else {
+    w.writeUint8((MT.TAG << 5) | NUMBYTES.EIGHT);
+    w.writeBigUint64(tag);
+  }
 }
 
 /**
@@ -342,7 +349,7 @@ function writeObject(
   if (encoder) {
     const res = encoder(obj, w, opts);
     if (res) {
-      if (isFinite(res[0])) {
+      if ((typeof res[0] === 'bigint') || isFinite(res[0])) {
         writeTag(res[0], w);
       }
       writeUnknown(res[1], w, opts);
@@ -353,7 +360,7 @@ function writeObject(
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
     const res = (obj as ToCBOR).toCBOR(w, opts);
     if (res) {
-      if (isFinite(res[0])) {
+      if ((typeof res[0] === 'bigint') || isFinite(res[0])) {
         writeTag(res[0], w);
       }
       writeUnknown(res[1], w, opts);

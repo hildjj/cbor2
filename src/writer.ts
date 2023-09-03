@@ -162,12 +162,14 @@ export class Writer {
   }
 }
 
+export type TagNumber = bigint | number;
+
 /**
  * A potentially-tagged value.  If the tag is NaN, it will not be used.
  * Otherwise, it must be an integer that will be written as a CBOR tag
  * before the value is encoded.
  */
-export type TaggedValue = [tag: number, value: unknown];
+export type TaggedValue = [tag: TagNumber, value: unknown];
 
 export interface ToCBOR {
   /**

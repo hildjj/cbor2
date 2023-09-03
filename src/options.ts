@@ -77,8 +77,10 @@ export interface Parent {
  */
 export interface DecodeOptions extends DecodeStreamOptions {
   /**
-   * What type to create when a container is needed?
+   * What type to create when a container is needed? This is used internally
+   * by comment and diagnose to add separate functionality.  Internal use only.
    * @default CBORcontainer
+   * @private
    */
   ParentType?: ParentConstructor;
 

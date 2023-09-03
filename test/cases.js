@@ -491,6 +491,9 @@ a1   -- Map (Length: 1 pair)
   [new Tag(256, 1), '256_1(1)', `0xd9010001
 d9 0100 -- Tag #256
   01    --   Unsigned: 1\n`],
+  [new Tag(0xffffffffffffffn, 1), '72057594037927935_3(1)', `0xdb00ffffffffffffff01
+db 00ffffffffffffff -- Tag #72057594037927935
+  01                --   Unsigned: 1\n`],
   [new Uint8Array([1, 2, 3]), 'h\'010203\'', `0x43010203
 43 -- Bytes (Length: 3)
   010203\n`],
@@ -812,6 +815,9 @@ d9 5249 -- Tag #21065: (I-RegExp)
 
 export const encodeGood = [
   [new Map([[[], []], [[], []]]), '{[]: [], []: []}', '0xa280808080'],
+  [new Tag(256n, 1), '256_1(1)', `0xd9010001
+d9 0100 -- Tag #256
+  01    --   Unsigned: 1\n`],
 
   /* eslint-disable no-new-wrappers */
   [new String('foo'), 'boxed', '0x63666f6f'],
