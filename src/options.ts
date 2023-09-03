@@ -1,5 +1,5 @@
-import {KeySorter} from './sorts.js';
-import {Simple} from './simple.js';
+import type {KeySorter} from './sorts.js';
+import type {Simple} from './simple.js';
 
 /**
  * Options for decoding.
@@ -43,6 +43,7 @@ export type MtAiValue = [
   ai: number,
   val: DecodeValue,
   offset: number,
+  len: bigint | number,
 ];
 
 export interface ParentConstructor {
@@ -76,8 +77,10 @@ export interface Parent {
  */
 export interface DecodeOptions extends DecodeStreamOptions {
   /**
-   * What type to create when a container is needed?
+   * What type to create when a container is needed? This is used internally
+   * by comment and diagnose to add separate functionality.  Internal use only.
    * @default CBORcontainer
+   * @private
    */
   ParentType?: ParentConstructor;
 
@@ -183,6 +186,32 @@ export interface DecodeOptions extends DecodeStreamOptions {
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
+
+/**
+ * Comment options on top of the decode options.
+ */
+export interface CommentOptions extends DecodeOptions {
+  /**
+   * For the root object, how many levels of nesting is it already?
+   * Happens with tag 24.
+   * @default 0
+   */
+  initialDepth?: number;
+
+  /**
+   * If true, don't add the initial 0xHEX line to comment output.
+   * @default false
+   */
+  noPrefixHex?: boolean;
+
+  /**
+   * The '--' separating bytes from description must be in at least this
+   * column.
+   * @default 0
+   */
+  minCol: number;
+}
+export type RequiredCommentOptions = Required<CommentOptions>;
 
 export interface WriterOptions {
   chunkSize?: number;

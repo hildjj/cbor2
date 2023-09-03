@@ -21,7 +21,6 @@ import {u8toHex} from './utils.js';
  * on to them in diagnostic mode.
  */
 class DiagContainer extends CBORcontainer {
-  public count = 0;
   public close = '';
   public quote = '"';
 
@@ -32,7 +31,7 @@ class DiagContainer extends CBORcontainer {
    * @readonly
    * @returns {boolean} True if cleanup needed.
    */
-  public get emptyStream(): boolean {
+  public get isEmptyStream(): boolean {
     return (this.mt === MT.UTF8_STRING || this.mt === MT.BYTE_STRING) &&
       (this.count === 0);
   }
@@ -152,7 +151,7 @@ export function diagnose(
       parent = ret;
     }
     while (parent?.done) {
-      if (parent.emptyStream) {
+      if (parent.isEmptyStream) {
         str = str.slice(0, -3);
         str += `_${parent.quote}${parent.quote}`;
       } else if ((parent.mt === MT.MAP) && ((parent.count % 2) !== 0)) {

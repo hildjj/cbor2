@@ -100,10 +100,12 @@ export class DecodeStream implements Sliceable {
     const ai = octet & 0x1f;
     let val: DecodeValue = ai;
     let simple = false;
+    let len = 0;
 
     switch (ai) {
       case NUMBYTES.ONE:
-        val = this.#view.getUint8(this.#offset++);
+        len = 1;
+        val = this.#view.getUint8(this.#offset);
         if (mt === MT.SIMPLE_FLOAT) {
           // An encoder MUST NOT issue two-byte sequences that start with 0xf8
           // (major type 7, additional information 24) and continue with a
@@ -116,22 +118,23 @@ export class DecodeStream implements Sliceable {
         }
         break;
       case NUMBYTES.TWO:
+        len = 2;
         if (mt === MT.SIMPLE_FLOAT) {
           val = parseHalf(this.#src, this.#offset);
         } else {
           val = this.#view.getUint16(this.#offset, false);
         }
-        this.#offset += 2;
         break;
       case NUMBYTES.FOUR:
+        len = 4;
         if (mt === MT.SIMPLE_FLOAT) {
           val = this.#view.getFloat32(this.#offset, false);
         } else {
           val = this.#view.getUint32(this.#offset, false);
         }
-        this.#offset += 4;
         break;
       case NUMBYTES.EIGHT: {
+        len = 8;
         if (mt === MT.SIMPLE_FLOAT) {
           val = this.#view.getFloat64(this.#offset, false);
         } else {
@@ -140,7 +143,6 @@ export class DecodeStream implements Sliceable {
             val = Number(val);
           }
         }
-        this.#offset += 8;
         break;
       }
       case 28:
@@ -154,7 +156,7 @@ export class DecodeStream implements Sliceable {
           case MT.TAG:
             throw new Error(`Invalid indefinite encoding for MT ${mt}`);
           case MT.SIMPLE_FLOAT:
-            yield [mt, ai, SYMS.BREAK, prevOffset];
+            yield [mt, ai, SYMS.BREAK, prevOffset, 0];
             return;
         }
         val = Infinity;
@@ -162,26 +164,27 @@ export class DecodeStream implements Sliceable {
       default:
         simple = true;
     }
+    this.#offset += len;
 
     switch (mt) {
       case MT.POS_INT:
-        yield [mt, ai, val, prevOffset];
+        yield [mt, ai, val, prevOffset, len];
         break;
       case MT.NEG_INT:
-        yield [mt, ai, (typeof val === 'bigint') ? -1n - val : -1 - Number(val), prevOffset];
+        yield [mt, ai, (typeof val === 'bigint') ? -1n - val : -1 - Number(val), prevOffset, len];
         break;
       case MT.BYTE_STRING:
         if (val === Infinity) {
           yield *this.#stream(mt, depth, prevOffset);
         } else {
-          yield [mt, ai, this.#read(val as number), prevOffset];
+          yield [mt, ai, this.#read(val as number), prevOffset, val];
         }
         break;
       case MT.UTF8_STRING:
         if (val === Infinity) {
           yield *this.#stream(mt, depth, prevOffset);
         } else {
-          yield [mt, ai, TD.decode(this.#read(val as number)), prevOffset];
+          yield [mt, ai, TD.decode(this.#read(val as number)), prevOffset, val];
         }
         break;
       case MT.ARRAY:
@@ -189,7 +192,7 @@ export class DecodeStream implements Sliceable {
           yield *this.#stream(mt, depth, prevOffset, false);
         } else {
           const nval = Number(val);
-          yield [mt, ai, nval, prevOffset];
+          yield [mt, ai, nval, prevOffset, len];
           for (let i = 0; i < nval; i++) {
             yield *this.#nextVal(depth + 1);
           }
@@ -200,7 +203,7 @@ export class DecodeStream implements Sliceable {
           yield *this.#stream(mt, depth, prevOffset, false);
         } else {
           const nval = Number(val);
-          yield [mt, ai, nval, prevOffset];
+          yield [mt, ai, nval, prevOffset, len];
           for (let i = 0; i < nval; i++) {
             yield *this.#nextVal(depth);
             yield *this.#nextVal(depth);
@@ -208,10 +211,11 @@ export class DecodeStream implements Sliceable {
         }
         break;
       case MT.TAG:
-        yield [mt, ai, val, prevOffset];
+        yield [mt, ai, val, prevOffset, len];
         yield *this.#nextVal(depth);
         break;
-      case MT.SIMPLE_FLOAT:
+      case MT.SIMPLE_FLOAT: {
+        const oval = val;
         if (simple) {
           switch (val) {
             case SIMPLE.FALSE: val = false; break;
@@ -221,15 +225,16 @@ export class DecodeStream implements Sliceable {
             default: val = new Simple(Number(val));
           }
         }
-        yield [mt, ai, val, prevOffset];
+        yield [mt, ai, val, prevOffset, oval];
         break;
+      }
     }
   }
 
   #read(size: number): Uint8Array {
     const a = this.#src.subarray(this.#offset, (this.#offset += size));
     if (a.length !== size) {
-      throw new Error('Unexpected nd of stream');
+      throw new Error(`Unexpected end of stream reading ${size} bytes, got ${a.length}`);
     }
     return a;
   }
@@ -240,7 +245,7 @@ export class DecodeStream implements Sliceable {
     prevOffset: number,
     check = true
   ): ValueGenerator {
-    yield [mt, NUMBYTES.INDEFINITE, Infinity, prevOffset];
+    yield [mt, NUMBYTES.INDEFINITE, Infinity, prevOffset, Infinity];
 
     while (true) {
       const child = this.#nextVal(depth);

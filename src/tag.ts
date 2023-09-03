@@ -1,33 +1,122 @@
-import type {Decodeable, RequiredDecodeOptions} from './options.js';
-import {ToCBOR} from './writer.js';
+import type {
+  Decodeable,
+  RequiredCommentOptions,
+  RequiredDecodeOptions,
+} from './options.js';
+import {type TagNumber, ToCBOR} from './writer.js';
 
-export type TagDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
+/**
+ * Apply this to a TagDecoder function to get commenting support.
+ */
+export interface Commenter {
+  /**
+   * If true, do not output text for child nodes.  The comment function
+   * will handle that.  If true, ensure that the text returned by the comment
+   * function ends in a newline.
+   * @default false
+   */
+  noChildren?: boolean;
+
+  /**
+   * When commenting on this tag, if this function returns a string, it will
+   * be appended after the tag number and a colon.
+   *
+   * @param tag The tag to comment on.
+   * @param opts Options.
+   * @param depth How deep are we in indentation clicks so far?
+   */
+  comment?(
+    tag: Tag,
+    opts: RequiredCommentOptions,
+    depth: number
+  ): string;
+}
+
+export type BaseDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
+export type TagDecoder = BaseDecoder & Commenter;
 
 /**
  * A CBOR tagged value.
+ * @see [IANA Registry](https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml)
  */
 export class Tag implements ToCBOR, Decodeable {
-  static #tags = new Map<bigint | number, TagDecoder>();
-  public readonly tag: number;
+  static #tags = new Map<TagNumber, TagDecoder>();
+  public readonly tag: TagNumber;
   public contents: unknown;
 
-  public constructor(tag: number, contents: unknown = undefined) {
+  /**
+   * A tag wrapped around another value.
+   *
+   * @param tag The tag number.
+   * @param contents The value that follows the tag number.
+   */
+  public constructor(tag: TagNumber, contents: unknown = undefined) {
     this.tag = tag;
     this.contents = contents;
   }
 
+  /**
+   * When constructing the commented version of this tag, should the contents
+   * be written as well?  If true, the comment function should output the
+   * contents values itself (only used for tag 24 so far).
+   *
+   * @type {boolean}
+   * @readonly
+   */
+  public get noChildren(): boolean {
+    const decoder = Tag.#tags.get(this.tag);
+    return Boolean(decoder?.noChildren);
+  }
+
+  /**
+   * Register a decoder for a give tag number.
+   *
+   * @param tag The tag number.
+   * @param decoder Decoder function.
+   * @param description If provided, use this when commenting to add a type
+   *   name in parens after the tag number.
+   * @returns Old decoder for this tag, if there was one.
+   */
   public static registerDecoder(
-    tag: bigint | number, decoder: TagDecoder
+    tag: TagNumber,
+    decoder: TagDecoder,
+    description?: string
   ): TagDecoder | undefined {
     const old = this.#tags.get(tag);
     this.#tags.set(tag, decoder);
+    if (old) {
+      // Copy over old commenting attributes.
+      if (!('comment' in decoder)) {
+        decoder.comment = old.comment;
+      }
+      if (!('noChildren' in decoder)) {
+        decoder.noChildren = old.noChildren;
+      }
+    }
+    if (description && !decoder.comment) {
+      decoder.comment = (): string => `(${description})`;
+    }
     return old;
   }
 
+  /**
+   * Remove the encoder for this tag number.
+   *
+   * @param tag Tag number.
+   * @returns Old decoder, if there was one.
+   */
   public static clearDecoder(tag: number): TagDecoder | undefined {
     const old = this.#tags.get(tag);
     this.#tags.delete(tag);
     return old;
+  }
+
+  /**
+   * Iterate over just the contents, so that the tag works more like an
+   * array.
+   */
+  public *[Symbol.iterator](): Generator<unknown, void, undefined> {
+    yield this.contents;
   }
 
   /**
@@ -56,7 +145,18 @@ export class Tag implements ToCBOR, Decodeable {
     return this;
   }
 
-  public toCBOR(): [number, unknown] {
+  public comment(
+    options: RequiredCommentOptions,
+    depth: number
+  ): string | undefined {
+    const decoder = Tag.#tags.get(this.tag);
+    if (decoder?.comment) {
+      return decoder.comment(this, options, depth);
+    }
+    return undefined;
+  }
+
+  public toCBOR(): [TagNumber, unknown] {
     return [this.tag, this.contents];
   }
 
