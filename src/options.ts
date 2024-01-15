@@ -241,6 +241,12 @@ export interface EncodeOptions extends WriterOptions {
   float64?: boolean;
 
   /**
+   * When writing floats, first flush any subnormal numbers to zero before
+   * decising on encoding.
+   */
+  flushToZero?: boolean;
+
+  /**
    * How to write TypedArrays?
    * Null to use the current platform's endian-ness.
    * True to always use little-endian.

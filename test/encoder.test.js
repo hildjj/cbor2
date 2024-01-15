@@ -179,3 +179,12 @@ test('encode avoiding ints', () => {
     [-0, '', '0xf90000'],
   ], {avoidInts: true, simplifyNegativeZero: true});
 });
+
+test('flush to zero', () => {
+  testAll([
+    [1e-320, '', '0x00'],
+    [-1e-320, '', '0xf98000'],
+    [Number.EPSILON, '', '0xfa25800000'],
+    [-Number.EPSILON, '', '0xfaa5800000'],
+  ], {flushToZero: true});
+});

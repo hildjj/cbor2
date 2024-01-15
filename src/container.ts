@@ -135,7 +135,7 @@ export class CBORcontainer {
           }
         }
         if (opts.rejectLargeNegatives &&
-            (value as number < -0x8000000000000000n)) {
+            (value as bigint < -0x8000000000000000n)) {
           throw new Error(`Invalid 65bit negative number: ${value}`);
         }
         if (opts.boxed) {

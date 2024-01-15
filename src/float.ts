@@ -72,3 +72,23 @@ export function halfToUint(half: number): number | null {
 
   return s16;
 }
+
+/**
+ * Flush subnormal numbers to 0/-0.
+ *
+ * @param n Number.
+ * @returns Normalized number.
+ */
+export function flushToZero(n: number): number {
+  if (n !== 0) { // Remember 0 === -0
+    const a = new ArrayBuffer(8);
+    const dv = new DataView(a);
+    dv.setFloat64(0, n, false);
+    const b = dv.getBigUint64(0, false);
+    // Subnormals have an 11-bit exponent of 0 and a non-zero mantissa.
+    if ((b & 0x7ff0000000000000n) === 0n) {
+      return (b & 0x8000000000000000n) ? -0 : 0;
+    }
+  }
+  return n;
+}

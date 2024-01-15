@@ -3,8 +3,8 @@
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
+import {flushToZero, halfToUint} from './float.js';
 import type {KeyValueEncoded} from './sorts.js';
-import {halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
 export const {
@@ -37,6 +37,7 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   avoidInts: false,
   collapseBigInts: true,
   float64: false,
+  flushToZero: false,
   forceEndian: null,
   ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
@@ -245,9 +246,14 @@ export function writeBigInt(
  * @param opts Encoding options.
  */
 export function writeNumber(
-  val: number, w: Writer,
+  val: number,
+  w: Writer,
   opts: RequiredEncodeOptions
 ): void {
+  if (opts.flushToZero) {
+    val = flushToZero(val);
+  }
+
   if (Object.is(val, -0)) {
     if (opts.simplifyNegativeZero) {
       if (opts.avoidInts) {

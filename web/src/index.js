@@ -31,6 +31,7 @@ const encodeOpts = {
   avoidInts: false,
   collapseBigInts: true,
   float64: false,
+  flushToZero: false,
   forceEndian: null,
   ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
@@ -102,11 +103,11 @@ function output(buf, typ) {
         break;
       case 'commented':
         copy.disabled = false;
-        otxt.value = comment(buf);
+        otxt.value = comment(buf, decodeOpts);
         break;
       case 'diagnostic':
         copy.disabled = true;
-        otxt.value = diagnose(buf);
+        otxt.value = diagnose(buf, decodeOpts);
         break;
       case 'js':
         copy.disabled = false;
