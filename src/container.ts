@@ -6,6 +6,7 @@ import {DecodeStream} from './decodeStream.js';
 import type {KeyValueEncoded} from './sorts.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
+import {checkSubnormal} from './float.js';
 import {encode} from './encoder.js';
 
 const LENGTH_FOR_AI = new Map([
@@ -54,6 +55,7 @@ export class CBORcontainer {
     rejectNegativeZero: false,
     rejectSimple: false,
     rejectStreaming: false,
+    rejectSubnormals: false,
     rejectUndefined: false,
     saveOriginal: false,
     sortKeys: null,
@@ -155,6 +157,10 @@ export class CBORcontainer {
             if (buf.length !== 3 || buf[1] !== 0x7e || buf[2] !== 0) {
               throw new Error(`Invalid NaN encoding: "${u8toHex(buf)}"`);
             }
+          }
+          if (opts.rejectSubnormals) {
+            // Skip the size byte
+            checkSubnormal(stream.toHere(offset + 1));
           }
           if (opts.rejectLongNumbers) {
             // No opts needed.

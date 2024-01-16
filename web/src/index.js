@@ -56,6 +56,7 @@ const decodeOpts = {
   rejectNegativeZero: false,
   rejectSimple: false,
   rejectStreaming: false,
+  rejectSubnormals: false,
   rejectUndefined: false,
   saveOriginal: false,
   sortKeys: null,

@@ -3,13 +3,22 @@
  *
  * @param buf Buffer to read from.
  * @param offset Offset into buf to start reading 2 octets.
+ * @param rejectSubnormals Throw if the result is subnormal.
  * @returns Parsed float.
+ * @throws Unwanted subnormal.
  */
-export function parseHalf(buf: Uint8Array, offset = 0): number {
+export function parseHalf(
+  buf: Uint8Array,
+  offset = 0,
+  rejectSubnormals = false
+): number {
   const sign = buf[offset] & 0x80 ? -1 : 1;
   const exp = (buf[offset] & 0x7C) >> 2;
   const mant = ((buf[offset] & 0x03) << 8) | buf[offset + 1];
-  if (!exp) {
+  if (exp === 0) {
+    if (rejectSubnormals && (mant !== 0)) {
+      throw new Error(`Unwanted subnormal: ${sign * 5.9604644775390625e-8 * mant}`);
+    }
     return sign * 5.9604644775390625e-8 * mant;
   } else if (exp === 0x1f) {
     if (mant) {
@@ -91,4 +100,37 @@ export function flushToZero(n: number): number {
     }
   }
   return n;
+}
+
+/**
+ * Does the given buffer contain a bigEndian IEEE754 float that is subnormal?
+ * If so, throw an error.
+ *
+ * @param buf 2, 4, or 8 bytes for float16, float32, or float64.
+ * @throws Bad input or subnormal.
+ */
+export function checkSubnormal(buf: Uint8Array): void {
+  switch (buf.length) {
+    case 2:
+      parseHalf(buf, 0, true);
+      break;
+    case 4: {
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const n = dv.getUint32(0, false);
+      if (((n & 0x7f800000) === 0) && (n & 0x007fffff)) {
+        throw new Error(`Unwanted subnormal: ${dv.getFloat32(0, false)}`);
+      }
+      break;
+    }
+    case 8: {
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const n = dv.getBigUint64(0, false);
+      if (((n & 0x7ff0000000000000n) === 0n) && (n & 0x000fffffffffffn)) {
+        throw new Error(`Unwanted subnormal: ${dv.getFloat64(0, false)}`);
+      }
+      break;
+    }
+    default:
+      throw new TypeError(`Bad input to isSubnormal: ${buf}`);
+  }
 }

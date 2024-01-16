@@ -164,6 +164,12 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectStreaming?: boolean;
 
   /**
+   * Reject subnormal floating point numbers.
+   * @default false
+   */
+  rejectSubnormals?: boolean;
+
+  /**
    * Reject the `undefined` simple value.  Usually used with rejectSimple.
    * @default false
    */

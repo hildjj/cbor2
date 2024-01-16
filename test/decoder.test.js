@@ -163,3 +163,10 @@ test('unbox decoded', () => {
   assert.deepEqual(unbox(new Tag(1, Object(0))), new Tag(1, 0));
   assert.deepEqual(unbox({a: 1}), {a: 1});
 });
+
+test('rejectSubnormals', () => {
+  failAll([
+    '0xf90001',
+    '0xf98001',
+  ], {rejectSubnormals: true});
+});
