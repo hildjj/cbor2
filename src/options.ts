@@ -19,6 +19,14 @@ export interface DecodeStreamOptions {
    * @default null
    */
   encoding?: 'base64' | 'hex' | null;
+
+  /**
+   * Reject integers and lengths that could have been encoded in a smaller
+   * encoding.
+   *
+   * @default false
+   */
+  requirePreferred?: boolean;
 }
 
 /**
@@ -98,6 +106,16 @@ export interface DecodeOptions extends DecodeStreamOptions {
   boxed?: boolean;
 
   /**
+   * Turn on options for draft-ietf-cbor-cde-01.
+   */
+  cde?: boolean;
+
+  /**
+   * Turn on options for draft-mcnally-deterministic-cbor-07.
+   */
+  dcbor?: boolean;
+
+  /**
    * Reject negative integers in the range [CBOR_NEGATIVE_INT_MAX ...
    * STANDARD_NEGATIVE_INT_MAX - 1].
    * @default false
@@ -134,16 +152,16 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectInts?: boolean;
 
   /**
+   * Reject floating point numbers that should have been encoded in shorter
+   * form, including having been encoded as an integer.
+   */
+  rejectLongFloats?: boolean;
+
+  /**
    * Reject NaNs that are not encoded as 0x7e00.
    * @default false
    */
   rejectLongLoundNaN?: boolean;
-
-  /**
-   * Reject numbers that could have been encoded in a smaller encoding.
-   * @default false
-   */
-  rejectLongNumbers?: boolean;
 
   /**
    * If negative zero (-0) is received, throw an error.

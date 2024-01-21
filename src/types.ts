@@ -125,16 +125,20 @@ function u8toBigInt(
   if (opts.rejectBigInts) {
     throw new Error(`Decoding unwanted big integer: ${tag}(h'${u8toHex(tag.contents)}')`);
   }
-  if (opts.rejectLongNumbers && tag.contents[0] === 0) {
+  if (opts.requirePreferred && tag.contents[0] === 0) {
+    // The preferred serialization of the byte string is to leave out any
+    // leading zeroes
     throw new Error(`Decoding overly-large bigint: ${tag}(h'${u8toHex(tag.contents)}`);
   }
   let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
   if (neg) {
     bi = -1n - bi;
   }
-  if (opts.rejectLongNumbers &&
+  if (opts.requirePreferred &&
     (bi >= Number.MIN_SAFE_INTEGER) &&
     (bi <= Number.MAX_SAFE_INTEGER)) {
+    // The preferred serialization of an integer that can be represented using
+    // major type 0 or 1 is to encode it this way instead of as a bignum
     throw new Error(`Decoding bigint that could have been int: ${bi}n`);
   }
   if (opts.boxed) {

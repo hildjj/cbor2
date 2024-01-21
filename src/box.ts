@@ -1,3 +1,4 @@
+/* eslint-disable no-redeclare */
 import {SYMS} from './constants.js';
 import {Tag} from './tag.js';
 
@@ -36,6 +37,10 @@ export function saveEncoded(obj: OriginalEncoding, orig: Uint8Array): void {
     value: orig,
   });
 }
+
+export function box(value: bigint, orig: Uint8Array): BigInt;
+export function box(value: string, orig: Uint8Array): String;
+export function box(value: number, orig: Uint8Array): Number;
 
 /**
  * Put an object wrapper around a primitive value, such as a number, boolean,

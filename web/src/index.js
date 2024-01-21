@@ -1,5 +1,15 @@
 import './style.css';
-import {Simple, Tag, comment, decode, diagnose, encode} from 'cbor2';
+import {
+  Simple,
+  Tag,
+  cdeDecodeOptions,
+  comment,
+  dcborDecodeOptions,
+  decode,
+  defaultDecodeOptions,
+  diagnose,
+  encode,
+} from 'cbor2';
 import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
@@ -9,6 +19,15 @@ const otxt = document.getElementById('output-text');
 const itxt = document.getElementById('input-text');
 const ifmt = document.getElementById('input-fmt');
 const copy = document.getElementById('copy');
+const sortKeysDecode = document.querySelector('#sortKeysDecode');
+
+const notCdeDecodeOptions = Object.fromEntries(
+  Object.entries(cdeDecodeOptions).map(([k, v]) => [k, !v])
+);
+
+const notDcborDecodeOptions = Object.fromEntries(
+  Object.entries(dcborDecodeOptions).map(([k, v]) => [k, !v])
+);
 
 /**
  * Encode Uint8Array to base64.
@@ -44,23 +63,7 @@ const encodeOpts = {
   sortKeys: null,
 };
 
-const decodeOpts = {
-  boxed: false,
-  rejectLargeNegatives: false,
-  rejectBigInts: false,
-  rejectDuplicateKeys: false,
-  rejectFloats: false,
-  rejectInts: false,
-  rejectLongLoundNaN: false,
-  rejectLongNumbers: false,
-  rejectNegativeZero: false,
-  rejectSimple: false,
-  rejectStreaming: false,
-  rejectSubnormals: false,
-  rejectUndefined: false,
-  saveOriginal: false,
-  sortKeys: null,
-};
+const decodeOpts = defaultDecodeOptions;
 
 // Convert any input to a buffer
 function input() {
@@ -175,6 +178,31 @@ sortKeysEncode.value = 'null';
 
 function changeDecodeOption({target}) {
   decodeOpts[target.id] = target.checked;
+  let modified = false;
+  if (target.id === 'dcbor') {
+    modified = true;
+    Object.assign(decodeOpts, target.checked ?
+      dcborDecodeOptions :
+      notDcborDecodeOptions);
+  } else if (target.id === 'cde') {
+    modified = true;
+    Object.assign(decodeOpts, target.checked ?
+      cdeDecodeOptions :
+      notCdeDecodeOptions);
+  }
+  if (modified) {
+    for (const inp of document.querySelectorAll('#decodingOpts input')) {
+      inp.checked = decodeOpts[inp.id];
+    }
+    if (decodeOpts.sortKeys === sortCoreDeterministic) {
+      sortKeysDecode.value = 'coreDeterministic';
+    } else if (decodeOpts.sortKeys === sortLengthFirstDeterministic) {
+      sortKeysDecode.value = 'lengthFirstDeterministic';
+    } else {
+      sortKeysDecode.value = 'null';
+    }
+  }
+
   convert();
 }
 
@@ -183,7 +211,6 @@ for (const inp of document.querySelectorAll('#decodingOpts input')) {
   inp.checked = decodeOpts[inp.id];
 }
 
-const sortKeysDecode = document.querySelector('#sortKeysDecode');
 sortKeysDecode.onchange = () => {
   encodeOpts.sortKeys = {
     null: null,

@@ -10,6 +10,7 @@
  */
 
 import './types.js';
+import {CBORcontainer} from './container.js';
 export type {DecodeStream, ValueGenerator} from './decodeStream.js';
 export type {
   CommentOptions,
@@ -35,3 +36,7 @@ export {Simple} from './simple.js';
 export {Tag} from './tag.js';
 export type {TagNumber, TaggedValue, ToCBOR, Writer} from './writer.js';
 export {unbox, getEncoded} from './box.js';
+
+export const defaultDecodeOptions = CBORcontainer.defaultOptions;
+export const cdeDecodeOptions = CBORcontainer.cdeOptions;
+export const dcborDecodeOptions = CBORcontainer.dcborOptions;

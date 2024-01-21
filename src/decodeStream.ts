@@ -22,6 +22,7 @@ export class DecodeStream implements Sliceable {
   public static defaultOptions: Required<DecodeStreamOptions> = {
     maxDepth: 1024,
     encoding: 'hex',
+    requirePreferred: false,
   };
 
   #src;
@@ -115,6 +116,8 @@ export class DecodeStream implements Sliceable {
             throw new Error(`Invalid simple encoding in extra byte: ${val}`);
           }
           simple = true;
+        } else if (this.#opts.requirePreferred && (val < 24)) {
+          throw new Error(`Unexpectedly long integer encoding (1) for ${val}`);
         }
         break;
       case NUMBYTES.TWO:
@@ -123,6 +126,9 @@ export class DecodeStream implements Sliceable {
           val = parseHalf(this.#src, this.#offset);
         } else {
           val = this.#view.getUint16(this.#offset, false);
+          if (this.#opts.requirePreferred && (val <= 0xff)) {
+            throw new Error(`Unexpectedly long integer encoding (2) for ${val}`);
+          }
         }
         break;
       case NUMBYTES.FOUR:
@@ -131,6 +137,9 @@ export class DecodeStream implements Sliceable {
           val = this.#view.getFloat32(this.#offset, false);
         } else {
           val = this.#view.getUint32(this.#offset, false);
+          if (this.#opts.requirePreferred && (val <= 0xffff)) {
+            throw new Error(`Unexpectedly long integer encoding (4) for ${val}`);
+          }
         }
         break;
       case NUMBYTES.EIGHT: {
@@ -141,6 +150,9 @@ export class DecodeStream implements Sliceable {
           val = this.#view.getBigUint64(this.#offset, false);
           if (val <= Number.MAX_SAFE_INTEGER) {
             val = Number(val);
+          }
+          if (this.#opts.requirePreferred && (val <= 0xffffffff)) {
+            throw new Error(`Unexpectedly long integer encoding (8) for ${val}`);
           }
         }
         break;

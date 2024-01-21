@@ -1,9 +1,9 @@
+import type {DecodeOptions, MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
+import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {MT, NUMBYTES} from './constants.js';
-import type {MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
 import {box, getEncoded, saveEncoded} from './box.js';
 import {u8concat, u8toHex} from './utils.js';
 import {DecodeStream} from './decodeStream.js';
-import type {KeyValueEncoded} from './sorts.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
 import {checkSubnormal} from './float.js';
@@ -19,17 +19,6 @@ const LENGTH_FOR_AI = new Map([
 
 const EMPTY_BUF = new Uint8Array(0);
 
-// Decide on dCBOR approach
-// export const dCBORdecodeOptions: ContainerOptions = {
-//   rejectLargeNegatives: true,
-//   rejectLongLoundNaN: true,
-//   rejectLongNumbers: true,
-//   rejectNegativeZero: true,
-//   rejectSimple: true,
-//   rejectStreaming: true,
-//   sortKeys: sortCoreDeterministic,
-// };
-
 /**
  * A CBOR data item that can contain other items.  One of:
  *
@@ -41,17 +30,19 @@ const EMPTY_BUF = new Uint8Array(0);
  * This is used in various decoding applications to keep track of state.
  */
 export class CBORcontainer {
-  public static defaultOptions: RequiredDecodeOptions = {
+  public static defaultDecodeOptions: RequiredDecodeOptions = {
     ...DecodeStream.defaultOptions,
     ParentType: CBORcontainer,
     boxed: false,
+    cde: false,
+    dcbor: false,
     rejectLargeNegatives: false,
     rejectBigInts: false,
     rejectDuplicateKeys: false,
     rejectFloats: false,
     rejectInts: false,
     rejectLongLoundNaN: false,
-    rejectLongNumbers: false,
+    rejectLongFloats: false,
     rejectNegativeZero: false,
     rejectSimple: false,
     rejectStreaming: false,
@@ -59,6 +50,44 @@ export class CBORcontainer {
     rejectUndefined: false,
     saveOriginal: false,
     sortKeys: null,
+  };
+
+  /**
+   * Throw errors when decoding for bytes that were not encoded with {@link
+   * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-01.html CBOR Common
+   * Deterministic Encoding Profile}.
+   *
+   * CDE does not mandate this checking, so it is up to the application
+   * whether it wants to ensure that inputs were not encoded incompetetently
+   * or maliciously.  To turn all of these on at once, set the cbor option to
+   * true.
+   */
+  public static cdeDecodeOptions: DecodeOptions = {
+    cde: true,
+    rejectStreaming: true,
+    requirePreferred: true,
+    sortKeys: sortCoreDeterministic,
+  };
+
+  /**
+   * Throw errors when decoding for bytes that were not encoded with {@link
+   * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-07.html
+   * dCBOR: A Deterministic CBOR Application Profile}.
+   *
+   * The dCBOR spec mandates that these errors be thrown when decoding dCBOR.
+   * Turn this on by setting the `dcbor` option to true, which also enables
+   * `cde` mode.
+   */
+  public static dcborDecodeOptions: DecodeOptions = {
+    ...this.cdeDecodeOptions,
+    dcbor: true,
+    rejectDuplicateKeys: true,
+    rejectLargeNegatives: true,
+    rejectLongLoundNaN: true,
+    rejectLongFloats: true,
+    rejectNegativeZero: true,
+    rejectSimple: true,
+    rejectUndefined: true,
   };
 
   public parent: Parent | undefined;
@@ -126,22 +155,12 @@ export class CBORcontainer {
         if (opts.rejectInts) {
           throw new Error(`Unexpected integer: ${value}`);
         }
-        if (opts.rejectLongNumbers && (ai > NUMBYTES.ZERO)) {
-          // No opts needed
-          const buf = encode(value, {chunkSize: 9});
-
-          // Known safe:
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          if (buf.length < LENGTH_FOR_AI.get(ai)!) {
-            throw new Error(`Int should have been encoded shorter: ${value}`);
-          }
-        }
         if (opts.rejectLargeNegatives &&
             (value as bigint < -0x8000000000000000n)) {
           throw new Error(`Invalid 65bit negative number: ${value}`);
         }
         if (opts.boxed) {
-          return box(value, stream.toHere(offset));
+          return box(value as number, stream.toHere(offset));
         }
         return value;
       case MT.SIMPLE_FLOAT:
@@ -162,7 +181,7 @@ export class CBORcontainer {
             // Skip the size byte
             checkSubnormal(stream.toHere(offset + 1));
           }
-          if (opts.rejectLongNumbers) {
+          if (opts.rejectLongFloats) {
             // No opts needed.
             const buf = encode(value, {chunkSize: 9});
             if ((buf[0] >> 5) !== mt) {
@@ -196,7 +215,7 @@ export class CBORcontainer {
           return new opts.ParentType(mav, Infinity, parent, opts);
         }
         if (opts.boxed) {
-          return box(value, stream.toHere(offset));
+          return box(value as string, stream.toHere(offset));
         }
         return value;
       case MT.ARRAY:

@@ -13,12 +13,20 @@ import {SYMS} from './constants.js';
  */
 export function decode<T = unknown>(
   src: Uint8Array | string,
-  options?: DecodeOptions
+  options: DecodeOptions = {}
 ): T {
-  const opts: Required<DecodeOptions> = {
-    ...CBORcontainer.defaultOptions,
-    ...options,
-  };
+  const opts = {...CBORcontainer.defaultDecodeOptions};
+  if (options.dcbor) {
+    Object.assign(opts, CBORcontainer.dcborDecodeOptions);
+  } else if (options.cde) {
+    Object.assign(opts, CBORcontainer.cdeDecodeOptions);
+  }
+  Object.assign(opts, options);
+
+  if (Object.hasOwn(opts, 'rejectLongNumbers')) {
+    throw new TypeError('rejectLongNumbers has changed to requirePreferred');
+  }
+
   if (opts.boxed) {
     opts.saveOriginal = true;
   }
