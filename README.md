@@ -5,7 +5,7 @@ format ([RFC8949](https://www.rfc-editor.org/rfc/rfc8949.html)).
 
 This package supersedes [node-cbor](https://github.com/hildjj/node-cbor/tree/main/packages/cbor), with the following goals:
 
-- Web-first.  Usable in node.
+- Web-first.  Usable in Node and Deno.
 - Simpler where possible.  Remove non-core features in favor of extensibility.
 - Synchronous decoding.  Removes streaming capabilities that are rarely used.
 - Complete break of API compatibility, allowing use of newer JavaScript constructs.
@@ -13,12 +13,9 @@ This package supersedes [node-cbor](https://github.com/hildjj/node-cbor/tree/mai
 
 ## Supported Node.js versions
 
-This project now only supports versions of Node that the Node team is
+This project now only supports versions of Node.js that the Node team is
 [currently supporting](https://github.com/nodejs/Release#release-schedule).
-Ava's [support
-statement](https://github.com/avajs/ava/blob/main/docs/support-statement.md)
-is what we will be using as well. Since the first release will not be soon,
-that means Node `18`+ is required.
+Currently, that means Node `18`+ is required.
 
 ## Installation
 

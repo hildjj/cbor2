@@ -251,11 +251,21 @@ export interface EncodeOptions extends WriterOptions {
   avoidInts?: boolean;
 
   /**
+   * Turn on options for draft-ietf-cbor-cde-01.
+   */
+  cde?: boolean;
+
+  /**
    * Should bigints that can fit into normal integers be collapsed into
    * normal integers?
    * @default true
    */
   collapseBigInts?: boolean;
+
+  /**
+   * Turn on options for draft-mcnally-deterministic-cbor-07.
+   */
+  dcbor?: boolean;
 
   /**
    * When writing floats, always use the 64-bit version.  Often combined with

@@ -48,14 +48,22 @@
       <h3>Options</h3>
       <div class="cmd">&nbsp;</div>
       <h4>Encoding</h4>
-      <ul id="encodingOpts">
+      <ul id="encodeOpts">
         <li>
           <input type="checkbox" id="avoidIntsEncode">
           <label for="avoidIntsEncode">avoidInts</label>
         </li>
         <li>
+          <input type="checkbox" id="cdeEncode">
+          <label for="cdeEncode">cde</label>
+        </li>
+        <li>
           <input type="checkbox" id="collapseBigIntsEncode" checked>
           <label for="collapseBigIntsEncode">collapseBigInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="dcborEncode" checked>
+          <label for="dcborEncode">dcbor</label>
         </li>
         <li>
           <input type="checkbox" id="float64Encode">
@@ -115,7 +123,7 @@
         </li>
       </ul>
       <h4>Decoding</h4>
-      <ul id="decodingOpts">
+      <ul id="decodeOpts">
         <li>
           <input type="checkbox" id="boxed">
           <label for="boxed">boxed</label>
