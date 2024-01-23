@@ -48,18 +48,30 @@
       <h3>Options</h3>
       <div class="cmd">&nbsp;</div>
       <h4>Encoding</h4>
-      <ul id="encodingOpts">
+      <ul id="encodeOpts">
         <li>
           <input type="checkbox" id="avoidIntsEncode">
           <label for="avoidIntsEncode">avoidInts</label>
+        </li>
+        <li>
+          <input type="checkbox" id="cdeEncode">
+          <label for="cdeEncode">cde</label>
         </li>
         <li>
           <input type="checkbox" id="collapseBigIntsEncode" checked>
           <label for="collapseBigIntsEncode">collapseBigInts</label>
         </li>
         <li>
+          <input type="checkbox" id="dcborEncode" checked>
+          <label for="dcborEncode">dcbor</label>
+        </li>
+        <li>
           <input type="checkbox" id="float64Encode">
           <label for="float64Encode">float64</label>
+        </li>
+        <li>
+          <input type="checkbox" id="flushToZero">
+          <label for="flushToZero">flushToZero</label>
         </li>
         <li>
           <label for="forceEndian">forceEndian</label>
@@ -111,10 +123,18 @@
         </li>
       </ul>
       <h4>Decoding</h4>
-      <ul id="decodingOpts">
+      <ul id="decodeOpts">
         <li>
           <input type="checkbox" id="boxed">
           <label for="boxed">boxed</label>
+        </li>
+        <li>
+          <input type="checkbox" id="cde">
+          <label for="cde">cde</label>
+        </li>
+        <li>
+          <input type="checkbox" id="dcbor">
+          <label for="dcbor">dcbor</label>
         </li>
         <li>
           <input type="checkbox" id="rejectLargeNegatives">
@@ -141,10 +161,6 @@
           <label for="rejectLongLoundNaN">rejectLongLoundNaN</label>
         </li>
         <li>
-          <input type="checkbox" id="rejectLongNumbers">
-          <label for="rejectLongNumbers">rejectLongNumbers</label>
-        </li>
-        <li>
           <input type="checkbox" id="rejectNegativeZero">
           <label for="rejectNegativeZero">rejectNegativeZero</label>
         </li>
@@ -157,8 +173,16 @@
           <label for="rejectStreaming">rejectStreaming</label>
         </li>
         <li>
+          <input type="checkbox" id="rejectSubnormals">
+          <label for="rejectSubnormals">rejectSubnormals</label>
+        </li>
+        <li>
           <input type="checkbox" id="rejectUndefined">
           <label for="rejectUndefined">rejectUndefined</label>
+        </li>
+        <li>
+          <input type="checkbox" id="requirePreferred">
+          <label for="requirePreferred">requirePreferred</label>
         </li>
         <li>
           <input type="checkbox" id="saveOriginal">

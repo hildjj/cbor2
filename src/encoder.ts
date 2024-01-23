@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
+import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
-import type {KeyValueEncoded} from './sorts.js';
-import {halfToUint} from './float.js';
+import {flushToZero, halfToUint} from './float.js';
 import {hexToU8} from './utils.js';
 
 export const {
@@ -20,23 +20,14 @@ const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
 
-// Decide on dCBOR approach
-// export const dCBORencodeOptions: EncodeOptions = {
-//   // Default: collapseBigInts: true,
-//   ignoreOriginalEncoding: true,
-//   largeNegativeAsBigInt: true,
-//   rejectCustomSimples: true,
-//   rejectDuplicateKeys: true,
-//   rejectUndefined: true,
-//   simplifyNegativeZero: true,
-//   sortKeys: sortCoreDeterministic,
-// };
-
-export const EncodeOptionsDefault: RequiredEncodeOptions = {
+export const defaultEncodeOptions: RequiredEncodeOptions = {
   ...Writer.defaultOptions,
   avoidInts: false,
+  cde: false,
   collapseBigInts: true,
+  dcbor: false,
   float64: false,
+  flushToZero: false,
   forceEndian: null,
   ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
@@ -47,6 +38,41 @@ export const EncodeOptionsDefault: RequiredEncodeOptions = {
   rejectUndefined: false,
   simplifyNegativeZero: false,
   sortKeys: null,
+};
+
+/**
+ * Encode with CDE ({@link
+ * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-01.html CBOR Common
+ * Deterministic Encoding Profile}).  Eable this set of options by setting
+ * `cde` to true.
+ *
+ * Since cbor2 always uses preferred encoding, this option only sets the
+ * sort algorithm for map/object keys, and ensures that any original
+ * encoding information (from decoding with saveOriginal) is ignored.
+ */
+export const cdeEncodeOptions: EncodeOptions = {
+  cde: true,
+  ignoreOriginalEncoding: true,
+  sortKeys: sortCoreDeterministic,
+};
+
+/**
+ * Encode with CDE and dCBOR ({@link
+ * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-07.html
+ * dCBOR: A Deterministic CBOR Application Profile}).  Enable this set of
+ * options by setting `dcbor` to true.
+ *
+ * Several of these options can cause errors to be thrown for inputs that
+ * would have otherwise generated valid CBOR (e.g. `undefined`).
+ */
+export const dcborEncodeOptions: EncodeOptions = {
+  ...cdeEncodeOptions,
+  dcbor: true,
+  largeNegativeAsBigInt: true,
+  rejectCustomSimples: true,
+  rejectDuplicateKeys: true,
+  rejectUndefined: true,
+  simplifyNegativeZero: true,
 };
 
 /**
@@ -245,9 +271,14 @@ export function writeBigInt(
  * @param opts Encoding options.
  */
 export function writeNumber(
-  val: number, w: Writer,
+  val: number,
+  w: Writer,
   opts: RequiredEncodeOptions
 ): void {
+  if (opts.flushToZero) {
+    val = flushToZero(val);
+  }
+
   if (Object.is(val, -0)) {
     if (opts.simplifyNegativeZero) {
       if (opts.avoidInts) {
@@ -429,11 +460,15 @@ export function writeUnknown(
  * @param options Tweak the conversion process.
  * @returns Bytes in a Uint8Array buffer.
  */
-export function encode(val: unknown, options?: EncodeOptions): Uint8Array {
-  const opts: RequiredEncodeOptions = {
-    ...EncodeOptionsDefault,
-    ...options,
-  };
+export function encode(val: unknown, options: EncodeOptions = {}): Uint8Array {
+  const opts: RequiredEncodeOptions = {...defaultEncodeOptions};
+  if (options.dcbor) {
+    Object.assign(opts, dcborEncodeOptions);
+  } else if (options.cde) {
+    Object.assign(opts, cdeEncodeOptions);
+  }
+  Object.assign(opts, options);
+
   const w = new Writer(opts);
   writeUnknown(val, w, opts);
   return w.read();

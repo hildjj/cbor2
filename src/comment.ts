@@ -182,7 +182,7 @@ function output(
 }
 
 const CommentOptionsDefault: RequiredCommentOptions = {
-  ...CBORcontainer.defaultOptions,
+  ...CBORcontainer.defaultDecodeOptions,
   initialDepth: 0,
   noPrefixHex: false,
   minCol: 0,

@@ -67,7 +67,7 @@ export function diagnose(
   options?: DecodeOptions
 ): string {
   const opts: Required<DecodeOptions> = {
-    ...CBORcontainer.defaultOptions,
+    ...CBORcontainer.defaultDecodeOptions,
     ...options,
     ParentType: DiagContainer,
   };

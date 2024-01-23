@@ -4,20 +4,8 @@ import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
 import {decode} from '../lib/decoder.js';
 import {hexToU8} from '../lib/utils.js';
-import {sortCoreDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
 import {unbox} from '../lib/box.js';
-
-const dCBORdecodeOptions = {
-  rejectLargeNegatives: true,
-  rejectLongLoundNaN: true,
-  rejectLongNumbers: true,
-  rejectNegativeZero: true,
-  rejectSimple: true,
-  rejectStreaming: true,
-  rejectUndefined: true,
-  sortKeys: sortCoreDeterministic,
-};
 
 function testAll(list, opts) {
   let count = 0;
@@ -53,10 +41,18 @@ test('decode bad tags', () => {
   failAll(cases.decodeBadTags);
 });
 
+test('decode with cde', () => {
+  testAll(cases.goodNumbers, {cde: true});
+  testAll(cases.good.filter(([o]) => o instanceof Map), {cde: true});
+  failAll([
+    '0x1817',
+  ], {cde: true});
+});
+
 test('decode with dCBOR', () => {
-  failAll(cases.decodeBadDcbor, dCBORdecodeOptions);
-  testAll(cases.goodNumbers, dCBORdecodeOptions);
-  testAll(cases.good.filter(([o]) => o instanceof Map), dCBORdecodeOptions);
+  failAll(cases.decodeBadDcbor, {dcbor: true});
+  testAll(cases.goodNumbers, {dcbor: true});
+  testAll(cases.good.filter(([o]) => o instanceof Map), {dcbor: true});
   failAll([
     '0xa280008001',
     '0xa200010002',
@@ -162,4 +158,18 @@ test('unbox decoded', () => {
   assert.equal(unbox(1), 1);
   assert.deepEqual(unbox(new Tag(1, Object(0))), new Tag(1, 0));
   assert.deepEqual(unbox({a: 1}), {a: 1});
+});
+
+test('rejectSubnormals', () => {
+  failAll([
+    '0xf90001',
+    '0xf98001',
+  ], {rejectSubnormals: true});
+});
+
+test('fail on old prefs', () => {
+  assert.throws(
+    () => decode('f93d00', {rejectLongNumbers: true}),
+    /rejectLongNumbers has changed to requirePreferred/
+  );
 });

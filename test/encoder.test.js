@@ -5,22 +5,11 @@ import {
   clearEncoder, encode, registerEncoder, writeInt,
 } from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
-import {sortCoreDeterministic, sortLengthFirstDeterministic} from '../lib/sorts.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
+import {sortLengthFirstDeterministic} from '../lib/sorts.js';
 import test from 'node:test';
 import util from 'node:util';
-
-export const dCBORencodeOptions = {
-  // Default: collapseBigInts: true,
-  ignoreOriginalEncoding: true,
-  largeNegativeAsBigInt: true,
-  rejectCustomSimples: true,
-  rejectDuplicateKeys: true,
-  rejectUndefined: true,
-  simplifyNegativeZero: true,
-  sortKeys: sortCoreDeterministic,
-};
 
 const BE = isBigEndian();
 
@@ -140,9 +129,15 @@ test('deterministic sorting', () => {
   );
 });
 
+test('encode cde', () => {
+  testAll([
+    [new Map([[100, 0], [10, 1]]), '', '0xa20a01186400'],
+  ], {cde: true});
+});
+
 test('encode dCBOR', () => {
-  failAll(cases.encodeBadDCBOR, dCBORencodeOptions);
-  testAll(cases.good.filter(([o]) => o instanceof Map), dCBORencodeOptions);
+  failAll(cases.encodeBadDCBOR, {dcbor: true});
+  testAll(cases.good.filter(([o]) => o instanceof Map), {dcbor: true});
   const dv = new DataView(new ArrayBuffer(4));
   dv.setFloat32(0, NaN);
   dv.setUint8(3, 1);
@@ -152,7 +147,7 @@ test('encode dCBOR', () => {
     [n, '', '0xf97e00'],
     [-0x8000000000000000n, '', '0x3b7fffffffffffffff'],
     [-0x8000000000000001n, '', '0xc3488000000000000000'],
-  ], dCBORencodeOptions);
+  ], {dcbor: true});
 });
 
 test('encode rejections', () => {
@@ -178,4 +173,13 @@ test('encode avoiding ints', () => {
     [0, '', '0xf90000'],
     [-0, '', '0xf90000'],
   ], {avoidInts: true, simplifyNegativeZero: true});
+});
+
+test('flush to zero', () => {
+  testAll([
+    [1e-320, '', '0x00'],
+    [-1e-320, '', '0xf98000'],
+    [Number.EPSILON, '', '0xfa25800000'],
+    [-Number.EPSILON, '', '0xfaa5800000'],
+  ], {flushToZero: true});
 });

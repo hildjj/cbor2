@@ -1,5 +1,18 @@
 import './style.css';
-import {Simple, Tag, comment, decode, diagnose, encode} from 'cbor2';
+import {
+  Simple,
+  Tag,
+  cdeDecodeOptions,
+  cdeEncodeOptions,
+  comment,
+  dcborDecodeOptions,
+  dcborEncodeOptions,
+  decode,
+  defaultDecodeOptions,
+  defaultEncodeOptions,
+  diagnose,
+  encode,
+} from 'cbor2';
 import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
@@ -9,6 +22,24 @@ const otxt = document.getElementById('output-text');
 const itxt = document.getElementById('input-text');
 const ifmt = document.getElementById('input-fmt');
 const copy = document.getElementById('copy');
+const sortKeysEncode = document.querySelector('#sortKeysEncode');
+const sortKeysDecode = document.querySelector('#sortKeysDecode');
+
+const notCdeEncodeOptions = Object.fromEntries(
+  Object.entries(cdeEncodeOptions).map(([k, v]) => [k, !v])
+);
+
+const notDcborEncodeOptions = Object.fromEntries(
+  Object.entries(dcborEncodeOptions).map(([k, v]) => [k, !v])
+);
+
+const notCdeDecodeOptions = Object.fromEntries(
+  Object.entries(cdeDecodeOptions).map(([k, v]) => [k, !v])
+);
+
+const notDcborDecodeOptions = Object.fromEntries(
+  Object.entries(dcborDecodeOptions).map(([k, v]) => [k, !v])
+);
 
 /**
  * Encode Uint8Array to base64.
@@ -27,38 +58,34 @@ function error(e) {
   otxt.value = e.toString();
 }
 
-const encodeOpts = {
-  avoidInts: false,
-  collapseBigInts: true,
-  float64: false,
-  forceEndian: null,
-  ignoreOriginalEncoding: false,
-  largeNegativeAsBigInt: false,
-  rejectBigInts: false,
-  rejectCustomSimples: false,
-  rejectDuplicateKeys: false,
-  rejectFloats: false,
-  rejectUndefined: false,
-  simplifyNegativeZero: false,
-  sortKeys: null,
-};
+const encodeOpts = defaultEncodeOptions;
+const decodeOpts = defaultDecodeOptions;
 
-const decodeOpts = {
-  boxed: false,
-  rejectLargeNegatives: false,
-  rejectBigInts: false,
-  rejectDuplicateKeys: false,
-  rejectFloats: false,
-  rejectInts: false,
-  rejectLongLoundNaN: false,
-  rejectLongNumbers: false,
-  rejectNegativeZero: false,
-  rejectSimple: false,
-  rejectStreaming: false,
-  rejectUndefined: false,
-  saveOriginal: false,
-  sortKeys: null,
-};
+function showEncodeOpts() {
+  for (const inp of document.querySelectorAll('#encodeOpts input')) {
+    inp.checked = encodeOpts[inp.id.replace(/Encode$/, '')];
+  }
+  if (encodeOpts.sortKeys === sortCoreDeterministic) {
+    sortKeysEncode.value = 'coreDeterministic';
+  } else if (encodeOpts.sortKeys === sortLengthFirstDeterministic) {
+    sortKeysEncode.value = 'lengthFirstDeterministic';
+  } else {
+    sortKeysEncode.value = 'null';
+  }
+}
+
+function showDecodeOpts() {
+  for (const inp of document.querySelectorAll('#decodeOpts input')) {
+    inp.checked = decodeOpts[inp.id];
+  }
+  if (decodeOpts.sortKeys === sortCoreDeterministic) {
+    sortKeysDecode.value = 'coreDeterministic';
+  } else if (decodeOpts.sortKeys === sortLengthFirstDeterministic) {
+    sortKeysDecode.value = 'lengthFirstDeterministic';
+  } else {
+    sortKeysDecode.value = 'null';
+  }
+}
 
 // Convert any input to a buffer
 function input() {
@@ -102,11 +129,11 @@ function output(buf, typ) {
         break;
       case 'commented':
         copy.disabled = false;
-        otxt.value = comment(buf);
+        otxt.value = comment(buf, decodeOpts);
         break;
       case 'diagnostic':
         copy.disabled = true;
-        otxt.value = diagnose(buf);
+        otxt.value = diagnose(buf, decodeOpts);
         break;
       case 'js':
         copy.disabled = false;
@@ -141,12 +168,22 @@ function convert() {
 function changeEncodeOption({target}) {
   const opt = target.id.replace(/Encode$/, '');
   encodeOpts[opt] = target.checked;
+  let modified = false;
+  if (opt === 'dcbor') {
+    Object.assign(encodeOpts, target.checked ?
+      dcborEncodeOptions :
+      notDcborEncodeOptions);
+    modified = true;
+  } else if (opt === 'cde') {
+    Object.assign(encodeOpts, target.checked ?
+      cdeEncodeOptions :
+      notCdeEncodeOptions);
+    modified = true;
+  }
+  if (modified) {
+    showEncodeOpts();
+  }
   convert();
-}
-
-for (const inp of document.querySelectorAll('#encodingOpts input')) {
-  inp.onchange = changeEncodeOption;
-  inp.checked = encodeOpts[inp.id.replace(/Encode$/, '')];
 }
 
 const forceEndian = document.querySelector('#forceEndian');
@@ -160,7 +197,6 @@ forceEndian.onchange = () => {
 };
 forceEndian.value = 'null';
 
-const sortKeysEncode = document.querySelector('#sortKeysEncode');
 sortKeysEncode.onchange = () => {
   encodeOpts.sortKeys = {
     null: null,
@@ -173,15 +209,35 @@ sortKeysEncode.value = 'null';
 
 function changeDecodeOption({target}) {
   decodeOpts[target.id] = target.checked;
+  let modified = false;
+  if (target.id === 'dcbor') {
+    modified = true;
+    Object.assign(decodeOpts, target.checked ?
+      dcborDecodeOptions :
+      notDcborDecodeOptions);
+  } else if (target.id === 'cde') {
+    modified = true;
+    Object.assign(decodeOpts, target.checked ?
+      cdeDecodeOptions :
+      notCdeDecodeOptions);
+  }
+  if (modified) {
+    showDecodeOpts();
+  }
+
   convert();
 }
 
-for (const inp of document.querySelectorAll('#decodingOpts input')) {
-  inp.onchange = changeDecodeOption;
-  inp.checked = decodeOpts[inp.id];
+showEncodeOpts();
+for (const inp of document.querySelectorAll('#encodeOpts input')) {
+  inp.onchange = changeEncodeOption;
 }
 
-const sortKeysDecode = document.querySelector('#sortKeysDecode');
+showDecodeOpts();
+for (const inp of document.querySelectorAll('#decodeOpts input')) {
+  inp.onchange = changeDecodeOption;
+}
+
 sortKeysDecode.onchange = () => {
   encodeOpts.sortKeys = {
     null: null,
