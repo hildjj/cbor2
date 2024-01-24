@@ -87,42 +87,6 @@ export type TypeEncoder<T> = (
   opts: RequiredEncodeOptions
 ) => TaggedValue | undefined;
 
-// Only add ones here that have to be in for compliance.
-const TYPES = new Map<unknown, unknown>([
-  [Array, writeArray],
-  [Uint8Array, writeUint8Array],
-]);
-
-/**
- * Add a known converter for the given type to CBOR.
- *
- * @param typ Type constructor, e.g. "Array".
- * @param encoder Converter function for that type.
- * @returns Previous converter for that type, or unknown.
- */
-export function registerEncoder<T extends AbstractClassType<T>>(
-  typ: T,
-  encoder: TypeEncoder<InstanceType<T>>
-): TypeEncoder<T> | undefined {
-  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
-  TYPES.set(typ, encoder);
-  return old;
-}
-
-/**
- * Remove the given type from being converted to CBOR.
- *
- * @param typ Type constructor, e.e.g "Array".
- * @returns Previous converter for that type, or unknown.
- */
-export function clearEncoder<T extends AbstractClassType<T>>(
-  typ: T
-): TypeEncoder<T> | undefined {
-  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
-  TYPES.delete(typ);
-  return old;
-}
-
 export interface ToJSON {
   /**
    * Used by the JSON.stringify method to enable the transformation of an
@@ -214,6 +178,24 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
 }
 
 /**
+ * Write a tag number to the output stream.  MUST be followed by writing
+ * the tag contents.
+ *
+ * @param tag Tag number.
+ * @param w Stream to write to.
+ */
+export function writeTag(tag: TagNumber, w: Writer): void {
+  if (typeof tag === 'number') {
+    writeInt(tag, w, MT.TAG);
+  } else if (tag <= Number.MAX_SAFE_INTEGER) {
+    writeInt(Number(tag), w, MT.TAG);
+  } else {
+    w.writeUint8((MT.TAG << 5) | NUMBYTES.EIGHT);
+    w.writeBigUint64(tag);
+  }
+}
+
+/**
  * Intended for internal use.
  *
  * @param val Bigint to write.
@@ -297,24 +279,6 @@ export function writeNumber(
 }
 
 /**
- * Write a tag number to the output stream.  MUST be followed by writing
- * the tag contents.
- *
- * @param tag Tag number.
- * @param w Stream to write to.
- */
-export function writeTag(tag: TagNumber, w: Writer): void {
-  if (typeof tag === 'number') {
-    writeInt(tag, w, MT.TAG);
-  } else if (tag <= Number.MAX_SAFE_INTEGER) {
-    writeInt(Number(tag), w, MT.TAG);
-  } else {
-    w.writeUint8((MT.TAG << 5) | NUMBYTES.EIGHT);
-    w.writeBigUint64(tag);
-  }
-}
-
-/**
  * Convert the string to UTF8.  Write the length of the UTF8 version to the
  * stream with major type UTF8_STRING, then the UTF8 bytes.
  *
@@ -343,6 +307,8 @@ export function writeArray(
   const a = obj as unknown[];
   writeInt(a.length, w, MT.ARRAY);
   for (const i of a) { // Iterator gives undefined for holes.
+    // Circular
+    // eslint-disable-next-line no-use-before-define
     writeUnknown(i, w, opts);
   }
 }
@@ -358,6 +324,42 @@ export function writeUint8Array(obj: unknown, w: Writer): undefined {
   const u = obj as Uint8Array;
   writeInt(u.length, w, MT.BYTE_STRING);
   w.write(u);
+}
+
+// Only add ones here that have to be in for compliance.
+const TYPES = new Map<unknown, unknown>([
+  [Array, writeArray],
+  [Uint8Array, writeUint8Array],
+]);
+
+/**
+ * Add a known converter for the given type to CBOR.
+ *
+ * @param typ Type constructor, e.g. "Array".
+ * @param encoder Converter function for that type.
+ * @returns Previous converter for that type, or unknown.
+ */
+export function registerEncoder<T extends AbstractClassType<T>>(
+  typ: T,
+  encoder: TypeEncoder<InstanceType<T>>
+): TypeEncoder<T> | undefined {
+  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
+  TYPES.set(typ, encoder);
+  return old;
+}
+
+/**
+ * Remove the given type from being converted to CBOR.
+ *
+ * @param typ Type constructor, e.e.g "Array".
+ * @returns Previous converter for that type, or unknown.
+ */
+export function clearEncoder<T extends AbstractClassType<T>>(
+  typ: T
+): TypeEncoder<T> | undefined {
+  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
+  TYPES.delete(typ);
+  return old;
 }
 
 function writeObject(
@@ -383,6 +385,9 @@ function writeObject(
       if ((typeof res[0] === 'bigint') || isFinite(res[0])) {
         writeTag(res[0], w);
       }
+
+      // Circular
+      // eslint-disable-next-line no-use-before-define
       writeUnknown(res[1], w, opts);
     }
     return;
@@ -394,18 +399,24 @@ function writeObject(
       if ((typeof res[0] === 'bigint') || isFinite(res[0])) {
         writeTag(res[0], w);
       }
+      // Circular
+      // eslint-disable-next-line no-use-before-define
       writeUnknown(res[1], w, opts);
     }
     return;
   }
 
   if (typeof (obj as ToJSON).toJSON === 'function') {
+    // Circular
+    // eslint-disable-next-line no-use-before-define
     writeUnknown((obj as ToJSON).toJSON(), w, opts);
     return;
   }
 
   // Note: keys will never be duplicated here.
   const entries = Object.entries(obj).map<KeyValueEncoded>(
+    // Circular
+    // eslint-disable-next-line no-use-before-define
     e => [e[0], e[1], encode(e[0], opts)]
   );
   if (opts.sortKeys) {
@@ -415,6 +426,8 @@ function writeObject(
 
   for (const [_k, v, e] of entries) {
     w.write(e);
+    // Circular
+    // eslint-disable-next-line no-use-before-define
     writeUnknown(v, w, opts);
   }
 }

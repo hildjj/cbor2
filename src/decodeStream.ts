@@ -66,6 +66,7 @@ export class DecodeStream implements Sliceable {
    * Get the stream of events describing the CBOR item.
    *
    * @throws On invalid input or extra data in input.
+   * @yields Value tuples.
    * @example
    * ```js
    * const s = new DecodeStream(buffer);
@@ -88,6 +89,7 @@ export class DecodeStream implements Sliceable {
    * @returns A generator that yields information about every sub-item
    *   found in the input.
    * @throws Maximum depth exceeded, invalid input.
+   * @yields Value tuples.
    */
   *#nextVal(depth: number): ValueGenerator {
     if (depth++ > this.#opts.maxDepth) {

@@ -1,4 +1,3 @@
-/* eslint-disable no-redeclare */
 import {SYMS} from './constants.js';
 import {Tag} from './tag.js';
 

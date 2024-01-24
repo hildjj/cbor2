@@ -44,8 +44,8 @@ const notDcborDecodeOptions = Object.fromEntries(
 /**
  * Encode Uint8Array to base64.
  *
- * @param bytes Buffer.
- * @returns Base64.
+ * @param {Uint8Array} bytes Buffer.
+ * @returns {string} Base64.
  */
 export function bytesToBase64(bytes) {
   const binString = Array.from(bytes, x => String.fromCodePoint(x))

@@ -54,19 +54,22 @@ export type MtAiValue = [
   len: bigint | number,
 ];
 
+// Circular
+/* eslint-disable no-use-before-define */
 export interface ParentConstructor {
   // eslint-disable-next-line @typescript-eslint/prefer-function-type
   new (
     mav: MtAiValue,
     left: number,
     parent: Parent | undefined,
-    opts: RequiredDecodeOptions
+    opts: RequiredDecodeOptions,
   ): Parent;
 }
 
 export interface Decodeable {
   decode(options: RequiredDecodeOptions): unknown;
 }
+/* eslint-enable no-use-before-define */
 
 export interface Parent {
   parent: Parent | undefined;
