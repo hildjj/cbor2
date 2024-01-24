@@ -4,8 +4,12 @@
 .eslintrc.cjs
 .github/
 .gitmodules
+.vscode/
 coverage/
+deno.jsonc
+deno.lock
 docs/
+examples/
 pnpm-lock.yaml
 src/
 test-vectors/
@@ -13,8 +17,4 @@ test/
 tsconfig.json
 tsup.config.js
 typedoc.config.cjs
-examples/
-.vscode/
 web/
-deno.lock
-deno.jsonc

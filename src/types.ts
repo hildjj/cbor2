@@ -320,7 +320,7 @@ function convertToTyped<
   return ret;
 }
 
-// eslint-disable-next-line max-params
+// eslint-disable-next-line @typescript-eslint/max-params
 function writeTyped<T extends TypedArray>(
   w: Writer,
   littleTag: number,

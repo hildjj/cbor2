@@ -9,6 +9,7 @@ import {type TagNumber, ToCBOR} from './writer.js';
  * Apply this to a TagDecoder function to get commenting support.
  */
 export interface Commenter {
+
   /**
    * If true, do not output text for child nodes.  The comment function
    * will handle that.  If true, ensure that the text returned by the comment
@@ -26,12 +27,16 @@ export interface Commenter {
    * @param depth How deep are we in indentation clicks so far?
    */
   comment?(
+    // Circular
+    // eslint-disable-next-line no-use-before-define
     tag: Tag,
     opts: RequiredCommentOptions,
     depth: number
   ): string;
 }
 
+// Circular
+// eslint-disable-next-line no-use-before-define
 export type BaseDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
 export type TagDecoder = BaseDecoder & Commenter;
 
@@ -114,6 +119,7 @@ export class Tag implements ToCBOR, Decodeable {
   /**
    * Iterate over just the contents, so that the tag works more like an
    * array.
+   * @yields One time, the contained value.
    */
   public *[Symbol.iterator](): Generator<unknown, void, undefined> {
     yield this.contents;

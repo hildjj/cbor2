@@ -12,19 +12,19 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
-        platform: [ubuntu-20.04]
+        node-version: [18.x, 20.x, 21.x]
+        platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Install pnpm
         run: corepack enable
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
