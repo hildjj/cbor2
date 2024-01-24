@@ -4,6 +4,7 @@
 .eslintrc.cjs
 .github/
 .gitmodules
+.ncurc
 .vscode/
 coverage/
 deno.jsonc
