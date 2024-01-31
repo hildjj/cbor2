@@ -9,8 +9,8 @@ devDependencies:
     specifier: link:..
     version: link:..
   css-loader:
-    specifier: 6.9.1
-    version: 6.9.1(webpack@5.90.0)
+    specifier: 6.10.0
+    version: 6.10.0(webpack@5.90.0)
   html-webpack-plugin:
     specifier: 5.6.0
     version: 5.6.0(webpack@5.90.0)
@@ -377,11 +377,17 @@ packages:
       which: 2.0.2
     dev: true
 
-  /css-loader@6.9.1(webpack@5.90.0):
-    resolution: {integrity: sha512-OzABOh0+26JKFdMzlK6PY1u5Zx8+Ck7CVRlcGNZoY9qwJjdfu2VWFuprTIpPW+Av5TZTVViYWcFQaEEQURLknQ==}
+  /css-loader@6.10.0(webpack@5.90.0):
+    resolution: {integrity: sha512-LTSA/jWbwdMlk+rhmElbDR2vbtQoTBPr7fkJE+mxrHj+7ru0hUmHafDRzWIjIHTwpitWVaqY2/UWGRca3yUgRw==}
     engines: {node: '>= 12.13.0'}
     peerDependencies:
+      '@rspack/core': 0.x || 1.x
       webpack: ^5.0.0
+    peerDependenciesMeta:
+      '@rspack/core':
+        optional: true
+      webpack:
+        optional: true
     dependencies:
       icss-utils: 5.1.0(postcss@8.4.33)
       postcss: 8.4.33
