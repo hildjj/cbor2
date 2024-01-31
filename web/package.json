@@ -10,7 +10,7 @@
   "license": "MIT",
   "devDependencies": {
     "cbor2": "link:..",
-    "css-loader": "6.9.1",
+    "css-loader": "6.10.0",
     "html-webpack-plugin": "5.6.0",
     "node-inspect-extracted": "3.0.0",
     "style-loader": "3.3.4",
