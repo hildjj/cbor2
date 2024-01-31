@@ -119,6 +119,14 @@ export interface DecodeOptions extends DecodeStreamOptions {
   dcbor?: boolean;
 
   /**
+   * Always generate Map instances when decoding, instead of trying to
+   * generate object instances when all of the keys are strings.  If you
+   * have the boxed option on, this option has no effect, and Maps are always
+   * produced.
+   */
+  preferMap?: boolean;
+
+  /**
    * Reject negative integers in the range [CBOR_NEGATIVE_INT_MAX ...
    * STANDARD_NEGATIVE_INT_MAX - 1].
    * @default false

@@ -36,6 +36,7 @@ export class CBORcontainer {
     boxed: false,
     cde: false,
     dcbor: false,
+    preferMap: false,
     rejectLargeNegatives: false,
     rejectBigInts: false,
     rejectDuplicateKeys: false,
@@ -328,7 +329,7 @@ export class CBORcontainer {
         }
 
         // Extra array elements are ignored in both branches.
-        ret = !this.#opts.boxed && pu.every(([k]) => typeof k === 'string') ?
+        ret = !this.#opts.boxed && !this.#opts.preferMap && pu.every(([k]) => typeof k === 'string') ?
           Object.fromEntries(pu) :
           new Map<unknown, unknown>(pu as unknown as [unknown, unknown][]);
         break;

@@ -173,3 +173,16 @@ test('fail on old prefs', () => {
     /rejectLongNumbers has changed to requirePreferred/
   );
 });
+
+test('preferMap', () => {
+  testAll([
+    [new Map(), 'Map(0) {}', `0xa0
+a0 -- Map (Length: 0 pairs)\n`],
+    [new Map([['a', 'b']]), "Map(1) { 'a' => 'b' }", `0xa161616162
+a1   -- Map (Length: 1 pair)
+  61 --   [key 0] UTF8 (Length: 1): "a"
+    61
+  61 --   [val 0] UTF8 (Length: 1): "b"
+    62\n`],
+  ], {preferMap: true});
+});
