@@ -1,7 +1,6 @@
 .c8rc
 .c8rc
 .editorconfig
-.eslintrc.cjs
 .github/
 .gitmodules
 .ncurc
@@ -10,6 +9,7 @@ coverage/
 deno.jsonc
 deno.lock
 docs/
+eslint.config.js
 examples/
 pnpm-lock.yaml
 src/
