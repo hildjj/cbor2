@@ -43,17 +43,17 @@
     "name": "Joe Hildebrand",
     "email": "joe-github@cursive.net"
   },
-  "packageManager": "pnpm@8.15.4",
+  "packageManager": "pnpm@8.15.6",
   "devDependencies": {
-    "@cto.af/eslint-config": "4.0.0",
+    "@cto.af/eslint-config": "4.0.2",
     "c8": "9.1.0",
     "eslint": "8.57.0",
-    "eslint-plugin-jsdoc": "48.2.1",
+    "eslint-plugin-jsdoc": "48.2.2",
     "eslint-plugin-markdown": "4.0.1",
     "rimraf": "^5.0.5",
     "tsup": "8.0.2",
-    "typedoc": "0.25.11",
-    "typescript-eslint": "7.1.1"
+    "typedoc": "0.25.12",
+    "typescript-eslint": "7.5.0"
   },
   "license": "MIT",
   "engines": {
