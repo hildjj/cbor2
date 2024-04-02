@@ -1,4 +1,3 @@
 {
-  "dep": ["prod", "dev", "packageManager"],
-  "reject": ["typescript"]
+  "dep": ["prod", "dev", "packageManager"]
 }
