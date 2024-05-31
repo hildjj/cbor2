@@ -2,7 +2,7 @@ import '../lib/types.js';
 import * as cases from './cases.js';
 import {MT, SYMS} from '../lib/constants.js';
 import {
-  clearEncoder, encode, registerEncoder, writeInt,
+  clearEncoder, encode, encodedNumber, registerEncoder, writeInt,
 } from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
@@ -182,4 +182,115 @@ test('flush to zero', () => {
     [Number.EPSILON, '', '0xfa25800000'],
     [-Number.EPSILON, '', '0xfaa5800000'],
   ], {flushToZero: true});
+});
+
+test('encodedNumber', () => {
+  testAll([
+    [encodedNumber(0, 'bigint'), '', '0xc24100'],
+    [encodedNumber(0n, 'bigint'), '', '0xc24100'],
+    [encodedNumber(1, 'bigint'), '', '0xc24101'],
+    [encodedNumber(1n, 'bigint'), '', '0xc24101'],
+    [encodedNumber(-1, 'bigint'), '', '0xc34100'],
+    [encodedNumber(-1n, 'bigint'), '', '0xc34100'],
+
+    [encodedNumber(0, 'f16'), '', '0xf90000'],
+    [encodedNumber(1, 'f16'), '', '0xf93c00'],
+    [encodedNumber(-1, 'f16'), '', '0xf9bc00'],
+    [encodedNumber(0n, 'f16'), '', '0xf90000'],
+    [encodedNumber(1n, 'f16'), '', '0xf93c00'],
+    [encodedNumber(-1n, 'f16'), '', '0xf9bc00'],
+    [encodedNumber(NaN, 'f16'), '', '0xf97e00'],
+    [encodedNumber(-0, 'f16'), '', '0xf98000'],
+    [encodedNumber(Infinity, 'f16'), '', '0xf97c00'],
+    [encodedNumber(-Infinity, 'f16'), '', '0xf9fc00'],
+
+    [encodedNumber(0, 'f32'), '', '0xfa00000000'],
+    [encodedNumber(1, 'f32'), '', '0xfa3f800000'],
+    [encodedNumber(-1, 'f32'), '', '0xfabf800000'],
+    [encodedNumber(0n, 'f32'), '', '0xfa00000000'],
+    [encodedNumber(1n, 'f32'), '', '0xfa3f800000'],
+    [encodedNumber(-1n, 'f32'), '', '0xfabf800000'],
+    [encodedNumber(NaN, 'f32'), '', '0xfa7fc00000'],
+    [encodedNumber(-0, 'f32'), '', '0xfa80000000'],
+    [encodedNumber(Infinity, 'f32'), '', '0xfa7f800000'],
+    [encodedNumber(-Infinity, 'f32'), '', '0xfaff800000'],
+
+    [encodedNumber(0, 'f64'), '', '0xfb0000000000000000'],
+    [encodedNumber(1, 'f64'), '', '0xfb3ff0000000000000'],
+    [encodedNumber(-1, 'f64'), '', '0xfbbff0000000000000'],
+    [encodedNumber(0n, 'f64'), '', '0xfb0000000000000000'],
+    [encodedNumber(1n, 'f64'), '', '0xfb3ff0000000000000'],
+    [encodedNumber(-1n, 'f64'), '', '0xfbbff0000000000000'],
+    [encodedNumber(NaN, 'f64'), '', '0xfb7ff8000000000000'],
+    [encodedNumber(-0, 'f64'), '', '0xfb8000000000000000'],
+    [encodedNumber(Infinity, 'f64'), '', '0xfb7ff0000000000000'],
+    [encodedNumber(-Infinity, 'f64'), '', '0xfbfff0000000000000'],
+
+    [encodedNumber(0, 'i8'), '', '0x1800'],
+    [encodedNumber(1, 'i8'), '', '0x1801'],
+    [encodedNumber(-1, 'i8'), '', '0x3800'],
+    [encodedNumber(0n, 'i8'), '', '0x1800'],
+    [encodedNumber(1n, 'i8'), '', '0x1801'],
+    [encodedNumber(-1n, 'i8'), '', '0x3800'],
+
+    [encodedNumber(0, 'i16'), '', '0x190000'],
+    [encodedNumber(1, 'i16'), '', '0x190001'],
+    [encodedNumber(-1, 'i16'), '', '0x390000'],
+    [encodedNumber(0n, 'i16'), '', '0x190000'],
+    [encodedNumber(1n, 'i16'), '', '0x190001'],
+    [encodedNumber(-1n, 'i16'), '', '0x390000'],
+
+    [encodedNumber(0, 'i32'), '', '0x1a00000000'],
+    [encodedNumber(1, 'i32'), '', '0x1a00000001'],
+    [encodedNumber(-1, 'i32'), '', '0x3a00000000'],
+    [encodedNumber(0n, 'i32'), '', '0x1a00000000'],
+    [encodedNumber(1n, 'i32'), '', '0x1a00000001'],
+    [encodedNumber(-1n, 'i32'), '', '0x3a00000000'],
+
+    [encodedNumber(0, 'i64'), '', '0x1b0000000000000000'],
+    [encodedNumber(1, 'i64'), '', '0x1b0000000000000001'],
+    [encodedNumber(-1, 'i64'), '', '0x3b0000000000000000'],
+    [encodedNumber(0n, 'i64'), '', '0x1b0000000000000000'],
+    [encodedNumber(1n, 'i64'), '', '0x1b0000000000000001'],
+    [encodedNumber(-1n, 'i64'), '', '0x3b0000000000000000'],
+  ]);
+
+  [
+    [1.1, 'bigint'],
+    [-1.1, 'bigint'],
+    [NaN, 'bigint'],
+    [Infinity, 'bigint'],
+    [-Infinity, 'bigint'],
+    [-0, 'bigint'],
+
+    [12345678, 'f16'],
+    [123456789, 'f32'],
+    [12345678n, 'f16'],
+    [123456789n, 'f32'],
+
+    [-0, 'i8'],
+    [Infinity, 'i8'],
+    [-Infinity, 'i8'],
+    [NaN, 'i8'],
+
+    [-0, 'i16'],
+    [Infinity, 'i16'],
+    [-Infinity, 'i16'],
+    [NaN, 'i16'],
+
+    [-0, 'i32'],
+    [Infinity, 'i32'],
+    [-Infinity, 'i32'],
+    [NaN, 'i32'],
+
+    [-0, 'i64'],
+    [Infinity, 'i64'],
+    [-Infinity, 'i64'],
+    [NaN, 'i64'],
+
+    [0, 'INVALID'],
+  ].forEach(([value, encoding]) => assert.throws(
+    () => encodedNumber(value, encoding),
+    util.inspect({value, encoding})
+  ));
 });

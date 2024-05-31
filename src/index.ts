@@ -36,6 +36,7 @@ export {
   defaultEncodeOptions,
   dcborEncodeOptions,
   encode,
+  encodedNumber,
 } from './encoder.js';
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
