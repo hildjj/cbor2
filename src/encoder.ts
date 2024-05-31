@@ -496,7 +496,14 @@ export function encode(val: unknown, options: EncodeOptions = {}): Uint8Array {
  * selected encoding is floating point.  Otherwise, -0 causes an error.
  * You MUST NOT use the `ignoreOriginalEncoding` option when encoding these
  * numbers, or the encoding that is stored along with the boxed number will
- * be ignored.
+ * be ignored.  The `cde` and `dcbor` options turn on `ignoreOriginalEncoding`
+ * by default, so it must be exlicitly disabled.
+ *
+ * @example
+ * const num = encodedNumber(2, 'i32');
+ * // [Number: 2]
+ * const enc = encode(num, {cde: true, ignoreOriginalEncoding: false});
+ * // Uint8Array(3) [ 25, 0, 2 ]
  *
  * @param value Number to be encoded later
  * @param encoding Desired encoding.
