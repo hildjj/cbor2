@@ -19,6 +19,14 @@ export default [
   ...markdown,
   {
     files: [
+      '**/*.md/*.js',
+    ],
+    rules: {
+      'no-new-wrappers': 'off',
+    },
+  },
+  {
+    files: [
       'web/**/*.js',
     ],
     rules: {

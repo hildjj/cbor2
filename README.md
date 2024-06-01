@@ -188,13 +188,46 @@ import {Tag} from 'cbor2/tag';
 Tag.registerDecoder(0, ({contents}) => Temporal.Instant.from(contents));
 ```
 
+## Boxed Types
+
+JavaScript "boxed" types, such as those created with `new Number(3)`, are
+object wrappers around JavaScript primitives.  These objects can be used in
+most places that a primitive value would be used, but since they are objects
+they can have associated properties.  This library can decode CBOR values into
+boxed types if desired, such that the original CBOR encoding of that value is
+stored as a hidden property on the value, ensuring that round-tripping between
+decoding and encoding will produce the original CBOR value, no matter which
+of the many legal CBOR encodings were used for a given value.  For example:
+
+```js
+import {decode, encode} from 'cbor';
+
+const val = decode('fa40800000', {boxed: true}); // [Number: 4]
+encode(4); // 0x04
+encode(new Number(4)); // 0x04
+encode(val); // 0xfa40800000, the original encoding
+encode(val, {ignoreOriginalEncoding: true}); // 0x04
+```
+
+When pedantic protocols are strict about the types they will accept, and you
+want to force a particular numeric encoding, you can use the `encodedNumber`
+function to create a boxed number with the desired encoding attached:
+
+```js
+import {encode, encodedNumber} from 'cbor';
+
+const val = encodedNumber(4, 'i64'); // [Number: 4]
+encode(val); // 0x1b0000000000000004
+```
+
 ## Developers
 
 The tests for this package use a set of test vectors from RFC 8949 appendix A
 by importing a machine readable version of them from
-[https://github.com/cbor/test-vectors](https://github.com/cbor/test-vectors). For these tests to work, you will need
-to use the command `git submodule update --init` after cloning or pulling this
-code.   See the [git docs](https://gist.github.com/gitaarik/8735255#file-git_submodules-md)
+[https://github.com/cbor/test-vectors](https://github.com/cbor/test-vectors).
+For these tests to work, you will need to use the command
+`git submodule update --init` after cloning or pulling this code.   See the
+[git docs](https://gist.github.com/gitaarik/8735255#file-git_submodules-md)
 for more information.
 
 ---
