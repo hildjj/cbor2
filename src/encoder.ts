@@ -5,6 +5,7 @@ import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
 import {flushToZero, halfToUint} from './float.js';
+import {box} from './box.js';
 import {hexToU8} from './utils.js';
 
 export const {
@@ -485,4 +486,125 @@ export function encode(val: unknown, options: EncodeOptions = {}): Uint8Array {
   const w = new Writer(opts);
   writeUnknown(val, w, opts);
   return w.read();
+}
+
+/**
+ * Return a boxed number encoded in the desired (often non-optimal) format.
+ * This might be used for APIs that have strict encoding requirements where
+ * the normal JS number does not always create the correct encoding.
+ * NOTES: -0 is always encoded as -0, without simplification, as long as the
+ * selected encoding is floating point.  Otherwise, -0 causes an error.
+ * You MUST NOT use the `ignoreOriginalEncoding` option when encoding these
+ * numbers, or the encoding that is stored along with the boxed number will
+ * be ignored.  The `cde` and `dcbor` options turn on `ignoreOriginalEncoding`
+ * by default, so it must be exlicitly disabled.
+ *
+ * @example
+ * const num = encodedNumber(2, 'i32');
+ * // [Number: 2]
+ * const enc = encode(num, {cde: true, ignoreOriginalEncoding: false});
+ * // Uint8Array(3) [ 25, 0, 2 ]
+ *
+ * @param value Number to be encoded later
+ * @param encoding Desired encoding.  Default: 'f', which uses the preferred
+ *   float encoding, even for integers.
+ * @returns Boxed number or bigint object with hidden property set containing
+ *   the desired encoding.
+ */
+export function encodedNumber(value: bigint | number, encoding: 'bigint'): BigInt;
+export function encodedNumber(value: bigint | number, encoding?: 'f' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'): Number;
+
+export function encodedNumber(
+  value: bigint | number,
+  encoding?: 'bigint' | 'f' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'
+): BigInt | Number {
+  if (!encoding) {
+    encoding = 'f';
+  }
+  const opts = {
+    ...defaultEncodeOptions,
+    collapseBigInts: false,
+    chunkSize: 10,
+    simplifyNegativeZero: false,
+  };
+  const w = new Writer(opts);
+  const numValue = Number(value);
+
+  function breakInt(max: number): [number, number] {
+    const neg = value < 0;
+    const pos = neg ? -numValue - 1 : numValue;
+    const mt = (neg ? MT.NEG_INT : MT.POS_INT) << 5;
+
+    if (
+      !Number.isSafeInteger(numValue) ||
+      Object.is(numValue, -0) ||
+      (pos > max)
+    ) {
+      throw new TypeError(`Invalid ${encoding}: ${value}`);
+    }
+    return [mt, pos];
+  }
+
+  switch (encoding) {
+    case 'bigint': {
+      if (Object.is(value, -0)) {
+        throw new TypeError(`Invalid bigint: ${value}`);
+      }
+      const n = BigInt(value);
+      writeBigInt(n, w, opts);
+      return box(n, w.read());
+    }
+    case 'f':
+      writeFloat(numValue, w, opts);
+      break;
+    case 'f16': {
+      const half = halfToUint(numValue);
+      if (half === null) {
+        throw new TypeError(`Invalid f16: ${value}`);
+      }
+      w.writeUint8(HALF);
+      w.writeUint16(half);
+      break;
+    }
+    case 'f32':
+      if (!isNaN(numValue) && (Math.fround(numValue) !== numValue)) {
+        throw new TypeError(`Invalid f32: ${value}`);
+      }
+      w.writeUint8(FLOAT);
+      w.writeFloat32(numValue);
+      break;
+    case 'f64':
+      // `number` always fits in f64, but `bigint` might not.  Huge bigints
+      // get converted to Infinity or -Infinity.
+      w.writeUint8(DOUBLE);
+      w.writeFloat64(numValue);
+      break;
+    case 'i8': {
+      const [mt, pos] = breakInt(0xff);
+      w.writeUint8(mt | NUMBYTES.ONE);
+      w.writeUint8(pos);
+      break;
+    }
+    case 'i16': {
+      const [mt, pos] = breakInt(0xffff);
+      w.writeUint8(mt | NUMBYTES.TWO);
+      w.writeUint16(pos);
+      break;
+    }
+    case 'i32': {
+      const [mt, pos] = breakInt(0xffffffff);
+      w.writeUint8(mt | NUMBYTES.FOUR);
+      w.writeUint32(pos);
+      break;
+    }
+    case 'i64': {
+      const [mt, pos] = breakInt(Number.MAX_SAFE_INTEGER);
+      w.writeUint8(mt | NUMBYTES.EIGHT);
+      w.writeBigUint64(BigInt(pos));
+      break;
+    }
+    default:
+      throw new TypeError(`Invalid number encoding: "${encoding}"`);
+  }
+  return box(numValue, w.read());
 }

@@ -12,6 +12,7 @@ import {
   defaultEncodeOptions,
   diagnose,
   encode,
+  encodedNumber,
 } from 'cbor2';
 import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
@@ -104,8 +105,8 @@ function input() {
     case 'js': {
       if (txt.trim().length > 0) {
         // eslint-disable-next-line no-new-func
-        const fun = new Function('Simple', 'Tag', `"use strict";return ${txt}`);
-        return encode(fun(Simple, Tag), encodeOpts);
+        const fun = new Function('Simple', 'Tag', 'encodedNumber', `"use strict";return ${txt}`);
+        return encode(fun(Simple, Tag, encodedNumber), encodeOpts);
       }
       return new Uint8Array(0);
     }
