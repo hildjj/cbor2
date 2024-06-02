@@ -1,4 +1,5 @@
-import {comment, decode, encode, encodedNumber, getEncoded, u8toHex} from 'cbor2';
+import {comment, decode, encode, encodedNumber, getEncoded} from 'cbor2';
+import {u8toHex} from 'cbor2/utils';
 
 const eNum = encodedNumber(4, 'f32');
 const buf = encode(eNum);
