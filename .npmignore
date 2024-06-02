@@ -1,6 +1,8 @@
 .c8rc
 .c8rc
+.cache/
 .editorconfig
+.fiveserverrc
 .github/
 .gitmodules
 .ncurc

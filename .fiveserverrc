@@ -1,0 +1,8 @@
+{
+  "https": true,
+  "root": "docs/",
+  "open": "/",
+  "useLocalIp": false,
+  "watch": ".",
+  "host": "localhost"
+}
