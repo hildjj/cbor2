@@ -12,7 +12,7 @@ module.exports = {
   sidebarLinks: {
     GitHub: 'https://github.com/hildjj/cbor2/',
     Documentation: 'http://hildjj.github.io/cbor2/',
-    Playground: '/playground/index.html',
+    Playground: '/cbor2/playground/index.html',
     Spec: 'http://cbor.io/',
   },
   navigation: {
