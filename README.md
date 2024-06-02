@@ -218,7 +218,11 @@ import {encode, encodedNumber} from 'cbor';
 
 const val = encodedNumber(4, 'i64'); // [Number: 4]
 encode(val); // 0x1b0000000000000004
+encode(encodedNumber(4)); // 0xf94400
 ```
+
+Note that the default format for `encodedNumber` is the preferred floating
+point representation, which can be explicitly selected with an encoding of `'f'`.
 
 ## Developers
 

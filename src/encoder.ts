@@ -506,17 +506,21 @@ export function encode(val: unknown, options: EncodeOptions = {}): Uint8Array {
  * // Uint8Array(3) [ 25, 0, 2 ]
  *
  * @param value Number to be encoded later
- * @param encoding Desired encoding.
+ * @param encoding Desired encoding.  Default: 'f', which uses the preferred
+ *   float encoding, even for integers.
  * @returns Boxed number or bigint object with hidden property set containing
  *   the desired encoding.
  */
 export function encodedNumber(value: bigint | number, encoding: 'bigint'): BigInt;
-export function encodedNumber(value: bigint | number, encoding: 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'): Number;
+export function encodedNumber(value: bigint | number, encoding?: 'f' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'): Number;
 
 export function encodedNumber(
   value: bigint | number,
-  encoding: 'bigint' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'
+  encoding?: 'bigint' | 'f' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'
 ): BigInt | Number {
+  if (!encoding) {
+    encoding = 'f';
+  }
   const opts = {
     ...defaultEncodeOptions,
     collapseBigInts: false,
@@ -550,6 +554,9 @@ export function encodedNumber(
       writeBigInt(n, w, opts);
       return box(n, w.read());
     }
+    case 'f':
+      writeFloat(numValue, w, opts);
+      break;
     case 'f16': {
       const half = halfToUint(numValue);
       if (half === null) {

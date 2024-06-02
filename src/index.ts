@@ -42,6 +42,7 @@ export {Simple} from './simple.js';
 export {Tag} from './tag.js';
 export type {TagNumber, TaggedValue, ToCBOR, Writer} from './writer.js';
 export {unbox, getEncoded} from './box.js';
+export {u8toHex} from './utils.js';
 export const {
   cdeDecodeOptions,
   dcborDecodeOptions,
