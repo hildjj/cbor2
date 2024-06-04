@@ -14,7 +14,13 @@ import {
   encode,
   encodedNumber,
 } from 'cbor2';
-import {base64ToBytes, hexToU8, u8toHex} from 'cbor2/utils';
+import {base64ToBytes, base64UrlToBytes, hexToU8, u8toHex} from 'cbor2/utils';
+import {
+  bytesToBase64,
+  bytesToBase64url,
+  compressString,
+  decompressString,
+} from './encode.js';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
 
@@ -25,6 +31,34 @@ const ifmt = document.getElementById('input-fmt');
 const copy = document.getElementById('copy');
 const sortKeysEncode = document.querySelector('#sortKeysEncode');
 const sortKeysDecode = document.querySelector('#sortKeysDecode');
+
+let state = {
+  inp: 'JSON',
+  outp: 'commented',
+  encodeOpts: defaultEncodeOptions,
+  decodeOpts: defaultDecodeOptions,
+  txt: `\
+{
+  "type": "here"
+}`,
+};
+delete state.decodeOpts.ParentType;
+
+const sortNames = new Map([
+  [sortCoreDeterministic, 'coreDeterministic'],
+  [sortLengthFirstDeterministic, 'lengthFirstDeterministic'],
+  [null, 'null'],
+  [undefined, 'null'],
+]);
+const sortFuncs = new Map([
+  ['sortCoreDeterministic', sortCoreDeterministic],
+  ['sortLengthFirstDeterministic', sortLengthFirstDeterministic],
+  ['coreDeterministic', sortCoreDeterministic],
+  ['lengthFirstDeterministic', sortLengthFirstDeterministic],
+  ['null', null],
+  [null, null],
+  [undefined, null],
+]);
 
 const notCdeEncodeOptions = Object.fromEntries(
   Object.entries(cdeEncodeOptions).map(([k, v]) => [k, !v])
@@ -42,59 +76,31 @@ const notDcborDecodeOptions = Object.fromEntries(
   Object.entries(dcborDecodeOptions).map(([k, v]) => [k, !v])
 );
 
-/**
- * Encode Uint8Array to base64.
- *
- * @param {Uint8Array} bytes Buffer.
- * @returns {string} Base64.
- */
-export function bytesToBase64(bytes) {
-  const binString = Array.from(bytes, x => String.fromCodePoint(x))
-    .join('');
-  return btoa(binString);
-}
-
 function error(e) {
   copy.disabled = true;
   otxt.value = e.toString();
 }
 
-const encodeOpts = defaultEncodeOptions;
-const decodeOpts = defaultDecodeOptions;
-
 function showEncodeOpts() {
   for (const inp of document.querySelectorAll('#encodeOpts input')) {
-    inp.checked = encodeOpts[inp.id.replace(/Encode$/, '')];
+    inp.checked = state.encodeOpts[inp.id.replace(/Encode$/, '')];
   }
-  if (encodeOpts.sortKeys === sortCoreDeterministic) {
-    sortKeysEncode.value = 'coreDeterministic';
-  } else if (encodeOpts.sortKeys === sortLengthFirstDeterministic) {
-    sortKeysEncode.value = 'lengthFirstDeterministic';
-  } else {
-    sortKeysEncode.value = 'null';
-  }
+  sortKeysEncode.value = sortNames.get(state.encodeOpts.sortKeys);
 }
 
 function showDecodeOpts() {
   for (const inp of document.querySelectorAll('#decodeOpts input')) {
-    inp.checked = decodeOpts[inp.id];
+    inp.checked = state.decodeOpts[inp.id];
   }
-  if (decodeOpts.sortKeys === sortCoreDeterministic) {
-    sortKeysDecode.value = 'coreDeterministic';
-  } else if (decodeOpts.sortKeys === sortLengthFirstDeterministic) {
-    sortKeysDecode.value = 'lengthFirstDeterministic';
-  } else {
-    sortKeysDecode.value = 'null';
-  }
+  sortKeysDecode.value = sortNames.get(state.decodeOpts.sortKeys);
 }
 
 // Convert any input to a buffer
 function input() {
-  const inp = ifmt.selectedOptions[0].label;
-  const txt = itxt.value;
+  const {inp, txt} = state;
   switch (inp) {
     case 'JSON':
-      return encode(JSON.parse(txt), encodeOpts);
+      return encode(JSON.parse(txt), state.encodeOpts);
     case 'hex': {
       let hex = txt.replace(/^0x/i, '');
       hex = hex.replace(/\s+/g, '');
@@ -102,11 +108,18 @@ function input() {
     }
     case 'base64':
       return base64ToBytes(txt);
+    case 'base64url':
+      return base64UrlToBytes(txt);
     case 'js': {
       if (txt.trim().length > 0) {
         // eslint-disable-next-line no-new-func
-        const fun = new Function('Simple', 'Tag', 'encodedNumber', `"use strict";return ${txt}`);
-        return encode(fun(Simple, Tag, encodedNumber), encodeOpts);
+        const fun = new Function(
+          'Simple',
+          'Tag',
+          'encodedNumber',
+          `"use strict";return ${txt}`
+        );
+        return encode(fun(Simple, Tag, encodedNumber), state.encodeOpts);
       }
       return new Uint8Array(0);
     }
@@ -128,17 +141,21 @@ function output(buf, typ) {
         copy.disabled = false;
         otxt.value = bytesToBase64(buf);
         break;
+      case 'base64url':
+        copy.disabled = false;
+        otxt.value = bytesToBase64url(buf);
+        break;
       case 'commented':
         copy.disabled = false;
-        otxt.value = comment(buf, decodeOpts);
+        otxt.value = comment(buf, state.decodeOpts);
         break;
       case 'diagnostic':
         copy.disabled = true;
-        otxt.value = diagnose(buf, decodeOpts);
+        otxt.value = diagnose(buf, state.decodeOpts);
         break;
       case 'js':
         copy.disabled = false;
-        otxt.value = inspect(decode(buf, decodeOpts), {
+        otxt.value = inspect(decode(buf, state.decodeOpts), {
           depth: Infinity,
           compact: 1,
           maxArrayLength: Infinity,
@@ -147,7 +164,7 @@ function output(buf, typ) {
         break;
       case 'JSON':
         copy.disabled = false;
-        otxt.value = JSON.stringify(decode(buf, decodeOpts), null, 2);
+        otxt.value = JSON.stringify(decode(buf, state.decodeOpts), null, 2);
         break;
       default:
         throw new Error(`Unknown output: "${outp}"`);
@@ -157,26 +174,65 @@ function output(buf, typ) {
   }
 }
 
-function convert() {
+function replaceFuncsWithNames(obj) {
+  switch (typeof obj) {
+    case 'number':
+    case 'boolean':
+    case 'string':
+    case 'bigint':
+    case 'undefined':
+    case 'symbol':
+      return obj;
+    case 'function':
+      return sortNames.get(obj);
+    case 'object': {
+      let dup = null;
+      if (obj) {
+        if (Array.isArray(obj)) {
+          dup = [];
+          for (const v of obj) {
+            dup.push(replaceFuncsWithNames(v));
+          }
+        } else {
+          dup = {};
+          for (const [k, v] of Object.entries(obj)) {
+            dup[k] = replaceFuncsWithNames(v);
+          }
+        }
+      }
+      return dup;
+    }
+    default:
+      throw new Error(`Unknown type: ${typeof obj}`);
+  }
+}
+
+async function convert() {
   try {
     output(input());
   } catch (e) {
     error(e);
     throw e;
   }
+
+  const sanitizedState = replaceFuncsWithNames(state);
+  const u = new URL(window.location.href);
+  const hash = await compressString(JSON.stringify(sanitizedState));
+  u.hash = hash;
+  window.history.replaceState(hash, '', u);
 }
 
 function changeEncodeOption({target}) {
   const opt = target.id.replace(/Encode$/, '');
-  encodeOpts[opt] = target.checked;
+  state.encodeOpts[opt] = target.checked;
   let modified = false;
   if (opt === 'dcbor') {
-    Object.assign(encodeOpts, target.checked ?
+    Object.assign(state.encodeOpts, target.checked ?
       dcborEncodeOptions :
       notDcborEncodeOptions);
     modified = true;
   } else if (opt === 'cde') {
-    Object.assign(encodeOpts, target.checked ?
+    Object.assign(state.encodeOpts, target.checked ?
       cdeEncodeOptions :
       notCdeEncodeOptions);
     modified = true;
@@ -184,41 +240,37 @@ function changeEncodeOption({target}) {
   if (modified) {
     showEncodeOpts();
   }
-  convert();
+  return convert();
 }
 
 const forceEndian = document.querySelector('#forceEndian');
 forceEndian.onchange = () => {
-  encodeOpts.forceEndian = {
+  state.encodeOpts.forceEndian = {
     null: null,
     true: true,
     false: false,
   }[forceEndian.value];
-  convert();
+  return convert();
 };
 forceEndian.value = 'null';
 
 sortKeysEncode.onchange = () => {
-  encodeOpts.sortKeys = {
-    null: null,
-    coreDeterministic: sortCoreDeterministic,
-    lengthFirstDeterministic: sortLengthFirstDeterministic,
-  }[sortKeysEncode.value];
-  convert();
+  state.encodeOpts.sortKeys = sortFuncs.get(sortKeysEncode.value);
+  return convert();
 };
 sortKeysEncode.value = 'null';
 
 function changeDecodeOption({target}) {
-  decodeOpts[target.id] = target.checked;
+  state.decodeOpts[target.id] = target.checked;
   let modified = false;
   if (target.id === 'dcbor') {
     modified = true;
-    Object.assign(decodeOpts, target.checked ?
+    Object.assign(state.decodeOpts, target.checked ?
       dcborDecodeOptions :
       notDcborDecodeOptions);
   } else if (target.id === 'cde') {
     modified = true;
-    Object.assign(decodeOpts, target.checked ?
+    Object.assign(state.decodeOpts, target.checked ?
       cdeDecodeOptions :
       notCdeDecodeOptions);
   }
@@ -226,31 +278,23 @@ function changeDecodeOption({target}) {
     showDecodeOpts();
   }
 
-  convert();
-}
-
-showEncodeOpts();
-for (const inp of document.querySelectorAll('#encodeOpts input')) {
-  inp.onchange = changeEncodeOption;
-}
-
-showDecodeOpts();
-for (const inp of document.querySelectorAll('#decodeOpts input')) {
-  inp.onchange = changeDecodeOption;
+  return convert();
 }
 
 sortKeysDecode.onchange = () => {
-  encodeOpts.sortKeys = {
-    null: null,
-    coreDeterministic: sortCoreDeterministic,
-    lengthFirstDeterministic: sortLengthFirstDeterministic,
-  }[sortKeysDecode.value];
-  convert();
+  state.decodeOpts.sortKeys = sortFuncs.get(sortKeysDecode.value);
+  return convert();
 };
 sortKeysDecode.value = 'null';
 
-ofmt.oninput = convert;
-ifmt.oninput = convert;
+ofmt.oninput = () => {
+  state.outp = ofmt.value;
+  return convert();
+};
+ifmt.oninput = () => {
+  state.inp = ifmt.value;
+  return convert();
+};
 copy.onclick = () => {
   // Copy output to input, and guess the new input format
   let txt = otxt.value;
@@ -274,12 +318,37 @@ copy.onclick = () => {
 // Debounce
 let timeout = null;
 itxt.oninput = () => {
+  state.txt = itxt.value;
   clearTimeout(timeout);
   timeout = setTimeout(() => {
     timeout = null;
-    convert();
+    return convert();
   }, 300);
 };
 
-// Make sure that initial output is set
-convert();
+(async() => {
+  const u = new URL(window.location.href);
+  if (u.hash) {
+    const jsonState = await decompressString(u.hash.replace(/^#/, ''));
+    state = JSON.parse(jsonState);
+    state.decodeOpts.sortKeys = sortFuncs.get(state.decodeOpts.sortKeys);
+    state.encodeOpts.sortKeys = sortFuncs.get(state.encodeOpts.sortKeys);
+  }
+  itxt.value = state.txt;
+  ofmt.value = state.outp;
+  ifmt.value = state.inp;
+
+  showEncodeOpts();
+  for (const inp of document.querySelectorAll('#encodeOpts input')) {
+    inp.onchange = changeEncodeOption;
+  }
+
+  showDecodeOpts();
+  for (const inp of document.querySelectorAll('#decodeOpts input')) {
+    inp.onchange = changeDecodeOption;
+  }
+
+  // Make sure that initial output is set
+  await convert();
+})();
+

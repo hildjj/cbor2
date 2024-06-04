@@ -44,7 +44,7 @@
     "name": "Joe Hildebrand",
     "email": "joe-github@cursive.net"
   },
-  "packageManager": "pnpm@9.1.4",
+  "license": "MIT",
   "devDependencies": {
     "@cto.af/eslint-config": "4.0.2",
     "c8": "9.1.0",
@@ -57,7 +57,7 @@
     "typedoc": "0.25.13",
     "typescript-eslint": "7.11.0"
   },
-  "license": "MIT",
+  "packageManager": "pnpm@9.1.4",
   "engines": {
     "node": ">=18"
   }
