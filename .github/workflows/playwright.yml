@@ -21,7 +21,8 @@ jobs:
       run: npm run build && npm run docs
     - name: Get installed Playwright version
       id: playwright-version
-      run: echo "PLAYWRIGHT_VERSION=$(cd web && pnpm ls @playwright/test --parseable | tail -1)" >> $GITHUB_ENV
+      run: echo "PLAYWRIGHT_VERSION=$(pnpm ls @playwright/test --parseable | tail -1)" >> $GITHUB_ENV
+      working-directory: web
     - name: Cache playwright binaries
       uses: actions/cache@v3
       id: playwright-cache
@@ -31,11 +32,13 @@ jobs:
         key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
     - run: npx playwright install --with-deps
       if: steps.playwright-cache.outputs.cache-hit != 'true'
+      working-directory: web
     - run: npx playwright install-deps
       if: steps.playwright-cache.outputs.cache-hit == 'true'
-
+      working-directory: web
     - name: Run Playwright tests
-      run: npm run test:web
+      run: npm run test
+      working-directory: web
     - uses: actions/upload-artifact@v4
       if: failure()
       with:
