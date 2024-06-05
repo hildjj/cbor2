@@ -1,3 +1,6 @@
 {
-  "eslint.experimental.useFlatConfig": true
+  "eslint.experimental.useFlatConfig": true,
+  "playwright.env": {
+    "VSCODE_PLAYWRIGHT": "1"
+  }
 }

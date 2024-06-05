@@ -76,11 +76,11 @@ export interface Parent {
   children: Decodeable | unknown[];
   left: number;
   offset: number;
+  get done(): boolean;
+  get isStreaming(): boolean;
   push(child: unknown, stream: Sliceable, offset: number): number;
   replaceLast(child: unknown, item: Parent, stream: Sliceable): unknown;
   convert(stream: Sliceable): unknown;
-  get done(): boolean;
-  get isStreaming(): boolean;
 }
 
 /**

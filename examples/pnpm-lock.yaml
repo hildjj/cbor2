@@ -1,18 +1,24 @@
-lockfileVersion: '6.0'
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
-  cbor2:
-    specifier: file:..
-    version: file:..
+importers:
+
+  .:
+    dependencies:
+      cbor2:
+        specifier: file:..
+        version: file:..
 
 packages:
 
-  file:..:
+  cbor2@file:..:
     resolution: {directory: .., type: directory}
     name: cbor2
     engines: {node: '>=18'}
-    dev: false
+
+snapshots:
+
+  cbor2@file:..: {}

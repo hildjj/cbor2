@@ -1,8 +1,8 @@
 {
   "https": true,
-  "mount": { "/cbor2": "docs/" },
+  "mount": { "/cbor2": "../docs/" },
   "open": "/cbor2/",
   "useLocalIp": false,
-  "watch": "docs/",
+  "watch": "../docs/",
   "host": "localhost"
 }
