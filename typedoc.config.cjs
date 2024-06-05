@@ -21,4 +21,5 @@ module.exports = {
   },
   categorizeByGroup: false,
   sort: ['static-first', 'alphabetical'],
+  exclude: ['**/*.spec.ts'],
 };

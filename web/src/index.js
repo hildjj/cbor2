@@ -35,8 +35,8 @@ const sortKeysDecode = document.querySelector('#sortKeysDecode');
 let state = {
   inp: 'JSON',
   outp: 'commented',
-  encodeOpts: defaultEncodeOptions,
-  decodeOpts: defaultDecodeOptions,
+  encodeOpts: {...defaultEncodeOptions},
+  decodeOpts: {...defaultDecodeOptions},
   txt: `\
 {
   "type": "here"
