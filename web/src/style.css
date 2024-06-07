@@ -1,16 +1,19 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
   background-color:cornsilk;
+  display: block;
 }
 
 .container {
   display: flex;
   flex-flow: row wrap;
-  align-items: flex-start;
+  align-items: stretch;
+  gap: 1em;
+  width: 100%;
 }
 
 .cmd {
-  margin: 0 10px 5px 10px;
+  margin: 0 10px 5px 0;
 }
 
 #to {
@@ -18,27 +21,71 @@ body {
 }
 
 h3 {
-  margin: 0 10px 5px 10px;
+  margin: 0 10px 5px 0;
 }
 
 h4 {
-  margin: 0 10px 5px 10px;
+  margin: 0 10px 5px 0;
 }
 
 li {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  /* margin-left: -20px; */
 }
 
 li * {
   margin: 3px;
 }
 
-textarea {
-  margin: 0 10px 0 10px;
+.power {
+  margin-top: 10px;
 }
 
-.power {
-  margin: 10px;
+.monaco {
+  min-width: 300px;
+  min-height: 30em;
+  max-width: 99%;
+}
+
+.col {
+  flex: 1;
+}
+
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  width: 90%;
+  text-align: left;
+  border: none;
+  outline: none;
+  transition: 0.4s;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.active, .accordion:hover {
+  background-color: #ccc;
+}
+
+.accordion:after {
+  content: '\02795'; /* Unicode character for "plus" sign (+) */
+  /* font-size: 13px; */
+  color: #777;
+  float: right;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: "\2796"; /* Unicode character for "minus" sign (-) */
+}
+
+.panel {
+  padding: 0;
+  margin: 5px 5px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
 }
