@@ -1,4 +1,7 @@
 import './style.css';
+// eslint-disable-next-line n/no-missing-import
+import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/+esm';
+
 import {
   Simple,
   Tag,
@@ -24,13 +27,61 @@ import {
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
 
-const ofmt = document.getElementById('output-fmt');
-const otxt = document.getElementById('output-text');
+const proxy = URL.createObjectURL(new Blob([`
+  self.MonacoEnvironment = {
+    baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min'
+  };
+  importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/base/worker/workerMain.js');
+`], {type: 'text/javascript'}));
+window.MonacoEnvironment = {
+  getWorkerUrl: () => proxy,
+};
+
 const itxt = document.getElementById('input-text');
+const otxt = document.getElementById('output-text');
+const ofmt = document.getElementById('output-fmt');
 const ifmt = document.getElementById('input-fmt');
 const copy = document.getElementById('copy');
 const sortKeysEncode = document.querySelector('#sortKeysEncode');
 const sortKeysDecode = document.querySelector('#sortKeysDecode');
+const fontSize = 16;
+const theme = 'vs-dark';
+
+const inEditor = monaco.editor.create(itxt, {
+  detectIndentation: false,
+  fontSize,
+  language: 'js',
+  minimap: {enabled: false},
+  tabSize: 2,
+  theme,
+});
+const inModel = inEditor.getModel();
+
+const outEditor = monaco.editor.create(otxt, {
+  detectIndentation: false,
+  fontSize,
+  minimap: {enabled: false},
+  readOnly: true,
+  theme,
+});
+const outModel = outEditor.getModel();
+
+window.addEventListener('resize', () => {
+  // See https://stackoverflow.com/a/70120566/8388
+  inEditor.layout({width: 0, height: 0});
+  outEditor.layout({width: 0, height: 0});
+  window.requestAnimationFrame(() => {
+    const iRect = itxt.getBoundingClientRect();
+    inEditor.layout({width: iRect.width, height: iRect.height});
+    const oRect = otxt.getBoundingClientRect();
+    outEditor.layout({width: oRect.width, height: oRect.height});
+  });
+});
+
+window._cbor2testing = {
+  inModel,
+  outModel,
+};
 
 let state = {
   inp: 'JSON',
@@ -76,9 +127,9 @@ const notDcborDecodeOptions = Object.fromEntries(
   Object.entries(dcborDecodeOptions).map(([k, v]) => [k, !v])
 );
 
-function error(e) {
+export function error(e) {
   copy.disabled = true;
-  otxt.value = e.toString();
+  outModel.setValue(e.toString());
 }
 
 function showEncodeOpts() {
@@ -131,40 +182,42 @@ function input() {
 // Convert a buffer to the desired output format
 function output(buf, typ) {
   try {
-    const outp = ofmt.selectedOptions[0].label;
+    const outp = ofmt.value;
     switch (outp) {
       case 'hex':
         copy.disabled = false;
-        otxt.value = u8toHex(buf);
+        outModel.setValue(u8toHex(buf));
         break;
       case 'base64':
         copy.disabled = false;
-        otxt.value = bytesToBase64(buf);
+        outModel.setValue(bytesToBase64(buf));
         break;
       case 'base64url':
         copy.disabled = false;
-        otxt.value = bytesToBase64url(buf);
+        outModel.setValue(bytesToBase64url(buf));
         break;
       case 'commented':
         copy.disabled = false;
-        otxt.value = comment(buf, state.decodeOpts);
+        outModel.setValue(comment(buf, state.decodeOpts));
         break;
       case 'diagnostic':
         copy.disabled = true;
-        otxt.value = diagnose(buf, state.decodeOpts);
+        outModel.setValue(diagnose(buf, state.decodeOpts));
         break;
       case 'js':
         copy.disabled = false;
-        otxt.value = inspect(decode(buf, state.decodeOpts), {
+        outModel.setValue(inspect(decode(buf, state.decodeOpts), {
           depth: Infinity,
           compact: 1,
           maxArrayLength: Infinity,
-          breakLength: otxt.cols - 1,
-        });
+          breakLength: 30,
+        }));
         break;
       case 'JSON':
         copy.disabled = false;
-        otxt.value = JSON.stringify(decode(buf, state.decodeOpts), null, 2);
+        outModel.setValue(
+          JSON.stringify(decode(buf, state.decodeOpts), null, 2)
+        );
         break;
       default:
         throw new Error(`Unknown output: "${outp}"`);
@@ -297,34 +350,44 @@ ifmt.oninput = () => {
 };
 copy.onclick = () => {
   // Copy output to input, and guess the new input format
-  let txt = otxt.value;
-  let sel = ofmt.selectedOptions[0].label;
+  let txt = outModel.getValue();
+  let sel = ofmt.value;
 
-  if (ofmt.selectedOptions[0].label === 'commented') {
+  if (sel === 'commented') {
     const m = txt.match(/^0x[0-9a-f]+/i);
     txt = m ? m[0] : '';
     sel = 'hex';
   }
-
-  itxt.value = txt;
-  for (const o of ifmt.options) {
-    if (o.label === sel) {
-      ifmt.selectedIndex = o.index;
-      break;
-    }
-  }
+  ifmt.value = sel;
+  state.inp = sel;
+  inModel.setValue(txt);
 };
 
 // Debounce
 let timeout = null;
-itxt.oninput = () => {
-  state.txt = itxt.value;
+inModel.onDidChangeContent(() => {
+  state.txt = inModel.getValue();
   clearTimeout(timeout);
   timeout = setTimeout(() => {
+    clearTimeout(timeout);
     timeout = null;
     return convert();
   }, 300);
-};
+});
+
+const acc = document.getElementsByClassName('accordion');
+for (let i = 0; i < acc.length; i++) {
+  const a = acc[i];
+  a.addEventListener('click', () => {
+    a.classList.toggle('active');
+    const panel = a.nextElementSibling;
+    if (panel.style.maxHeight) {
+      panel.style.maxHeight = null;
+    } else {
+      panel.style.maxHeight = `${panel.scrollHeight}px`;
+    }
+  });
+}
 
 (async() => {
   const u = new URL(window.location.href);
@@ -334,9 +397,9 @@ itxt.oninput = () => {
     state.decodeOpts.sortKeys = sortFuncs.get(state.decodeOpts.sortKeys);
     state.encodeOpts.sortKeys = sortFuncs.get(state.encodeOpts.sortKeys);
   }
-  itxt.value = state.txt;
   ofmt.value = state.outp;
   ifmt.value = state.inp;
+  inModel.setValue(state.txt);
 
   showEncodeOpts();
   for (const inp of document.querySelectorAll('#encodeOpts input')) {

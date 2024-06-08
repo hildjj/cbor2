@@ -16,6 +16,16 @@ const hex = 'a164747970656468657265';
 const b64 = 'oWR0eXBlZGhlcmU=';
 const b64url = 'oWR0eXBlZGhlcmU';
 
+async function checkMonacoText(
+  page: Page, modelName: string, value: string
+): Promise<void> {
+  await expect.poll(async() => page.evaluate(
+    // @ts-expect-error _cbor2testing added just for testability.
+    (name: string) => window._cbor2testing[name].getValue(),
+    modelName
+  )).toBe(value);
+}
+
 test.beforeEach(async({page}) => {
   await page.goto('playground/');
   await expect(page).toHaveTitle(/cbor2 playground/);
@@ -23,27 +33,26 @@ test.beforeEach(async({page}) => {
 
 async function checkOutputs(page: Page): Promise<void> {
   await page.locator('#output-fmt').selectOption('commented');
-  await expect(page.locator('#output-text')).toHaveValue(commented);
-  await page.locator('#input-fmt').selectOption('js');
+  await checkMonacoText(page, 'outModel', commented);
   await page.locator('#output-fmt').selectOption('diagnostic');
-  await expect(page.locator('#output-text')).toHaveValue('{"type": "here"}');
+  await checkMonacoText(page, 'outModel', '{"type": "here"}');
   await page.locator('#output-fmt').selectOption('hex');
-  await expect(page.locator('#output-text')).toHaveValue(hex);
+  await checkMonacoText(page, 'outModel', hex);
   await page.locator('#output-fmt').selectOption('base64');
-  await expect(page.locator('#output-text')).toHaveValue(b64);
+  await checkMonacoText(page, 'outModel', b64);
   await page.locator('#output-fmt').selectOption('base64url');
-  await expect(page.locator('#output-text')).toHaveValue(b64url);
+  await checkMonacoText(page, 'outModel', b64url);
   await page.locator('#output-fmt').selectOption('js');
-  await expect(page.locator('#output-text')).toHaveValue("{ type: 'here' }");
+  await checkMonacoText(page, 'outModel', "{ type: 'here' }");
   await page.locator('#output-fmt').selectOption('JSON');
-  await expect(page.locator('#output-text')).toHaveValue(input);
+  await checkMonacoText(page, 'outModel', input);
 }
 
 test('Conversions', async({page}) => {
   await expect(page.locator('#input-fmt')).toHaveValue('JSON');
-  await expect(page.locator('#input-text')).toHaveValue(input);
+  await checkMonacoText(page, 'inModel', input);
   await expect(page.locator('#output-fmt')).toHaveValue('commented');
-  await expect(page.locator('#output-text')).toHaveValue(commented);
+  await checkMonacoText(page, 'outModel', commented);
 
   await checkOutputs(page);
 
@@ -76,6 +85,7 @@ test('Conversions', async({page}) => {
 });
 
 test('Encode Options', async({page}) => {
+  await page.getByRole('button', {name: 'Encoding \u2795'}).click();
   await page.locator('#dcborEncode').check();
   await expect(page.getByLabel('avoidInts')).not.toBeChecked();
   await expect(page.locator('#cdeEncode')).toBeChecked();
@@ -95,6 +105,7 @@ test('Encode Options', async({page}) => {
 });
 
 test('Decode Options', async({page}) => {
+  await page.getByRole('button', {name: 'Decoding \u2795'}).click();
   await page.locator('#dcbor').check();
   await expect(page.getByLabel('boxed')).not.toBeChecked();
   await expect(page.locator('#cde')).toBeChecked();
