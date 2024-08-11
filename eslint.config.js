@@ -19,6 +19,15 @@ export default [
   ...markdown,
   {
     files: [
+      'src/**.ts',
+    ],
+    rules: {
+      // Lots of wrapper-object processing in this lib.
+      '@typescript-eslint/no-wrapper-object-types': 'off',
+    },
+  },
+  {
+    files: [
       '**/*.md/*.js',
     ],
     rules: {
@@ -31,6 +40,7 @@ export default [
     ],
     rules: {
       'n/file-extension-in-import': 'off',
+      'n/no-unsupported-features/node-builtins': 'off',
     },
     languageOptions: {
       globals: globals.browser,

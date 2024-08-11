@@ -2,6 +2,7 @@ import '../lib/types.js';
 import {decodeBad, decodeGood, good, goodBoxed, toBuffer} from './cases.js';
 import assert from 'node:assert/strict';
 import {diagnose} from '../lib/diagnostic.js';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 
 function testAll(list) {

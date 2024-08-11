@@ -8,6 +8,7 @@ import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
 import {sortLengthFirstDeterministic} from '../lib/sorts.js';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 import util from 'node:util';
 
@@ -67,7 +68,7 @@ test('good endian encode', () => {
 test('clear type', () => {
   const t = new cases.TempClass(1);
   assert.equal(u8toHex(encode(t)), 'd9fffe01');
-  assert.equal(registerEncoder(cases.TempClass, (obj, w, opts) => {
+  assert.equal(registerEncoder(cases.TempClass, (_obj, w, _opts) => {
     w.writeUint8(0);
     return SYMS.DONE;
   }), undefined);

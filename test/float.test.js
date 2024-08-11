@@ -1,5 +1,6 @@
 import {checkSubnormal, flushToZero, halfToUint} from '../lib/float.js';
 import assert from 'node:assert/strict';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 
 test('flushToZero', () => {

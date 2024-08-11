@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readFile} from 'node:fs/promises';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,7 +33,7 @@ vecStr = vecStr.replace(
     "___VALUE___": "$<num>"
   }`
 );
-const vectors = JSON.parse(vecStr, (key, value) => {
+const vectors = JSON.parse(vecStr, (_key, value) => {
   if (!value) {
     return value;
   }
