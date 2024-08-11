@@ -55,7 +55,6 @@ export type MtAiValue = [
 ];
 
 // Circular
-/* eslint-disable no-use-before-define */
 export interface ParentConstructor {
   // eslint-disable-next-line @typescript-eslint/prefer-function-type
   new (
@@ -69,7 +68,6 @@ export interface ParentConstructor {
 export interface Decodeable {
   decode(options: RequiredDecodeOptions): unknown;
 }
-/* eslint-enable no-use-before-define */
 
 export interface Parent {
   parent: Parent | undefined;

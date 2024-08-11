@@ -1,6 +1,7 @@
 import {decode, encode} from '../lib/index.js';
 import assert from 'node:assert/strict';
 import {hexToU8} from '../lib/utils.js';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 
 test('encode', () => {

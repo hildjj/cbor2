@@ -309,7 +309,6 @@ export function writeArray(
   writeInt(a.length, w, MT.ARRAY);
   for (const i of a) { // Iterator gives undefined for holes.
     // Circular
-    // eslint-disable-next-line no-use-before-define
     writeUnknown(i, w, opts);
   }
 }
@@ -388,7 +387,6 @@ function writeObject(
       }
 
       // Circular
-      // eslint-disable-next-line no-use-before-define
       writeUnknown(res[1], w, opts);
     }
     return;
@@ -401,7 +399,6 @@ function writeObject(
         writeTag(res[0], w);
       }
       // Circular
-      // eslint-disable-next-line no-use-before-define
       writeUnknown(res[1], w, opts);
     }
     return;
@@ -409,7 +406,6 @@ function writeObject(
 
   if (typeof (obj as ToJSON).toJSON === 'function') {
     // Circular
-    // eslint-disable-next-line no-use-before-define
     writeUnknown((obj as ToJSON).toJSON(), w, opts);
     return;
   }
@@ -417,7 +413,6 @@ function writeObject(
   // Note: keys will never be duplicated here.
   const entries = Object.entries(obj).map<KeyValueEncoded>(
     // Circular
-    // eslint-disable-next-line no-use-before-define
     e => [e[0], e[1], encode(e[0], opts)]
   );
   if (opts.sortKeys) {
@@ -428,7 +423,6 @@ function writeObject(
   for (const [_k, v, e] of entries) {
     w.write(e);
     // Circular
-    // eslint-disable-next-line no-use-before-define
     writeUnknown(v, w, opts);
   }
 }

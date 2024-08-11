@@ -2,6 +2,7 @@ import '../lib/types.js';
 import * as cases from './cases.js';
 import assert from 'node:assert/strict';
 import {comment} from '../lib/comment.js';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 
 function testAll(list, opts) {

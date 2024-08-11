@@ -28,7 +28,6 @@ export interface Commenter {
    */
   comment?(
     // Circular
-    // eslint-disable-next-line no-use-before-define
     tag: Tag,
     opts: RequiredCommentOptions,
     depth: number
@@ -36,7 +35,6 @@ export interface Commenter {
 }
 
 // Circular
-// eslint-disable-next-line no-use-before-define
 export type BaseDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
 export type TagDecoder = BaseDecoder & Commenter;
 
@@ -118,8 +116,7 @@ export class Tag implements ToCBOR, Decodeable {
 
   /**
    * Iterate over just the contents, so that the tag works more like an
-   * array.
-   * @yields One time, the contained value.
+   * array.  Yields One time, the contained value.
    */
   public *[Symbol.iterator](): Generator<unknown, void, undefined> {
     yield this.contents;

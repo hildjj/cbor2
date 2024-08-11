@@ -163,7 +163,7 @@ Tag.registerDecoder(TAG.NEG_BIGINT, u8toBigIntNeg);
 // 24: Encoded CBOR data item; see Section 3.4.5.1
 // To turn on decoding of the embedded CBOR, do this:
 // cbor.Tag.registerDecoder(24, (tag, opts) => decode(tag.contents, opts));
-function embeddedCBOR(tag: Tag, opts: RequiredDecodeOptions): unknown {
+function embeddedCBOR(tag: Tag, _opts: RequiredDecodeOptions): unknown {
   assertU8(tag.contents);
   return tag;
 }
@@ -297,9 +297,8 @@ interface TypedArrayConstructor<T> {
 }
 
 function convertToTyped<
-  S extends TypedArray,
-  T extends TypedArrayConstructor<S>
->(tag: Tag, Typ: T, littleEndian: boolean): S {
+  S extends TypedArray
+>(tag: Tag, Typ: TypedArrayConstructor<S>, littleEndian: boolean): S {
   assertU8(tag.contents);
   let len = tag.contents.length;
   if ((len % Typ.BYTES_PER_ELEMENT) !== 0) {
@@ -321,11 +320,11 @@ function convertToTyped<
 }
 
 // eslint-disable-next-line @typescript-eslint/max-params
-function writeTyped<T extends TypedArray>(
+function writeTyped(
   w: Writer,
   littleTag: number,
   bigTag: number,
-  array: T,
+  array: TypedArray,
   opts: RequiredEncodeOptions
 ): undefined {
   const endian = opts.forceEndian ?? LE;

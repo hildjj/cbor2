@@ -180,7 +180,7 @@ function input() {
 }
 
 // Convert a buffer to the desired output format
-function output(buf, typ) {
+function output(buf, _typ) {
   try {
     const outp = ofmt.value;
     switch (outp) {

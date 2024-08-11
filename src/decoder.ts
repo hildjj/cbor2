@@ -11,6 +11,7 @@ import {SYMS} from './constants.js';
  * @returns JS value decoded from cbor.
  * @throws {Error} No value found, decoding errors.
  */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 export function decode<T = unknown>(
   src: Uint8Array | string,
   options: DecodeOptions = {}

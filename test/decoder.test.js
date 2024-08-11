@@ -4,6 +4,7 @@ import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
 import {decode} from '../lib/decoder.js';
 import {hexToU8} from '../lib/utils.js';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 import {unbox} from '../lib/box.js';
 
@@ -60,8 +61,8 @@ test('decode with dCBOR', () => {
 });
 
 test('goodEndian', () => {
-  testAll(cases.goodEndian.map(([obj, little, big]) => [obj, 'little', little]));
-  testAll(cases.goodEndian.map(([obj, little, big]) => [obj, 'big', big]));
+  testAll(cases.goodEndian.map(([obj, little, _big]) => [obj, 'little', little]));
+  testAll(cases.goodEndian.map(([obj, _little, big]) => [obj, 'big', big]));
 });
 
 test('depth', () => {
