@@ -44,6 +44,9 @@ const ifmt = document.getElementById('input-fmt');
 const copy = document.getElementById('copy');
 const sortKeysEncode = document.querySelector('#sortKeysEncode');
 const sortKeysDecode = document.querySelector('#sortKeysDecode');
+const stringNormalization = document.querySelector('#stringNormalization');
+const rejectStringsNotNormalizedAs =
+  document.querySelector('#rejectStringsNotNormalizedAs');
 const fontSize = 16;
 const theme = 'vs-dark';
 
@@ -137,12 +140,15 @@ function showEncodeOpts() {
     inp.checked = state.encodeOpts[inp.id.replace(/Encode$/, '')];
   }
   sortKeysEncode.value = sortNames.get(state.encodeOpts.sortKeys);
+  stringNormalization.value = state.encodeOpts.stringNormalization;
 }
 
 function showDecodeOpts() {
   for (const inp of document.querySelectorAll('#decodeOpts input')) {
     inp.checked = state.decodeOpts[inp.id];
   }
+  rejectStringsNotNormalizedAs.value =
+    state.decodeOpts.rejectStringsNotNormalizedAs;
   sortKeysDecode.value = sortNames.get(state.decodeOpts.sortKeys);
 }
 
@@ -307,11 +313,24 @@ forceEndian.onchange = () => {
 };
 forceEndian.value = 'null';
 
+rejectStringsNotNormalizedAs.onchange = () => {
+  state.decodeOpts.rejectStringsNotNormalizedAs =
+    rejectStringsNotNormalizedAs.value;
+  return convert();
+};
+rejectStringsNotNormalizedAs.value = 'null';
+
 sortKeysEncode.onchange = () => {
   state.encodeOpts.sortKeys = sortFuncs.get(sortKeysEncode.value);
   return convert();
 };
 sortKeysEncode.value = 'null';
+
+stringNormalization.onChange = () => {
+  state.encodeOpts.stringNormalization = stringNormalization.value;
+  return convert();
+};
+stringNormalization.value = 'null';
 
 function changeDecodeOption({target}) {
   state.decodeOpts[target.id] = target.checked;

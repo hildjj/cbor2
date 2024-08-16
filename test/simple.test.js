@@ -8,4 +8,6 @@ test('Simple', () => {
   const s = new Simple(0);
   assert.equal(s.toString(), 'simple(0)');
   assert.equal(util.inspect(s, {colors: false}), 'simple(0)');
+  assert.deepEqual(s.decode(), new Simple(0));
+  assert.equal(new Simple(20).decode(), false);
 });

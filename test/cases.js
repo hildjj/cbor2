@@ -649,14 +649,14 @@ c0   -- Tag #0: (String Date) 2013-03-21T20:04:00.000Z
   [new Date(1363896240500), '1(1363896240.5_3)', `0xc1fb41d452d9ec200000
 c1                    -- Tag #1: (Epoch Date) 2013-03-21T20:04:00.500Z
   fb 41d452d9ec200000 --   Float: 1363896240.5\n`],
-  [hexToU8(''), "_''", `0x5fff
+  [hexToU8(''), "''_", `0x5fff
 5f   -- Bytes (Length: Indefinite)
   ff --   [0] BREAK\n`],
   [hexToU8(''), "(_ h'')", `0x5f40ff
 5f   -- Bytes (Length: Indefinite)
   40 --   [0] Bytes (Length: 0)
   ff --   [1] BREAK\n`],
-  ['', '_""', `0x7fff
+  ['', '""_', `0x7fff
 7f   -- UTF8 (Length: Indefinite)
   ff --   [0] BREAK\n`],
   ['', '(_ "")', `0x7f60ff
@@ -826,12 +826,6 @@ d9 0100 -- Tag #256
   /* eslint-enable no-new-wrappers */
 ];
 
-export const encodeBadDCBOR = [
-  new Map([[[], 0], [[], 1]]),
-  new Simple(0),
-  undefined,
-];
-
 export const collapseBigIntegers = [
   [0n, '0xc24100', '0x00'],
   [1n, '0xc24101', '0x01'],
@@ -892,48 +886,6 @@ export const decodeBadTags = [
   '0xc1a1616100', // Time with bad obj
 ];
 
-export const decodeBadDcbor = [
-  '0xa2616101616102', // {a: 1, a: 2}
-  '0xa200010002',
-  '0xa2f5f4f5f6',
-  '0xa280008001',
-  '0xa20a000a001',
-  '0xa2810000810001',
-  '0xa2616200616101', // {b: 1, a: 2}
-  '0xf98000', // -0
-  '0xfa7f800000', // Long infinities
-  '0xfaff800000',
-  '0xfb7ff0000000000000',
-  '0xfbfff0000000000000',
-  '0xfa7fc00000', // Long NaNs
-  '0xfb7ff8000000000000',
-  '0xf97e01', // Signalling NaN
-  '0xfb7ff8000000000001',
-  '0x3b8000000000000000', // 65bit neg
-  // Should be smaller
-  '0x1817',
-  '0x190017',
-  '0x1a00000017',
-  '0x1b0000000000000017',
-  '0xfa3fa00000', // 1.25_2
-  '0xfb3ff4000000000000', // 1.25_3
-  '0xfb402400000000000000', // 10
-  '0xc2420002',
-  '0xc24102',
-  // Should be int
-  '0xf94900',
-  '0xfa50000000',
-  // No streaming
-  '0x5fff',
-  '0x7fff',
-  '0x9fff',
-  '0xbfff',
-  // Simple
-  '0xe0',
-  // Undefined
-  '0xf7',
-];
-
 const HEX = /^0x(?<hex>[0-9a-f]+)/im;
 
 /**
@@ -949,7 +901,10 @@ export function toBuffer(c) {
     c = c[2];
   }
   const match = c.match(HEX);
-  return hexToU8(match.groups.hex);
+  if (match) {
+    return hexToU8(match.groups.hex);
+  }
+  return hexToU8(c);
 }
 
 /**
@@ -968,7 +923,10 @@ export function toString(c) {
     return c;
   }
   const match = c.match(HEX);
-  return match.groups.hex;
+  if (match) {
+    return match.groups.hex;
+  }
+  return c;
 }
 
 // Here to avoid ava's odd injection of Map into the namespace of the tests

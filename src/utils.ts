@@ -96,3 +96,24 @@ export function isBigEndian(): boolean {
   const view = new Uint32Array(array.buffer);
   return !((view[0] = 1) & array[0]);
 }
+
+/**
+ * Convert a string to a U+xxxx notation for debugging.
+ *
+ * @param str String to convert
+ * @returns "U+0000 U+0001"
+ */
+export function stringToHex(str: string): string {
+  let res = '';
+  for (const c of str) {
+    const cp = c
+      .codePointAt(0)
+      ?.toString(16)
+      .padStart(4, '0');
+    if (res) {
+      res += ', ';
+    }
+    res += `U+${cp}`;
+  }
+  return res;
+}

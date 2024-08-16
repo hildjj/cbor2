@@ -6,7 +6,7 @@
  *
  * ```js
  * import {diagnose} from 'cbor2/diagnostic';
- * console.log(diagnose('7fff')); // _""
+ * console.log(diagnose('7fff')); // ""_
  * ```
  */
 
@@ -153,7 +153,7 @@ export function diagnose(
     while (parent?.done) {
       if (parent.isEmptyStream) {
         str = str.slice(0, -3);
-        str += `_${parent.quote}${parent.quote}`;
+        str += `${parent.quote}${parent.quote}_`;
       } else if ((parent.mt === MT.MAP) && ((parent.count % 2) !== 0)) {
         throw new Error(`Odd streaming map size: ${parent.count}`);
       } else {

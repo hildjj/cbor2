@@ -82,6 +82,11 @@ export interface Parent {
 }
 
 /**
+ * See String.prototype.normalize.
+ */
+export type StringNormalization = 'NFC' | 'NFD' | 'NFKC' | 'NFKD';
+
+/**
  * Decoding options.
  */
 export interface DecodeOptions extends DecodeStreamOptions {
@@ -107,12 +112,19 @@ export interface DecodeOptions extends DecodeStreamOptions {
   boxed?: boolean;
 
   /**
-   * Turn on options for draft-ietf-cbor-cde-01.
+   * Turn on options for draft-ietf-cbor-cde-05.
    */
   cde?: boolean;
 
   /**
-   * Turn on options for draft-mcnally-deterministic-cbor-07.
+   * In dCBOR, JS numbers between 2^53 and 2^64 get encoded as CBOR integers.
+   * When decoding, present them as JS numbers instead of BigInt, losing
+   * accuracy.
+   */
+  convertUnsafeIntsToFloat?: boolean;
+
+  /**
+   * Turn on options for draft-mcnally-deterministic-cbor-11.
    */
   dcbor?: boolean;
 
@@ -197,6 +209,18 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectSubnormals?: boolean;
 
   /**
+   * Reject strings that are not normalized with the given normalization form.
+   * Don't use this without Unicode expertise.
+   */
+  rejectStringsNotNormalizedAs?: StringNormalization | null;
+
+  /**
+   * For dCBOR, reject "integers" between 2^53 and 2^64 that were encoded
+   * as floats.
+   */
+  rejectUnsafeFloatInts?: boolean;
+
+  /**
    * Reject the `undefined` simple value.  Usually used with rejectSimple.
    * @default false
    */
@@ -260,7 +284,7 @@ export interface EncodeOptions extends WriterOptions {
   avoidInts?: boolean;
 
   /**
-   * Turn on options for draft-ietf-cbor-cde-01.
+   * Turn on options for draft-ietf-cbor-cde-05.
    */
   cde?: boolean;
 
@@ -272,7 +296,7 @@ export interface EncodeOptions extends WriterOptions {
   collapseBigInts?: boolean;
 
   /**
-   * Turn on options for draft-mcnally-deterministic-cbor-07.
+   * Turn on options for draft-mcnally-deterministic-cbor-11.
    */
   dcbor?: boolean;
 
@@ -310,6 +334,23 @@ export interface EncodeOptions extends WriterOptions {
    * @default false
    */
   largeNegativeAsBigInt?: boolean;
+
+  /**
+   * Per dcbor:
+   *
+   * "MUST check whether floating point values to be encoded have the
+   * numerically equal value in DCBOR_INT = [-2^63, 2^64-1].  If that is the
+   * case, it MUST be converted to that numerically equal integer value
+   * before encoding it.  (Preferred encoding will then ensure the shortest
+   * length encoding is used.)  If a floating point value has a non-zero
+   * fractional part, or an exponent that takes it out of DCBOR_INT, the
+   * original floating point value is used for encoding.  (Specifically,
+   * conversion to a CBOR bignum is never considered.)"
+   *
+   * This should only apply to "integers" that are outside the JS safe range
+   * of [-(2^53 - 1), 2^53-1].
+   */
+  reduceUnsafeNumbers?: boolean;
 
   /**
    * Do not encode bigints that cannot be reduced to integers.
@@ -354,6 +395,14 @@ export interface EncodeOptions extends WriterOptions {
    * @default null
    */
   sortKeys?: KeySorter | null;
+
+  /**
+   * If specified, normalize strings on encoding.  'NFD' may optimize for CPU,
+   * 'NFC' may optimize for size.  Don't use this without Unicode
+   * expertise.  In particular, the 'K' forms are really unlikely to be useful.
+   * @default undefined
+   */
+  stringNormalization?: StringNormalization | null;
 }
 
 export type RequiredEncodeOptions = Required<EncodeOptions>;

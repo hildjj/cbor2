@@ -42,7 +42,7 @@ export const TAG = {
   JSON: 262,
   REGEXP: 21066,
   SELF_DESCRIBED: 55799,
-  // Always invalid: https://www.ietf.org/archive/id/draft-bormann-cbor-notable-tags-07.html#name-invalid-tag
+  // Always invalid: https://www.ietf.org/archive/id/draft-bormann-cbor-notable-tags-10.html#name-invalid-tag
   INVALID_16: 0xffff,
   INVALID_32: 0xffffffff,
   INVALID_64: 0xffffffffffffffffn,
@@ -90,3 +90,11 @@ export class SYMS {
    */
   public static readonly ENCODED = Symbol.for('github.com/hildjj/cbor2/cbor-encoded');
 }
+
+/**
+ * The range [-2^63, 2^64-1].
+ */
+export const DCBOR_INT = {
+  MIN: -(2n ** 63n),
+  MAX: (2n ** 64n) - 1n,
+};

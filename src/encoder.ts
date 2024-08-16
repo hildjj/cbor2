@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
+import {DCBOR_INT, MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
-import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
 import {flushToZero, halfToUint} from './float.js';
 import {box} from './box.js';
@@ -32,6 +32,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   forceEndian: null,
   ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
+  reduceUnsafeNumbers: false,
   rejectBigInts: false,
   rejectCustomSimples: false,
   rejectDuplicateKeys: false,
@@ -39,11 +40,12 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   rejectUndefined: false,
   simplifyNegativeZero: false,
   sortKeys: null,
+  stringNormalization: null,
 };
 
 /**
  * Encode with CDE ({@link
- * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-01.html CBOR Common
+ * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-05.html CBOR Common
  * Deterministic Encoding Profile}).  Eable this set of options by setting
  * `cde` to true.
  *
@@ -59,7 +61,7 @@ export const cdeEncodeOptions: EncodeOptions = {
 
 /**
  * Encode with CDE and dCBOR ({@link
- * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-07.html
+ * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-11.html
  * dCBOR: A Deterministic CBOR Application Profile}).  Enable this set of
  * options by setting `dcbor` to true.
  *
@@ -70,10 +72,12 @@ export const dcborEncodeOptions: EncodeOptions = {
   ...cdeEncodeOptions,
   dcbor: true,
   largeNegativeAsBigInt: true,
+  reduceUnsafeNumbers: true,
   rejectCustomSimples: true,
   rejectDuplicateKeys: true,
   rejectUndefined: true,
   simplifyNegativeZero: true,
+  stringNormalization: 'NFC',
 };
 
 /**
@@ -274,6 +278,14 @@ export function writeNumber(
     }
   } else if (!opts.avoidInts && Number.isSafeInteger(val)) {
     writeInt(val, w);
+  } else if (opts.reduceUnsafeNumbers &&
+    (Math.floor(val) === val) &&
+    (val >= DCBOR_INT.MIN) &&
+    (val <= DCBOR_INT.MAX)) {
+    // This is going to be confusing in lots of situations, particularly if
+    // collapseBigInts is not true.  Also, round-tripping will need special
+    // attention.
+    writeBigInt(BigInt(val), w, opts);
   } else {
     writeFloat(val, w, opts);
   }
@@ -286,8 +298,15 @@ export function writeNumber(
  * @param val String.
  * @param w Writer.
  */
-export function writeString(val: string, w: Writer): void {
-  const utf8 = TE.encode(val);
+export function writeString(
+  val: string,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  const s = (opts.stringNormalization) ?
+    val.normalize(opts.stringNormalization) :
+    val;
+  const utf8 = TE.encode(s);
   writeInt(utf8.length, w, MT.UTF8_STRING);
   w.write(utf8);
 }
@@ -443,7 +462,7 @@ export function writeUnknown(
   switch (typeof val) {
     case 'number': writeNumber(val, w, opts); break;
     case 'bigint': writeBigInt(val, w, opts); break;
-    case 'string': writeString(val, w); break;
+    case 'string': writeString(val, w, opts); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;
     case 'undefined':
       if (opts.rejectUndefined) {

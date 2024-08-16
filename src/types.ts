@@ -128,7 +128,7 @@ function u8toBigInt(
   if (opts.requirePreferred && tag.contents[0] === 0) {
     // The preferred serialization of the byte string is to leave out any
     // leading zeroes
-    throw new Error(`Decoding overly-large bigint: ${tag}(h'${u8toHex(tag.contents)}`);
+    throw new Error(`Decoding overly-large bigint: ${tag.tag}(h'${u8toHex(tag.contents)})`);
   }
   let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
   if (neg) {
@@ -528,6 +528,8 @@ if (typeof SharedArrayBuffer !== 'undefined') {
   registerEncoder(SharedArrayBuffer, intentionallyUnimplemented);
 }
 
+// I don't understand this lint error adequately.
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 function writeBoxed<T>(
   obj: unknown
 ): TaggedValue {
@@ -536,9 +538,9 @@ function writeBoxed<T>(
 
 // These mostly-useless types get converted to their unboxed values.
 // They will never have ENCODED stored on them at this point.
-registerEncoder(Boolean, writeBoxed);
-registerEncoder(Number, writeBoxed);
-registerEncoder(String, writeBoxed);
+registerEncoder(Boolean, writeBoxed<Boolean>);
+registerEncoder(Number, writeBoxed<Number>);
+registerEncoder(String, writeBoxed<String>);
 
 // @ts-expect-error Boxed BigInt doesn't have a real constructor.  This isn't
 // worth making the types even more opaque to fix.

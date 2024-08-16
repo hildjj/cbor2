@@ -25,13 +25,14 @@
     "docs": "typedoc && cd web && npm run build",
     "lint": "eslint .",
     "start": "cd web && npm start",
-    "pretest": "npm run build",
+    "pretest": "npm run build:sourcemap",
     "test": "npm run test:noBuild",
+    "posttest": "tsup --silent",
     "test:noBuild": "c8 node --test test/*.test.js",
     "test:web": "cd web && npm test",
     "build": "tsup",
-    "build:sourcemap": "npm run build -- --sourcemap",
-    "watch": "tsup  --sourcemap --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
+    "build:sourcemap": "npm run build -- --sourcemap inline",
+    "watch": "tsup --sourcemap inline --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
     "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild"
   },
   "keywords": [
@@ -50,12 +51,12 @@
     "@cto.af/eslint-config": "4.1.5",
     "c8": "10.1.2",
     "eslint": "9.9.0",
-    "eslint-plugin-jsdoc": "50.0.1",
+    "eslint-plugin-jsdoc": "50.2.1",
     "eslint-plugin-markdown": "5.1.0",
     "rimraf": "^6.0.1",
     "tsup": "8.2.4",
     "typedoc": "0.26.5",
-    "typescript-eslint": "8.0.1"
+    "typescript-eslint": "8.1.0"
   },
   "overrides": {
     "@typescript-eslint/utils": "8.0.0-alpha.44",
