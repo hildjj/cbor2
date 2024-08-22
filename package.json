@@ -52,12 +52,12 @@
     "@cto.af/eslint-config": "4.1.5",
     "c8": "10.1.2",
     "eslint": "9.9.0",
-    "eslint-plugin-jsdoc": "50.2.1",
+    "eslint-plugin-jsdoc": "50.2.2",
     "eslint-plugin-markdown": "5.1.0",
     "rimraf": "^6.0.1",
     "tsup": "8.2.4",
-    "typedoc": "0.26.5",
-    "typescript-eslint": "8.1.0"
+    "typedoc": "0.26.6",
+    "typescript-eslint": "8.2.0"
   },
   "overrides": {
     "@typescript-eslint/utils": "8.0.0-alpha.44",
@@ -69,7 +69,7 @@
       "@typescript-eslint/parser": "8.0.0-alpha.44"
     }
   },
-  "packageManager": "pnpm@9.7.0",
+  "packageManager": "pnpm@9.8.0",
   "engines": {
     "node": ">=18"
   }

@@ -12,14 +12,14 @@
   "author": "Joe Hildebrand <joe-github@cursive.net>",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "1.46.0",
+    "@playwright/test": "1.46.1",
     "cbor2": "link:..",
     "css-loader": "7.1.2",
     "five-server": "0.3.3",
     "html-webpack-plugin": "5.6.0",
     "node-inspect-extracted": "3.0.2",
     "style-loader": "4.0.0",
-    "webpack": "5.93.0",
+    "webpack": "5.94.0",
     "webpack-cli": "5.1.4"
   },
   "engines": {

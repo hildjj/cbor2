@@ -51,4 +51,4 @@ test('never use lengths', () => {
     diagnose('1b0000000000000002', {diagnosticSizes: DiagnosticSizes.NEVER}),
     '2'
   );
-})
+});
