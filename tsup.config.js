@@ -12,8 +12,7 @@ const entry = files
   .map(f => path.join('src', f));
 
 export default defineConfig({
-  //
-  // clean: true,
+  clean: true,
   dts: true,
   entry,
   format: 'esm',

@@ -3,6 +3,7 @@ import {Tag} from './tag.js';
 
 export interface OriginalEncoding {
   [SYMS.ENCODED]?: Uint8Array;
+  [SYMS.LENGTH]?: Uint8Array;
 }
 export interface ValueOf<T> extends OriginalEncoding {
   valueOf(): T;
@@ -15,8 +16,22 @@ export interface ValueOf<T> extends OriginalEncoding {
  * @returns Encoded version as bytes, if available.
  */
 export function getEncoded(obj: unknown): Uint8Array | undefined {
-  if (obj && typeof obj === 'object') {
+  if ((obj != null) && (typeof obj === 'object')) {
     return (obj as OriginalEncoding)[SYMS.ENCODED];
+  }
+  return undefined;
+}
+
+/**
+ * Get the encoded version of the length of the object or array, if it has
+ * been stored.
+ *
+ * @param obj Object to check.
+ * @returns Encoded length as bytes, if available.
+ */
+export function getEncodedLength(obj: unknown): Uint8Array | undefined {
+  if ((obj != null) && (typeof obj === 'object')) {
+    return (obj as OriginalEncoding)[SYMS.LENGTH];
   }
   return undefined;
 }
@@ -37,9 +52,33 @@ export function saveEncoded(obj: OriginalEncoding, orig: Uint8Array): void {
   });
 }
 
+/**
+ * Save the original encoding for the length of an object or array, so that
+ * it can be later extracted.  Include the major type in the original bytes.
+ *
+ * @param obj Object to store a length on.
+ * @param orig Originally-encoded version of the length, including major type.
+ */
+export function saveEncodedLength(
+  obj: OriginalEncoding,
+  orig: Uint8Array
+): void {
+  Object.defineProperty(obj, SYMS.LENGTH, {
+    configurable: true,
+    enumerable: false,
+    value: orig,
+  });
+}
+
 export function box(value: bigint, orig: Uint8Array): BigInt;
 export function box(value: string, orig: Uint8Array): String;
 export function box(value: number, orig: Uint8Array): Number;
+export function box(
+  value: bigint | number, orig: Uint8Array
+): BigInt | Number;
+export function box(
+  value: bigint | number | string, orig: Uint8Array
+): BigInt | Number | String;
 
 /**
  * Put an object wrapper around a primitive value, such as a number, boolean,

@@ -28,6 +28,7 @@ export type {
   Sliceable,
   WriterOptions,
 } from './options.js';
+export {DiagnosticSizes} from './options.js';
 export {decode} from './decoder.js';
 export {diagnose} from './diagnostic.js';
 export {comment} from './comment.js';
@@ -41,7 +42,7 @@ export {
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
 export type {TagNumber, TaggedValue, ToCBOR, Writer} from './writer.js';
-export {unbox, getEncoded} from './box.js';
+export {saveEncoded, saveEncodedLength, unbox, getEncoded} from './box.js';
 export const {
   cdeDecodeOptions,
   dcborDecodeOptions,

@@ -12,7 +12,8 @@
     "./sorts": "./lib/sorts.js",
     "./tag": "./lib/tag.js",
     "./types": "./lib/types.js",
-    "./utils": "./lib/utils.js"
+    "./utils": "./lib/utils.js",
+    "./writer": "./lib/writer.js"
   },
   "type": "module",
   "repository": {
@@ -28,7 +29,7 @@
     "pretest": "npm run build:sourcemap",
     "test": "npm run test:noBuild",
     "posttest": "tsup --silent",
-    "test:noBuild": "c8 node --test test/*.test.js",
+    "test:noBuild": "c8 node --enable-source-maps --test test/*.test.js",
     "test:web": "cd web && npm test",
     "build": "tsup",
     "build:sourcemap": "npm run build -- --sourcemap inline",

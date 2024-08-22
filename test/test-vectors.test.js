@@ -95,7 +95,7 @@ test('vectors', async() => {
 
     if ('diagnostic' in v) {
       // Take off the _0 markings
-      const boring = info.diagnosed.replace(/_\d+/g, '');
+      const boring = info.diagnosed.replace(/_[0-9i]+/g, '');
       assert.deepEqual(boring, v.diagnostic, v.hex);
     }
 
@@ -161,7 +161,7 @@ test('dcbor invalid', async() => {
 
   let count = 0;
   for (const f of failures) {
-    assert.equal(diagnose(f.hex), f.diagnostic);
+    assert.equal(diagnose(f.hex), f.diagnostic, f.hex);
     assert.throws(() => {
       const s = decode(f.hex, {encoding: 'hex', dcbor: true});
       console.log('SHOULD THROW', f.hex, [...s]);

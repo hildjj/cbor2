@@ -21,3 +21,4 @@ tsconfig.json
 tsup.config.js
 typedoc.config.cjs
 web/
+dcbor-test-vectors/

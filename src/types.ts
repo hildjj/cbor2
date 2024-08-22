@@ -23,6 +23,7 @@ import {
   encode,
   registerEncoder,
   writeInt,
+  writeLength,
   writeTag,
   writeUnknown,
 } from './encoder.js';
@@ -84,7 +85,7 @@ registerEncoder(Map, (
   if (opts.sortKeys) {
     kve.sort(opts.sortKeys);
   }
-  writeInt(obj.size, w, MT.MAP);
+  writeLength(obj, obj.size, MT.MAP, w, opts);
   for (const [_k, v, e] of kve) {
     w.write(e);
     writeUnknown(v, w, opts);
@@ -329,7 +330,7 @@ function writeTyped(
 ): undefined {
   const endian = opts.forceEndian ?? LE;
   const tag = endian ? littleTag : bigTag;
-  writeTag(tag, w);
+  writeTag(tag, w, opts);
   writeInt(array.byteLength, w, MT.BYTE_STRING);
   if (LE === endian) {
     w.write(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));

@@ -89,6 +89,12 @@ export class SYMS {
    * Original CBOR encoding for round-tripping and crypto.
    */
   public static readonly ENCODED = Symbol.for('github.com/hildjj/cbor2/cbor-encoded');
+
+  /**
+   * Pre-encoded version of length for arrays and maps.  Must include the
+   * major type.
+   */
+  public static readonly LENGTH = Symbol.for('github.com/hildjj/cbor2/length');
 }
 
 /**

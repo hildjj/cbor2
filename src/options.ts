@@ -87,6 +87,23 @@ export interface Parent {
 export type StringNormalization = 'NFC' | 'NFD' | 'NFKC' | 'NFKD';
 
 /**
+ * Different styles of diagnose output for "spec" sizes.  "Spec" sizes
+ * are _i for 0-23 encoded in the AI byte, _0 for one extra byte, _1
+ * for two extra bytes, _2 for four extra bytes, _3 for eight extra bytes,
+ * and a plain _ for indefinite encoding.
+ */
+export enum DiagnosticSizes {
+  /** Never use spec sizes, except for as required for indefinite encoding. */
+  NEVER = -1,
+
+  /** Only use spec sizes when non-preferred encoding was used. */
+  PREFERRED = 0,
+
+  /** Always use spec sizes. */
+  ALWAYS = 1,
+}
+
+/**
  * Decoding options.
  */
 export interface DecodeOptions extends DecodeStreamOptions {
@@ -127,6 +144,13 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * Turn on options for draft-mcnally-deterministic-cbor-11.
    */
   dcbor?: boolean;
+
+  /**
+   * Should the size of an element always be appended to that element using
+   * an underscore when calling diagnose?
+   * @default DiagnosticSizes.PREFERRED
+   */
+  diagnosticSizes?: DiagnosticSizes;
 
   /**
    * Always generate Map instances when decoding, instead of trying to

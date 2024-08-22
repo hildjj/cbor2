@@ -233,6 +233,17 @@ test('encodedNumber', () => {
     [encodedNumber(Infinity, 'f64'), '', '0xfb7ff0000000000000'],
     [encodedNumber(-Infinity, 'f64'), '', '0xfbfff0000000000000'],
 
+    [encodedNumber(0, 'i'), '', '0x00'],
+    [encodedNumber(1, 'i'), '', '0x01'],
+    [encodedNumber(-1, 'i'), '', '0x20'],
+    [encodedNumber(0, 'i', MT.TAG), '', '0xc0'],
+    [encodedNumber(18014398509481984n, 'i', MT.TAG), '', '0xdb0040000000000000'],
+
+    [encodedNumber(0, 'i0'), '', '0x00'],
+    [encodedNumber(1, 'i0'), '', '0x01'],
+    [encodedNumber(-1, 'i0'), '', '0x20'],
+    [encodedNumber(0, 'i0', MT.TAG), '', '0xc0'],
+
     [encodedNumber(0, 'i8'), '', '0x1800'],
     [encodedNumber(1, 'i8'), '', '0x1801'],
     [encodedNumber(-1, 'i8'), '', '0x3800'],
@@ -296,8 +307,9 @@ test('encodedNumber', () => {
     [NaN, 'i64'],
 
     [0, 'INVALID'],
-  ].forEach(([value, encoding]) => assert.throws(
-    () => encodedNumber(value, encoding),
-    util.inspect({value, encoding})
+    [-1, 'i0', MT.TAG],
+  ].forEach(([value, encoding, mt]) => assert.throws(
+    () => encodedNumber(value, encoding, mt),
+    util.inspect({value, encoding, mt})
   ));
 });

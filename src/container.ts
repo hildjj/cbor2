@@ -1,5 +1,11 @@
 import {DCBOR_INT, MT, NUMBYTES} from './constants.js';
-import type {DecodeOptions, MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
+import {
+  type DecodeOptions,
+  DiagnosticSizes,
+  type MtAiValue,
+  type Parent,
+  type RequiredDecodeOptions,
+} from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {box, getEncoded, saveEncoded} from './box.js';
 import {stringToHex, u8concat, u8toHex} from './utils.js';
@@ -36,6 +42,7 @@ export class CBORcontainer {
     boxed: false,
     cde: false,
     dcbor: false,
+    diagnosticSizes: DiagnosticSizes.PREFERRED,
     convertUnsafeIntsToFloat: false,
     preferMap: false,
     rejectLargeNegatives: false,
@@ -210,8 +217,9 @@ export class CBORcontainer {
               throw new Error(`Number should have been encoded shorter: ${value}`);
             }
           }
-          if (opts.boxed) {
-            return box(value as number, stream.toHere(offset));
+          if ((typeof value === 'number') && opts.boxed) {
+            // Not symbols
+            return box(value, stream.toHere(offset));
           }
         } else {
           if (opts.rejectSimple) {

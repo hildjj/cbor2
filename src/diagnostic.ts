@@ -10,11 +10,15 @@
  * ```
  */
 
-import {MT, SYMS} from './constants.js';
+import {type DecodeOptions, DiagnosticSizes} from './options.js';
+import {MT, NUMBYTES, SYMS} from './constants.js';
 import {CBORcontainer} from './container.js';
-import type {DecodeOptions} from './options.js';
 import {DecodeStream} from './decodeStream.js';
+import {Simple} from './simple.js';
+import {halfToUint} from './float.js';
 import {u8toHex} from './utils.js';
+
+const TE = new TextEncoder();
 
 /**
  * Doesn't actually "contain" the child elements; there is no reason to hold
@@ -39,17 +43,77 @@ class DiagContainer extends CBORcontainer {
 
 /**
  * Append a "_0" (e.g.) to numeric types to show their AI size.  Also handles
- * -0 correctly.
+ * -0 correctly.  Only insert encoding indicators only where the binary form
+ * differs from preferred encoding.
  *
+ * @param mt Major Type.
  * @param ai Additional info.
  * @param value Numeric value to annotate.
  * @returns String version, marked up as needed.
  */
-function sized(ai: number, value: number): string {
-  let str = Object.is(value, -0) ? '-0' : String(value);
-  if (ai >= 24) {
-    str += '_';
-    str += String(ai - 24);
+function sized(
+  mt: number,
+  ai: number,
+  value: number | bigint,
+  opts: Required<DecodeOptions>
+): string {
+  let str = '';
+
+  // Only insert encoding indicators only where the binary form differs from
+  // preferred encoding.
+  if (ai === NUMBYTES.INDEFINITE) {
+    str += '_'; // Always needed
+  } else if (opts.diagnosticSizes === DiagnosticSizes.NEVER) {
+    return '';
+  } else {
+    let output_size = (opts.diagnosticSizes === DiagnosticSizes.ALWAYS);
+
+    // When ai <= 23 is always in preferred encoding.
+    if (!output_size) {
+      let correct_ai = NUMBYTES.ZERO;
+      if (Object.is(value, -0)) {
+        correct_ai = NUMBYTES.TWO;
+      } else if (mt === MT.POS_INT || mt === MT.NEG_INT) {
+        const neg = (value < 0);
+        const one = (typeof value === 'bigint') ? 1n : 1;
+        // @ts-expect-error It's ok, ts.
+        const pos = neg ? -value - one : value;
+        if (pos <= 23) {
+          correct_ai = Number(pos);
+        } else if (pos <= 0xff) {
+          correct_ai = NUMBYTES.ONE;
+        } else if (pos <= 0xffff) {
+          correct_ai = NUMBYTES.TWO;
+        } else if (pos <= 0xffffffff) {
+          correct_ai = NUMBYTES.FOUR;
+        } else {
+          correct_ai = NUMBYTES.EIGHT;
+        }
+      } else if (isFinite(value as number)) {
+        if (Math.fround(value as number) === value) {
+          // It's at least as small as f32.
+          if (halfToUint(value) == null) {
+            correct_ai = NUMBYTES.FOUR;
+          } else {
+            correct_ai = NUMBYTES.TWO;
+          }
+        } else {
+          correct_ai = NUMBYTES.EIGHT;
+        }
+      } else {
+        correct_ai = NUMBYTES.TWO;
+      }
+
+      output_size = (correct_ai !== ai);
+    }
+    if (output_size) {
+      str += '_';
+      if (ai < NUMBYTES.ONE) {
+        str += 'i';
+      } else {
+        str += String(ai - 24);
+      }
+    }
   }
   return str;
 }
@@ -90,11 +154,26 @@ export function diagnose(
     switch (mt) {
       case MT.POS_INT:
       case MT.NEG_INT:
-        str += sized(ai, val as number);
+        str += String(val);
+        str += sized(mt, ai, val as number, opts);
         break;
       case MT.SIMPLE_FLOAT:
         if (val !== SYMS.BREAK) {
-          str += sized(ai, val as number);
+          if (typeof val === 'number') {
+            const num = Object.is(val, -0) ? '-0.0' : String(val);
+            str += num;
+            if (isFinite(val) && !/[.e]/.test(num)) {
+              str += '.0';
+            }
+            str += sized(mt, ai, val, opts);
+          } else if (val instanceof Simple) {
+            str += 'simple(';
+            str += String(val.value);
+            str += sized(MT.POS_INT, ai, val.value, opts);
+            str += ')';
+          } else {
+            str += String(val);
+          }
         }
         break;
       case MT.BYTE_STRING:
@@ -106,6 +185,7 @@ export function diagnose(
           str += "h'";
           str += u8toHex(val as Uint8Array);
           str += "'";
+          str += sized(MT.POS_INT, ai, (val as Uint8Array).length, opts);
         }
         break;
       case MT.UTF8_STRING:
@@ -114,24 +194,32 @@ export function diagnose(
           ret.close = ')';
         } else {
           str += JSON.stringify(val); // Surrounds w/quotes and escapes
+          str += sized(MT.POS_INT, ai, TE.encode((val as string)).length, opts);
         }
         break;
-      case MT.ARRAY:
+      case MT.ARRAY: {
         str += '[';
+        const s = sized(MT.POS_INT, ai, val as number, opts);
+        str += s;
+        if (s) {
+          str += ' ';
+        }
         ret.close = ']';
-        if (val === Infinity) {
-          str += '_ ';
-        }
         break;
-      case MT.MAP:
+      }
+      case MT.MAP: {
         str += '{';
-        ret.close = '}';
-        if (val === Infinity) {
-          str += '_ ';
+        const s = sized(MT.POS_INT, ai, val as number, opts);
+        str += s;
+        if (s) {
+          str += ' ';
         }
+        ret.close = '}';
         break;
+      }
       case MT.TAG:
-        str += sized(ai, val as number);
+        str += String(val);
+        str += sized(MT.POS_INT, ai, val as number, opts);
         str += '(';
         ret.close = ')';
         break;

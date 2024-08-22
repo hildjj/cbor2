@@ -162,7 +162,7 @@ export class Writer {
   }
 }
 
-export type TagNumber = bigint | number;
+export type TagNumber = bigint | number | Number;
 
 /**
  * A potentially-tagged value.  If the tag is NaN, it will not be used.
