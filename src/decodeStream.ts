@@ -2,7 +2,6 @@ import type {DecodeStreamOptions, DecodeValue, MtAiValue, Sliceable} from './opt
 import {
   MT,
   NUMBYTES,
-  SIMPLE,
   SYMS,
 } from './constants.js';
 import {base64ToBytes, hexToU8} from './utils.js';
@@ -229,13 +228,7 @@ export class DecodeStream implements Sliceable {
       case MT.SIMPLE_FLOAT: {
         const oval = val;
         if (simple) {
-          switch (val) {
-            case SIMPLE.FALSE: val = false; break;
-            case SIMPLE.TRUE: val = true; break;
-            case SIMPLE.NULL: val = null; break;
-            case SIMPLE.UNDEFINED: val = undefined; break;
-            default: val = new Simple(Number(val));
-          }
+          val = Simple.create(Number(val));
         }
         yield [mt, ai, val, prevOffset, oval];
         break;

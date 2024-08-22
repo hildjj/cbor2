@@ -13,55 +13,47 @@ import test from 'node:test';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let vecStr = null;
-const vectorDir = path.resolve(
-  __dirname, '..', 'test-vectors'
-);
-const appendix_a = path.join(vectorDir, 'appendix_a.json');
-try {
-  vecStr = await readFile(appendix_a, {encoding: 'utf8'});
-} catch (ignored) {
-  throw new Error(`"${appendix_a}" not found.
-use command \`git submodule update --init\` to load test-vectors`);
-}
-
-// HACK: don't lose data when JSON parsing
-vecStr = vecStr.replace(
-  /"decoded":\s*(?<num>-?\d+(?:\.\d+)?(?:e[+-]\d+)?)\r?\n/g,
-  `"decoded": {
-    "___TYPE___": "number",
-    "___VALUE___": "$<num>"
-  }`
-);
-const vectors = JSON.parse(vecStr, (_key, value) => {
-  if (!value) {
-    return value;
+async function loadVectors(...paths) {
+  const fileName = path.resolve(__dirname, ...paths);
+  let str = null;
+  try {
+    str = await readFile(fileName, {encoding: 'utf8'});
+  } catch (ignored) {
+    throw new Error(`"${fileName}" not found.
+  use command \`git submodule update --init\` to load test-vectors`);
   }
-  if (value.___TYPE___ === 'number') {
-    const v = value.___VALUE___;
-    const f = Number.parseFloat(v);
-    try {
-      const bi = BigInt(v);
-      if ((bi > Number.MAX_SAFE_INTEGER) || (bi < Number.MIN_SAFE_INTEGER)) {
-        return bi;
-      }
-    } catch (_) {
-      // Ingore
+
+  // HACK: don't lose data when JSON parsing
+  str = str.replace(
+    /"decoded":\s*(?<num>-?\d+(?:\.\d+)?(?:e[+-]\d+)?)\r?\n/g,
+    `"decoded": {
+      "___TYPE___": "number",
+      "___VALUE___": "$<num>"
+    }`
+  );
+
+  const ret = JSON.parse(str, (_key, value) => {
+    if (!value) {
+      return value;
     }
-    return f;
-  }
-  return value;
-});
-
-let failStr = null;
-const fail = path.join(vectorDir, 'fail.json');
-try {
-  failStr = await readFile(fail, {encoding: 'utf8'});
-} catch (ignored) {
-  throw new Error(`"${fail}" not found.
-use command \`git submodule update --init\` to load test-vectors`);
+    if (value.___TYPE___ === 'number') {
+      const v = value.___VALUE___;
+      const f = Number.parseFloat(v);
+      try {
+        const bi = BigInt(v);
+        if ((bi > Number.MAX_SAFE_INTEGER) || (bi < Number.MIN_SAFE_INTEGER)) {
+          return bi;
+        }
+      } catch (_) {
+        // Ingore
+      }
+      return f;
+    }
+    return value;
+  });
+  assert(Array.isArray(ret));
+  return ret;
 }
-const failures = JSON.parse(failStr);
 
 // Fixed with boxed decoding.
 const failRoundtrip = new Set([
@@ -83,6 +75,9 @@ function applesauce(v, opts) {
     res.diagnosed = diagnose(res.buffer, opts);
     res.encoded = encode(res.decoded, opts);
     res.roundtrip = decode(res.encoded, opts);
+    if ('decoded' in v) {
+      res.originalEncoded = encode(v.decoded, opts);
+    }
   } catch (e) {
     e.message = `With "${v.hex}\n${e.message}"`;
     throw e;
@@ -90,8 +85,9 @@ function applesauce(v, opts) {
   return res;
 }
 
-test('vectors', () => {
-  assert(Array.isArray(vectors));
+test('vectors', async() => {
+  const vectors = await loadVectors('..', 'test-vectors', 'appendix_a.json');
+
   for (const v of vectors) {
     const info = applesauce(v);
 
@@ -99,7 +95,7 @@ test('vectors', () => {
 
     if ('diagnostic' in v) {
       // Take off the _0 markings
-      const boring = info.diagnosed.replace(/_\d+/g, '');
+      const boring = info.diagnosed.replace(/_[0-9i]+/g, '');
       assert.deepEqual(boring, v.diagnostic, v.hex);
     }
 
@@ -119,7 +115,9 @@ test('vectors', () => {
   }
 });
 
-test('errors', () => {
+test('errors', async() => {
+  const failures = await loadVectors('..', 'test-vectors', 'fail.json');
+
   let count = 0;
   for (const f of failures) {
     assert.throws(() => {
@@ -127,6 +125,55 @@ test('errors', () => {
       console.log('SHOULD THROW', f.hex, [...s]);
     });
 
+    count++;
+  }
+  assert.equal(count, failures.length);
+});
+
+test('dcbor valid', async() => {
+  const tests = await loadVectors('..', 'dcbor-test-vectors', 'valid.json');
+
+  for (const v of tests) {
+    const info = applesauce(v, {dcbor: true});
+
+    if (!v.skipDecode) {
+      assert.deepEqual(info.decoded, info.roundtrip, v.hex);
+    }
+
+    if ('diagnostic' in v) {
+      assert.deepEqual(info.diagnosed, v.diagnostic, v.hex);
+    }
+
+    if ('decoded' in v) {
+      if (!v.skipDecode) {
+        assert.deepEqual(info.decoded, v.decoded, v.hex);
+      }
+
+      if (v.roundtrip) {
+        assert.deepEqual(u8toHex(info.encoded), v.hex);
+      }
+    }
+  }
+});
+
+test('dcbor invalid', async() => {
+  const failures = await loadVectors('..', 'dcbor-test-vectors', 'invalid.json');
+
+  let count = 0;
+  for (const f of failures) {
+    assert.equal(diagnose(f.hex), f.diagnostic, f.hex);
+    assert.throws(() => {
+      const s = decode(f.hex, {encoding: 'hex', dcbor: true});
+      console.log('SHOULD THROW', f.hex, [...s]);
+    });
+
+    if (f.roundtrip) {
+      assert.throws(() => {
+        const original = decode(f.hex, {encoding: 'hex'});
+        const encoded = encode(original, {dcbor: true});
+        console.log('SHOULD THROW ENCODE', f.hex, u8toHex(encoded));
+      });
+    }
     count++;
   }
   assert.equal(count, failures.length);

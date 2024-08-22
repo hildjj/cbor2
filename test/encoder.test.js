@@ -137,15 +137,8 @@ test('encode cde', () => {
 });
 
 test('encode dCBOR', () => {
-  failAll(cases.encodeBadDCBOR, {dcbor: true});
   testAll(cases.good.filter(([o]) => o instanceof Map), {dcbor: true});
-  const dv = new DataView(new ArrayBuffer(4));
-  dv.setFloat32(0, NaN);
-  dv.setUint8(3, 1);
-  const n = dv.getFloat32(0); // NaN with extra bits set.
   testAll([
-    [-0, '', '0x00'], // -0 -> 0
-    [n, '', '0xf97e00'],
     [-0x8000000000000000n, '', '0x3b7fffffffffffffff'],
     [-0x8000000000000001n, '', '0xc3488000000000000000'],
   ], {dcbor: true});
@@ -240,6 +233,17 @@ test('encodedNumber', () => {
     [encodedNumber(Infinity, 'f64'), '', '0xfb7ff0000000000000'],
     [encodedNumber(-Infinity, 'f64'), '', '0xfbfff0000000000000'],
 
+    [encodedNumber(0, 'i'), '', '0x00'],
+    [encodedNumber(1, 'i'), '', '0x01'],
+    [encodedNumber(-1, 'i'), '', '0x20'],
+    [encodedNumber(0, 'i', MT.TAG), '', '0xc0'],
+    [encodedNumber(18014398509481984n, 'i', MT.TAG), '', '0xdb0040000000000000'],
+
+    [encodedNumber(0, 'i0'), '', '0x00'],
+    [encodedNumber(1, 'i0'), '', '0x01'],
+    [encodedNumber(-1, 'i0'), '', '0x20'],
+    [encodedNumber(0, 'i0', MT.TAG), '', '0xc0'],
+
     [encodedNumber(0, 'i8'), '', '0x1800'],
     [encodedNumber(1, 'i8'), '', '0x1801'],
     [encodedNumber(-1, 'i8'), '', '0x3800'],
@@ -303,8 +307,9 @@ test('encodedNumber', () => {
     [NaN, 'i64'],
 
     [0, 'INVALID'],
-  ].forEach(([value, encoding]) => assert.throws(
-    () => encodedNumber(value, encoding),
-    util.inspect({value, encoding})
+    [-1, 'i0', MT.TAG],
+  ].forEach(([value, encoding, mt]) => assert.throws(
+    () => encodedNumber(value, encoding, mt),
+    util.inspect({value, encoding, mt})
   ));
 });

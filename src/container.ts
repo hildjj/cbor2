@@ -1,8 +1,14 @@
-import type {DecodeOptions, MtAiValue, Parent, RequiredDecodeOptions} from './options.js';
+import {DCBOR_INT, MT, NUMBYTES} from './constants.js';
+import {
+  type DecodeOptions,
+  DiagnosticSizes,
+  type MtAiValue,
+  type Parent,
+  type RequiredDecodeOptions,
+} from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
-import {MT, NUMBYTES} from './constants.js';
 import {box, getEncoded, saveEncoded} from './box.js';
-import {u8concat, u8toHex} from './utils.js';
+import {stringToHex, u8concat, u8toHex} from './utils.js';
 import {DecodeStream} from './decodeStream.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
@@ -36,6 +42,8 @@ export class CBORcontainer {
     boxed: false,
     cde: false,
     dcbor: false,
+    diagnosticSizes: DiagnosticSizes.PREFERRED,
+    convertUnsafeIntsToFloat: false,
     preferMap: false,
     rejectLargeNegatives: false,
     rejectBigInts: false,
@@ -47,15 +55,17 @@ export class CBORcontainer {
     rejectNegativeZero: false,
     rejectSimple: false,
     rejectStreaming: false,
+    rejectStringsNotNormalizedAs: null,
     rejectSubnormals: false,
     rejectUndefined: false,
+    rejectUnsafeFloatInts: false,
     saveOriginal: false,
     sortKeys: null,
   };
 
   /**
    * Throw errors when decoding for bytes that were not encoded with {@link
-   * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-01.html CBOR Common
+   * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-05.html CBOR Common
    * Deterministic Encoding Profile}.
    *
    * CDE does not mandate this checking, so it is up to the application
@@ -72,7 +82,7 @@ export class CBORcontainer {
 
   /**
    * Throw errors when decoding for bytes that were not encoded with {@link
-   * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-07.html
+   * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-11.html
    * dCBOR: A Deterministic CBOR Application Profile}.
    *
    * The dCBOR spec mandates that these errors be thrown when decoding dCBOR.
@@ -82,6 +92,7 @@ export class CBORcontainer {
   public static dcborDecodeOptions: DecodeOptions = {
     ...this.cdeDecodeOptions,
     dcbor: true,
+    convertUnsafeIntsToFloat: true,
     rejectDuplicateKeys: true,
     rejectLargeNegatives: true,
     rejectLongLoundNaN: true,
@@ -89,6 +100,8 @@ export class CBORcontainer {
     rejectNegativeZero: true,
     rejectSimple: true,
     rejectUndefined: true,
+    rejectUnsafeFloatInts: true,
+    rejectStringsNotNormalizedAs: 'NFC',
   };
 
   public parent: Parent | undefined;
@@ -152,7 +165,7 @@ export class CBORcontainer {
     const [mt, ai, value, offset] = mav;
     switch (mt) {
       case MT.POS_INT:
-      case MT.NEG_INT:
+      case MT.NEG_INT: {
         if (opts.rejectInts) {
           throw new Error(`Unexpected integer: ${value}`);
         }
@@ -160,10 +173,17 @@ export class CBORcontainer {
             (value as bigint < -0x8000000000000000n)) {
           throw new Error(`Invalid 65bit negative number: ${value}`);
         }
-        if (opts.boxed) {
-          return box(value as number, stream.toHere(offset));
+        let val = value;
+        if (opts.convertUnsafeIntsToFloat &&
+          (val as bigint >= DCBOR_INT.MIN) &&
+          (val as bigint <= DCBOR_INT.MAX)) {
+          val = Number(value);
         }
-        return value;
+        if (opts.boxed) {
+          return box(val as number, stream.toHere(offset));
+        }
+        return val;
+      }
       case MT.SIMPLE_FLOAT:
         if (ai > NUMBYTES.ONE) {
           if (opts.rejectFloats) {
@@ -183,19 +203,23 @@ export class CBORcontainer {
             checkSubnormal(stream.toHere(offset + 1));
           }
           if (opts.rejectLongFloats) {
-            // No opts needed.
-            const buf = encode(value, {chunkSize: 9});
+            // No other opts needed.
+            const buf = encode(value, {
+              chunkSize: 9,
+              reduceUnsafeNumbers: opts.rejectUnsafeFloatInts,
+            });
             if ((buf[0] >> 5) !== mt) {
               throw new Error(`Should have been encoded as int, not float: ${value}`);
             }
             // Known safe:
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             if (buf.length < LENGTH_FOR_AI.get(ai)!) {
-              throw new Error(`Int should have been encoded shorter: ${value}`);
+              throw new Error(`Number should have been encoded shorter: ${value}`);
             }
           }
-          if (opts.boxed) {
-            return box(value as number, stream.toHere(offset));
+          if ((typeof value === 'number') && opts.boxed) {
+            // Not symbols
+            return box(value, stream.toHere(offset));
           }
         } else {
           if (opts.rejectSimple) {
@@ -215,6 +239,15 @@ export class CBORcontainer {
         if (value === Infinity) {
           return new opts.ParentType(mav, Infinity, parent, opts);
         }
+        if (opts.rejectStringsNotNormalizedAs && (typeof value === 'string')) {
+          const n = (value as string).normalize(
+            opts.rejectStringsNotNormalizedAs
+          );
+          if (value !== n) {
+            throw new Error(`String not normalized as "${opts.rejectStringsNotNormalizedAs}", got [${stringToHex(value as string)}] instead of [${stringToHex(n)}]`);
+          }
+        }
+
         if (opts.boxed) {
           return box(value as string, stream.toHere(offset));
         }

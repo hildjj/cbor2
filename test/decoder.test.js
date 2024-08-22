@@ -8,9 +8,12 @@ import {hexToU8} from '../lib/utils.js';
 import test from 'node:test';
 import {unbox} from '../lib/box.js';
 
-function testAll(list, opts) {
+function testAll(list, opts, except) {
   let count = 0;
   for (const [orig, diag, commented] of list) {
+    if (except && except.has(commented)) {
+      continue;
+    }
     const d = decode(cases.toBuffer(commented), opts);
     assert.deepEqual(d, orig, diag ?? commented);
     count++;
@@ -47,17 +50,19 @@ test('decode with cde', () => {
   testAll(cases.good.filter(([o]) => o instanceof Map), {cde: true});
   failAll([
     '0x1817',
+    '0xc24101',
+    '0xc2420001',
   ], {cde: true});
 });
 
 test('decode with dCBOR', () => {
-  failAll(cases.decodeBadDcbor, {dcbor: true});
-  testAll(cases.goodNumbers, {dcbor: true});
   testAll(cases.good.filter(([o]) => o instanceof Map), {dcbor: true});
+
   failAll([
     '0xa280008001',
     '0xa200010002',
-  ], {rejectDuplicateKeys: true});
+    '0x6345cc88',
+  ], {dcbor: true});
 });
 
 test('goodEndian', () => {

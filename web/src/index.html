@@ -93,6 +93,10 @@
           <label for="largeNegativeAsBigIntEncode">largeNegativeAsBigInt</label>
         </li>
         <li>
+          <input type="checkbox" id="reduceUnsafeNumbers">
+          <label for="reduceUnsafeNumbers">reduceUnsafeNumbers</label>
+        </li>
+        <li>
           <input type="checkbox" id="rejectBigIntsEncode">
           <label for="rejectBigIntsEncode">rejectBigInts</label>
         </li>
@@ -124,6 +128,16 @@
             <option>lengthFirstDeterministic</option>
           </select>
         </li>
+        <li>
+          <label for="stringNormalization">stringNormalization</label>
+          <select id="stringNormalization">
+            <option selected>null</option>
+            <option>NFC</option>
+            <option>NFD</option>
+            <option>NFKC</option>
+            <option>NFKD</option>
+          </select>
+        </li>
       </ul>
       <button class="accordion">Decoding</button>
       <ul id="decodeOpts" class="panel">
@@ -138,6 +152,10 @@
         <li>
           <input type="checkbox" id="dcbor">
           <label for="dcbor">dcbor</label>
+        </li>
+        <li>
+          <input type="checkbox" id="convertUnsafeIntsToFloat">
+          <label for="convertUnsafeIntsToFloat">convertUnsafeIntsToFloat</label>
         </li>
         <li>
           <input type="checkbox" id="preferMap">
@@ -164,6 +182,10 @@
           <label for="rejectInts">rejectInts</label>
         </li>
         <li>
+          <input type="checkbox" id="rejectLongFloats">
+          <label for="rejectLongFloats">rejectLongFloats</label>
+        </li>
+        <li>
           <input type="checkbox" id="rejectLongLoundNaN">
           <label for="rejectLongLoundNaN">rejectLongLoundNaN</label>
         </li>
@@ -182,6 +204,17 @@
         <li>
           <input type="checkbox" id="rejectSubnormals">
           <label for="rejectSubnormals">rejectSubnormals</label>
+        </li>
+        <li>
+          <label for="rejectStringsNotNormalizedAs">rejectStringsNotNormalizedAs</label>
+          <select id="rejectStringsNotNormalizedAs">
+            <option selected>null</option>
+            <option>NFC</option>
+            <option>NFD</option>
+            <option>NFKC</option>
+            <option>NFKD</option>
+          </select>
+
         </li>
         <li>
           <input type="checkbox" id="rejectUndefined">

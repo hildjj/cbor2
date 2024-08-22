@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
+import {DCBOR_INT, MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
-import {MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
 import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
+import {box, getEncodedLength} from './box.js';
 import {flushToZero, halfToUint} from './float.js';
-import {box} from './box.js';
 import {hexToU8} from './utils.js';
 
 export const {
@@ -32,6 +32,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   forceEndian: null,
   ignoreOriginalEncoding: false,
   largeNegativeAsBigInt: false,
+  reduceUnsafeNumbers: false,
   rejectBigInts: false,
   rejectCustomSimples: false,
   rejectDuplicateKeys: false,
@@ -39,11 +40,12 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   rejectUndefined: false,
   simplifyNegativeZero: false,
   sortKeys: null,
+  stringNormalization: null,
 };
 
 /**
  * Encode with CDE ({@link
- * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-01.html CBOR Common
+ * https://www.ietf.org/archive/id/draft-ietf-cbor-cde-05.html CBOR Common
  * Deterministic Encoding Profile}).  Eable this set of options by setting
  * `cde` to true.
  *
@@ -59,7 +61,7 @@ export const cdeEncodeOptions: EncodeOptions = {
 
 /**
  * Encode with CDE and dCBOR ({@link
- * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-07.html
+ * https://www.ietf.org/archive/id/draft-mcnally-deterministic-cbor-11.html
  * dCBOR: A Deterministic CBOR Application Profile}).  Enable this set of
  * options by setting `dcbor` to true.
  *
@@ -70,10 +72,12 @@ export const dcborEncodeOptions: EncodeOptions = {
   ...cdeEncodeOptions,
   dcbor: true,
   largeNegativeAsBigInt: true,
+  reduceUnsafeNumbers: true,
   rejectCustomSimples: true,
   rejectDuplicateKeys: true,
   rejectUndefined: true,
   simplifyNegativeZero: true,
+  stringNormalization: 'NFC',
 };
 
 /**
@@ -185,14 +189,22 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
  * @param tag Tag number.
  * @param w Stream to write to.
  */
-export function writeTag(tag: TagNumber, w: Writer): void {
+export function writeTag(
+  tag: TagNumber,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): void {
   if (typeof tag === 'number') {
     writeInt(tag, w, MT.TAG);
-  } else if (tag <= Number.MAX_SAFE_INTEGER) {
+  } else if ((typeof tag === 'object') &&
+    !opts.ignoreOriginalEncoding &&
+    (SYMS.ENCODED in tag)) {
+    w.write(tag[SYMS.ENCODED] as Uint8Array);
+  } else if (tag as bigint <= Number.MAX_SAFE_INTEGER) {
     writeInt(Number(tag), w, MT.TAG);
   } else {
     w.writeUint8((MT.TAG << 5) | NUMBYTES.EIGHT);
-    w.writeBigUint64(tag);
+    w.writeBigUint64(BigInt(tag as bigint));
   }
 }
 
@@ -237,7 +249,7 @@ export function writeBigInt(
   const s = pos.toString(16);
   const z = (s.length % 2) ? '0' : '';
 
-  writeTag(tag, w);
+  writeTag(tag, w, opts);
   // This takes a couple of big allocs for large numbers, but I still haven't
   // found a better way.
   const buf = hexToU8(z + s);
@@ -274,6 +286,14 @@ export function writeNumber(
     }
   } else if (!opts.avoidInts && Number.isSafeInteger(val)) {
     writeInt(val, w);
+  } else if (opts.reduceUnsafeNumbers &&
+    (Math.floor(val) === val) &&
+    (val >= DCBOR_INT.MIN) &&
+    (val <= DCBOR_INT.MAX)) {
+    // This is going to be confusing in lots of situations, particularly if
+    // collapseBigInts is not true.  Also, round-tripping will need special
+    // attention.
+    writeBigInt(BigInt(val), w, opts);
   } else {
     writeFloat(val, w, opts);
   }
@@ -286,8 +306,15 @@ export function writeNumber(
  * @param val String.
  * @param w Writer.
  */
-export function writeString(val: string, w: Writer): void {
-  const utf8 = TE.encode(val);
+export function writeString(
+  val: string,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  const s = (opts.stringNormalization) ?
+    val.normalize(opts.stringNormalization) :
+    val;
+  const utf8 = TE.encode(s);
   writeInt(utf8.length, w, MT.UTF8_STRING);
   w.write(utf8);
 }
@@ -306,7 +333,8 @@ export function writeArray(
   opts: RequiredEncodeOptions
 ): undefined {
   const a = obj as unknown[];
-  writeInt(a.length, w, MT.ARRAY);
+
+  writeLength(a, a.length, MT.ARRAY, w, opts);
   for (const i of a) { // Iterator gives undefined for holes.
     // Circular
     writeUnknown(i, w, opts);
@@ -362,6 +390,22 @@ export function clearEncoder<T extends AbstractClassType<T>>(
   return old;
 }
 
+// eslint-disable-next-line @typescript-eslint/max-params
+export function writeLength(
+  obj: object,
+  len: number,
+  mt: number,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): void {
+  const enc = getEncodedLength(obj);
+  if (enc && !opts.ignoreOriginalEncoding) {
+    w.write(enc);
+  } else {
+    writeInt(len, w, mt);
+  }
+}
+
 function writeObject(
   obj: object | null,
   w: Writer,
@@ -382,8 +426,8 @@ function writeObject(
   if (encoder) {
     const res = encoder(obj, w, opts);
     if (res) {
-      if ((typeof res[0] === 'bigint') || isFinite(res[0])) {
-        writeTag(res[0], w);
+      if ((typeof res[0] === 'bigint') || isFinite(Number(res[0]))) {
+        writeTag(res[0], w, opts);
       }
 
       // Circular
@@ -395,8 +439,8 @@ function writeObject(
   if (typeof (obj as ToCBOR).toCBOR === 'function') {
     const res = (obj as ToCBOR).toCBOR(w, opts);
     if (res) {
-      if ((typeof res[0] === 'bigint') || isFinite(res[0])) {
-        writeTag(res[0], w);
+      if ((typeof res[0] === 'bigint') || isFinite(Number(res[0]))) {
+        writeTag(res[0], w, opts);
       }
       // Circular
       writeUnknown(res[1], w, opts);
@@ -418,8 +462,8 @@ function writeObject(
   if (opts.sortKeys) {
     entries.sort(opts.sortKeys);
   }
-  writeInt(entries.length, w, MT.MAP);
 
+  writeLength(obj, entries.length, MT.MAP, w, opts);
   for (const [_k, v, e] of entries) {
     w.write(e);
     // Circular
@@ -443,7 +487,7 @@ export function writeUnknown(
   switch (typeof val) {
     case 'number': writeNumber(val, w, opts); break;
     case 'bigint': writeBigInt(val, w, opts); break;
-    case 'string': writeString(val, w); break;
+    case 'string': writeString(val, w, opts); break;
     case 'boolean': w.writeUint8(val ? TRUE : FALSE); break;
     case 'undefined':
       if (opts.rejectUndefined) {
@@ -506,11 +550,14 @@ export function encode(val: unknown, options: EncodeOptions = {}): Uint8Array {
  *   the desired encoding.
  */
 export function encodedNumber(value: bigint | number, encoding: 'bigint'): BigInt;
-export function encodedNumber(value: bigint | number, encoding?: 'f' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'): Number;
+export function encodedNumber(value: bigint | number, encoding: 'i' | 'i64', majorType?: number): Number | BigInt;
+export function encodedNumber(value: bigint | number, encoding: 'i0' | 'i8' | 'i16' | 'i32', majorType?: number): Number;
+export function encodedNumber(value: bigint | number, encoding?: 'f' | 'f16' | 'f32' | 'f64'): Number;
 
 export function encodedNumber(
   value: bigint | number,
-  encoding?: 'bigint' | 'f' | 'f16' | 'f32' | 'f64' | 'i8' | 'i16' | 'i32' | 'i64'
+  encoding?: 'bigint' | 'f' | 'f16' | 'f32' | 'f64' | 'i' | 'i0' | 'i8' | 'i16' | 'i32' | 'i64',
+  majorType = MT.POS_INT
 ): BigInt | Number {
   if (!encoding) {
     encoding = 'f';
@@ -526,8 +573,12 @@ export function encodedNumber(
 
   function breakInt(max: number): [number, number] {
     const neg = value < 0;
+    if (neg && (majorType !== MT.POS_INT)) {
+      throw new Error('Invalid major type combination');
+    }
+
     const pos = neg ? -numValue - 1 : numValue;
-    const mt = (neg ? MT.NEG_INT : MT.POS_INT) << 5;
+    const mt = (neg ? MT.NEG_INT : majorType) << 5;
 
     if (
       !Number.isSafeInteger(numValue) ||
@@ -573,6 +624,20 @@ export function encodedNumber(
       w.writeUint8(DOUBLE);
       w.writeFloat64(numValue);
       break;
+    case 'i':
+      // Use preferred encoding.  Will not collapse bigints.
+      if (Number.isSafeInteger(value)) {
+        writeInt(value as number, w, value < 0 ? undefined : majorType);
+      } else {
+        w.writeUint8((majorType << 5) | NUMBYTES.EIGHT);
+        w.writeBigUint64(BigInt(value));
+      }
+      break;
+    case 'i0': {
+      const [mt, pos] = breakInt(0x17);
+      w.writeUint8(mt | pos);
+      break;
+    }
     case 'i8': {
       const [mt, pos] = breakInt(0xff);
       w.writeUint8(mt | NUMBYTES.ONE);
@@ -600,5 +665,5 @@ export function encodedNumber(
     default:
       throw new TypeError(`Invalid number encoding: "${encoding}"`);
   }
-  return box(numValue, w.read());
+  return box(value, w.read());
 }

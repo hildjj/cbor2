@@ -23,6 +23,7 @@ import {
   encode,
   registerEncoder,
   writeInt,
+  writeLength,
   writeTag,
   writeUnknown,
 } from './encoder.js';
@@ -84,7 +85,7 @@ registerEncoder(Map, (
   if (opts.sortKeys) {
     kve.sort(opts.sortKeys);
   }
-  writeInt(obj.size, w, MT.MAP);
+  writeLength(obj, obj.size, MT.MAP, w, opts);
   for (const [_k, v, e] of kve) {
     w.write(e);
     writeUnknown(v, w, opts);
@@ -128,7 +129,7 @@ function u8toBigInt(
   if (opts.requirePreferred && tag.contents[0] === 0) {
     // The preferred serialization of the byte string is to leave out any
     // leading zeroes
-    throw new Error(`Decoding overly-large bigint: ${tag}(h'${u8toHex(tag.contents)}`);
+    throw new Error(`Decoding overly-large bigint: ${tag.tag}(h'${u8toHex(tag.contents)})`);
   }
   let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
   if (neg) {
@@ -329,7 +330,7 @@ function writeTyped(
 ): undefined {
   const endian = opts.forceEndian ?? LE;
   const tag = endian ? littleTag : bigTag;
-  writeTag(tag, w);
+  writeTag(tag, w, opts);
   writeInt(array.byteLength, w, MT.BYTE_STRING);
   if (LE === endian) {
     w.write(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
@@ -528,6 +529,8 @@ if (typeof SharedArrayBuffer !== 'undefined') {
   registerEncoder(SharedArrayBuffer, intentionallyUnimplemented);
 }
 
+// I don't understand this lint error adequately.
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 function writeBoxed<T>(
   obj: unknown
 ): TaggedValue {
@@ -536,9 +539,9 @@ function writeBoxed<T>(
 
 // These mostly-useless types get converted to their unboxed values.
 // They will never have ENCODED stored on them at this point.
-registerEncoder(Boolean, writeBoxed);
-registerEncoder(Number, writeBoxed);
-registerEncoder(String, writeBoxed);
+registerEncoder(Boolean, writeBoxed<Boolean>);
+registerEncoder(Number, writeBoxed<Number>);
+registerEncoder(String, writeBoxed<String>);
 
 // @ts-expect-error Boxed BigInt doesn't have a real constructor.  This isn't
 // worth making the types even more opaque to fix.

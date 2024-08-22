@@ -10,6 +10,7 @@ export default [
     ignores: [
       'lib/**',
       'web/dist/**',
+      'dcbor-test-vectors/**',
     ],
   },
   ...base,
