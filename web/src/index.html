@@ -21,6 +21,7 @@
       <h3>Input</h3>
       <div class="cmd">
         <select id="input-fmt">
+          <option>diagnostic</option>
           <option>JSON</option>
           <option>js</option>
           <option>hex</option>
@@ -158,6 +159,14 @@
           <label for="convertUnsafeIntsToFloat">convertUnsafeIntsToFloat</label>
         </li>
         <li>
+          <label for="diagnosticSizes">diagnosticSizes</label>
+          <select id="diagnosticSizes">
+            <option value="0" selected>PREFERRED</option>
+            <option value="1">ALWAYS</option>
+            <option value="-1">NEVER</option>
+          </select>
+        </li>
+        <li>
           <input type="checkbox" id="preferMap">
           <label for="preferMap">preferMap</label>
         </li>
@@ -214,7 +223,6 @@
             <option>NFKC</option>
             <option>NFKD</option>
           </select>
-
         </li>
         <li>
           <input type="checkbox" id="rejectUndefined">

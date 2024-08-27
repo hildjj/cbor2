@@ -26,6 +26,7 @@ import {
 } from './encode.js';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
+import {parseEDN} from 'cbor-edn';
 
 const proxy = URL.createObjectURL(new Blob([`
   self.MonacoEnvironment = {
@@ -45,6 +46,7 @@ const copy = document.getElementById('copy');
 const sortKeysEncode = document.querySelector('#sortKeysEncode');
 const sortKeysDecode = document.querySelector('#sortKeysDecode');
 const stringNormalization = document.querySelector('#stringNormalization');
+const diagnosticSizes = document.querySelector('#diagnosticSizes');
 const rejectStringsNotNormalizedAs =
   document.querySelector('#rejectStringsNotNormalizedAs');
 const fontSize = 16;
@@ -147,6 +149,7 @@ function showDecodeOpts() {
   for (const inp of document.querySelectorAll('#decodeOpts input')) {
     inp.checked = state.decodeOpts[inp.id];
   }
+  diagnosticSizes.value = String(state.decodeOpts.diagnosticSizes);
   rejectStringsNotNormalizedAs.value =
     state.decodeOpts.rejectStringsNotNormalizedAs;
   sortKeysDecode.value = sortNames.get(state.decodeOpts.sortKeys);
@@ -156,6 +159,8 @@ function showDecodeOpts() {
 function input() {
   const {inp, txt} = state;
   switch (inp) {
+    case 'diagnostic':
+      return parseEDN(txt);
     case 'JSON':
       return encode(JSON.parse(txt), state.encodeOpts);
     case 'hex': {
@@ -207,7 +212,7 @@ function output(buf, _typ) {
         outModel.setValue(comment(buf, state.decodeOpts));
         break;
       case 'diagnostic':
-        copy.disabled = true;
+        copy.disabled = false;
         outModel.setValue(diagnose(buf, state.decodeOpts));
         break;
       case 'js':
@@ -312,6 +317,11 @@ forceEndian.onchange = () => {
   return convert();
 };
 forceEndian.value = 'null';
+
+diagnosticSizes.onchange = () => {
+  state.decodeOpts.diagnosticSizes = Number(diagnosticSizes.value);
+  return convert();
+};
 
 rejectStringsNotNormalizedAs.onchange = () => {
   state.decodeOpts.rejectStringsNotNormalizedAs =
