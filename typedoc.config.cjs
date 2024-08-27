@@ -10,10 +10,11 @@ module.exports = {
   out: 'docs',
   cleanOutputDir: true,
   sidebarLinks: {
-    GitHub: 'https://github.com/hildjj/cbor2/',
-    Documentation: 'http://hildjj.github.io/cbor2/',
-    Playground: '/cbor2/playground/index.html',
-    Spec: 'http://cbor.io/',
+    'Playground': '/cbor2/playground/index.html',
+    'cbor-edn': 'https://github.com/hildjj/cbor-edn',
+    'GitHub': 'https://github.com/hildjj/cbor2/',
+    'Spec': 'http://cbor.io/',
+    'Documentation': 'http://hildjj.github.io/cbor2/',
   },
   navigation: {
     includeCategories: false,

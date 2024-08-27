@@ -15,10 +15,14 @@
  * @returns Array with contents decoded as hex from str.
  */
 export function hexToU8(str: string): Uint8Array {
-  const len = str.length / 2;
+  let len = Math.ceil(str.length / 2);
   const res = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    res[i] = parseInt(str.substr(i << 1, 2), 16);
+  len--;
+  for (let end = str.length, start = end - 2;
+    end >= 0;
+    end = start, start -= 2, len--
+  ) {
+    res[len] = parseInt(str.substring(start, end), 16);
   }
 
   return res;
