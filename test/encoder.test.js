@@ -236,6 +236,10 @@ test('encodedNumber', () => {
     [encodedNumber(0, 'i'), '', '0x00'],
     [encodedNumber(1, 'i'), '', '0x01'],
     [encodedNumber(-1, 'i'), '', '0x20'],
+    [encodedNumber(0xffffffffffffffffn, 'i'), '', '0x1bffffffffffffffff'],
+    [encodedNumber(0xffffffffffffffffn + 1n, 'i'), '', '0xc249010000000000000000'],
+    [encodedNumber(-0xffffffffffffffffn - 1n, 'i'), '', '0x3bffffffffffffffff'],
+    [encodedNumber(-0xffffffffffffffffn - 2n, 'i'), '', '0xc349010000000000000000'],
     [encodedNumber(0, 'i', MT.TAG), '', '0xc0'],
     [encodedNumber(18014398509481984n, 'i', MT.TAG), '', '0xdb0040000000000000'],
 
@@ -271,6 +275,9 @@ test('encodedNumber', () => {
     [encodedNumber(0n, 'i64'), '', '0x1b0000000000000000'],
     [encodedNumber(1n, 'i64'), '', '0x1b0000000000000001'],
     [encodedNumber(-1n, 'i64'), '', '0x3b0000000000000000'],
+    [encodedNumber(0xffffffffffffffffn, 'i64'), '', '0x1bffffffffffffffffn'],
+    [encodedNumber(-0xffffffffffffffffn, 'i64'), '', '0x3bfffffffffffffffe'],
+    [encodedNumber(-0xffffffffffffffffn - 1n, 'i64'), '', '0x3bffffffffffffffff'],
   ]);
 
   [
@@ -285,6 +292,10 @@ test('encodedNumber', () => {
     [123456789, 'f32'],
     [12345678n, 'f16'],
     [123456789n, 'f32'],
+    [0xffffffffffffffffn + 1n, 'i64'],
+    [-0xffffffffffffffffn - 2n, 'i64'],
+
+    [-0, 'i'],
 
     [-0, 'i8'],
     [Infinity, 'i8'],

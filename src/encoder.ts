@@ -100,6 +100,17 @@ export interface ToJSON {
   toJSON(key?: unknown): string;
 }
 
+function cborAbs(value: number): [num: number, neg: boolean];
+function cborAbs(value: bigint): [num: bigint, neg: boolean];
+function cborAbs(value: number | bigint): [num: number | bigint, neg: boolean];
+function cborAbs(value: number | bigint): [num: number | bigint, neg: boolean] {
+  const neg = value < 0;
+  if (typeof value === 'bigint') {
+    return [neg ? -value - 1n : value, neg];
+  }
+  return [neg ? -value - 1 : value, neg];
+}
+
 /**
  * Write a floating point number to the stream.  Prefers the smallest size
  * that does not lose precision for the given number.  Writes the size with
@@ -155,8 +166,7 @@ export function writeFloat(
  * @throws On invalid combinations.
  */
 export function writeInt(val: number, w: Writer, mt?: number): void {
-  const neg = val < 0;
-  const pos = neg ? -val - 1 : val;
+  const [pos, neg] = cborAbs(val);
   if (neg && mt) {
     throw new TypeError(`Negative size: ${val}`);
   }
@@ -221,8 +231,7 @@ export function writeBigInt(
   w: Writer,
   opts: RequiredEncodeOptions
 ): void {
-  const neg = val < 0n;
-  const pos = neg ? -val - 1n : val;
+  const [pos, neg] = cborAbs(val);
 
   if (opts.collapseBigInts &&
       (!opts.largeNegativeAsBigInt || (val >= -0x8000000000000000n))) {
@@ -553,7 +562,6 @@ export function encodedNumber(value: bigint | number, encoding: 'bigint'): BigIn
 export function encodedNumber(value: bigint | number, encoding: 'i' | 'i64', majorType?: number): Number | BigInt;
 export function encodedNumber(value: bigint | number, encoding: 'i0' | 'i8' | 'i16' | 'i32', majorType?: number): Number;
 export function encodedNumber(value: bigint | number, encoding?: 'f' | 'f16' | 'f32' | 'f64'): Number;
-
 export function encodedNumber(
   value: bigint | number,
   encoding?: 'bigint' | 'f' | 'f16' | 'f32' | 'f64' | 'i' | 'i0' | 'i8' | 'i16' | 'i32' | 'i64',
@@ -571,34 +579,41 @@ export function encodedNumber(
   const w = new Writer(opts);
   const numValue = Number(value);
 
-  function breakInt(max: number): [number, number] {
-    const neg = value < 0;
+  function breakInt(max: number): [number, number];
+  function breakInt(max: bigint): [number, number | bigint];
+  function breakInt(max: number | bigint): [number, number | bigint] {
+    if (Object.is(value, -0)) {
+      throw new Error('Invalid integer: -0');
+    }
+    const [pos, neg] = cborAbs(value);
     if (neg && (majorType !== MT.POS_INT)) {
       throw new Error('Invalid major type combination');
     }
 
-    const pos = neg ? -numValue - 1 : numValue;
-    const mt = (neg ? MT.NEG_INT : majorType) << 5;
+    const maxNumber = (typeof max === 'number') && isFinite(max);
+    if (maxNumber && !Number.isSafeInteger(numValue)) {
+      throw new TypeError(`Unsafe number for ${encoding}: ${value}`);
+    }
 
-    if (
-      !Number.isSafeInteger(numValue) ||
-      Object.is(numValue, -0) ||
-      (pos > max)
-    ) {
-      throw new TypeError(`Invalid ${encoding}: ${value}`);
+    if (pos > max) {
+      throw new TypeError(`Undersized encoding ${encoding} for: ${value}`);
+    }
+
+    const mt = (neg ? MT.NEG_INT : majorType) << 5;
+    if (maxNumber) {
+      return [mt, Number(pos)];
     }
     return [mt, pos];
   }
 
   switch (encoding) {
-    case 'bigint': {
+    case 'bigint':
       if (Object.is(value, -0)) {
-        throw new TypeError(`Invalid bigint: ${value}`);
+        throw new TypeError('Invalid bigint: -0');
       }
-      const n = BigInt(value);
-      writeBigInt(n, w, opts);
-      return box(n, w.read());
-    }
+      value = BigInt(value);
+      writeBigInt(value, w, opts);
+      break;
     case 'f':
       writeFloat(numValue, w, opts);
       break;
@@ -625,12 +640,22 @@ export function encodedNumber(
       w.writeFloat64(numValue);
       break;
     case 'i':
-      // Use preferred encoding.  Will not collapse bigints.
-      if (Number.isSafeInteger(value)) {
-        writeInt(value as number, w, value < 0 ? undefined : majorType);
+      // Use preferred encoding.
+      if (Object.is(value, -0)) {
+        throw new Error('Invalid integer: -0');
+      }
+
+      if (Number.isSafeInteger(numValue)) {
+        writeInt(numValue, w, value < 0 ? undefined : majorType);
       } else {
-        w.writeUint8((majorType << 5) | NUMBYTES.EIGHT);
-        w.writeBigUint64(BigInt(value));
+        const [mt, pos] = breakInt(Infinity);
+        if (pos > 0xffffffffffffffffn) {
+          value = BigInt(value);
+          writeBigInt(value, w, opts);
+        } else {
+          w.writeUint8(mt | NUMBYTES.EIGHT);
+          w.writeBigUint64(BigInt(pos));
+        }
       }
       break;
     case 'i0': {
@@ -657,7 +682,7 @@ export function encodedNumber(
       break;
     }
     case 'i64': {
-      const [mt, pos] = breakInt(Number.MAX_SAFE_INTEGER);
+      const [mt, pos] = breakInt(0xffffffffffffffffn);
       w.writeUint8(mt | NUMBYTES.EIGHT);
       w.writeBigUint64(BigInt(pos));
       break;
