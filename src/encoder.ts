@@ -166,8 +166,7 @@ export function writeFloat(
  * @throws On invalid combinations.
  */
 export function writeInt(val: number, w: Writer, mt?: number): void {
-  const neg = val < 0;
-  const pos = neg ? -val - 1 : val;
+  const [pos, neg] = cborAbs(val);
   if (neg && mt) {
     throw new TypeError(`Negative size: ${val}`);
   }
@@ -232,8 +231,7 @@ export function writeBigInt(
   w: Writer,
   opts: RequiredEncodeOptions
 ): void {
-  const neg = val < 0n;
-  const pos = neg ? -val - 1n : val;
+  const [pos, neg] = cborAbs(val);
 
   if (opts.collapseBigInts &&
       (!opts.largeNegativeAsBigInt || (val >= -0x8000000000000000n))) {
