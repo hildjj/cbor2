@@ -1,4 +1,4 @@
-name: Publish Package to npmjs
+name: Publish docs only
 on:
   workflow_dispatch:
     inputs:
