@@ -13,7 +13,7 @@
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "1.46.1",
-    "cbor-edn": "0.0.4",
+    "cbor-edn": "0.0.5",
     "cbor2": "link:..",
     "css-loader": "7.1.2",
     "five-server": "0.3.3",

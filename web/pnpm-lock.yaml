@@ -15,8 +15,8 @@ importers:
         specifier: 1.46.1
         version: 1.46.1
       cbor-edn:
-        specifier: 0.0.4
-        version: 0.0.4
+        specifier: 0.0.5
+        version: 0.0.5
       cbor2:
         specifier: link:..
         version: link:..
@@ -297,8 +297,8 @@ packages:
   caniuse-lite@1.0.30001653:
     resolution: {integrity: sha512-XGWQVB8wFQ2+9NZwZ10GxTYC5hk0Fa+q8cSkr0tgvMhYhMHP/QC+WTgrePMDBWiWc/pV+1ik82Al20XOK25Gcw==}
 
-  cbor-edn@0.0.4:
-    resolution: {integrity: sha512-85LjA4durLvw/B1ZOKuzworZRHOet/81jg7VZimhfmPlPMy77KRfVZ8VrS/35C55M3VpM05NjYLnnVdcmqSSAw==}
+  cbor-edn@0.0.5:
+    resolution: {integrity: sha512-YiUB/M1D0cNY9oztPCSL+AV3xpGjjBanxUT0R9elkp7SlAFRHO+WoaUAok5sqi5aMXfZq6h5ftEv7v87YbrHOg==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -1594,7 +1594,7 @@ snapshots:
 
   caniuse-lite@1.0.30001653: {}
 
-  cbor-edn@0.0.4:
+  cbor-edn@0.0.5:
     dependencies:
       '@scure/base': 1.1.7
       cbor2: link:..
