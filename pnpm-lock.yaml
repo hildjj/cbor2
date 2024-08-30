@@ -27,6 +27,9 @@ importers:
       eslint-plugin-markdown:
         specifier: 5.1.0
         version: 5.1.0(eslint@9.9.1)
+      package-extract:
+        specifier: 2.0.2
+        version: 2.0.2
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -607,6 +610,10 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
+
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
     engines: {node: '>= 6'}
@@ -1077,6 +1084,11 @@ packages:
   p-locate@5.0.0:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
+
+  package-extract@2.0.2:
+    resolution: {integrity: sha512-aZosgc0hC+uPkAKlnTIaXZ5cR0zniFVGf6vVNZOpgEdpmgd/Caxlk6BJt23qe7uRGQhjro2yhO5XY7kLgv5Syg==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   package-json-from-dist@1.0.0:
     resolution: {integrity: sha512-dATvCeZN/8wQsGywez1mzHtTlP22H8OEfPrVMLNr4/eGa+ijtLn/6M5f0dY8UKNrC2O9UCU6SSoG3qRKnt7STw==}
@@ -1931,6 +1943,8 @@ snapshots:
 
   color-name@1.1.4: {}
 
+  commander@12.1.0: {}
+
   commander@4.1.1: {}
 
   comment-parser@1.4.1: {}
@@ -2441,6 +2455,10 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
+
+  package-extract@2.0.2:
+    dependencies:
+      commander: 12.1.0
 
   package-json-from-dist@1.0.0: {}
 

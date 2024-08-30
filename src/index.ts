@@ -10,6 +10,7 @@
  */
 
 import './types.js';
+export {version} from './version.js';
 import {CBORcontainer} from './container.js';
 export type {DecodeStream, ValueGenerator} from './decodeStream.js';
 export type {
