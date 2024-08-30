@@ -5,6 +5,7 @@ import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/+esm'
 import {
   Simple,
   Tag,
+  version as cbor2version,
   cdeDecodeOptions,
   cdeEncodeOptions,
   comment,
@@ -24,9 +25,9 @@ import {
   compressString,
   decompressString,
 } from './encode.js';
+import {version as ednVersion, parseEDN} from 'cbor-edn';
 import {sortCoreDeterministic, sortLengthFirstDeterministic} from 'cbor2/sorts';
 import {inspect} from 'node-inspect-extracted';
-import {parseEDN} from 'cbor-edn';
 
 const proxy = URL.createObjectURL(new Blob([`
   self.MonacoEnvironment = {
@@ -51,6 +52,9 @@ const rejectStringsNotNormalizedAs =
   document.querySelector('#rejectStringsNotNormalizedAs');
 const fontSize = 16;
 const theme = 'vs-dark';
+
+document.querySelector('#cbor2-version').innerText = `@${cbor2version}`;
+document.querySelector('#cbor-edn-version').innerText = `@${ednVersion}`;
 
 const inEditor = monaco.editor.create(itxt, {
   detectIndentation: false,

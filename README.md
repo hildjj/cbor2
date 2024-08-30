@@ -11,6 +11,11 @@ This package supersedes [node-cbor](https://github.com/hildjj/node-cbor/tree/mai
 - Complete break of API compatibility, allowing use of newer JavaScript constructs.
 - No work-arounds for older environments.
 
+## Start playing with cbor2 now
+
+Visit the web [playground](https://hildjj.github.io/cbor2/playground/) for an
+interactive view of how the library works.
+
 ## Supported Node.js versions
 
 This project now only supports versions of Node.js that the Node team is
