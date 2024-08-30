@@ -35,8 +35,7 @@
     "build:sourcemap": "npm run build -- --sourcemap inline",
     "watch": "tsup --sourcemap inline --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
     "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild",
-    "ver": "package-extract -st -o src/version.ts",
-    "version": "npm run clean && npm run ci && git add src/version.ts"
+    "ver": "package-extract -st -o src/version.ts"
   },
   "keywords": [
     "coap",

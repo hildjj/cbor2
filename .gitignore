@@ -4,5 +4,6 @@ coverage/
 docs/
 lib/
 node_modules/
+src/version.ts
 web/playwright-report/
 web/test-results/
