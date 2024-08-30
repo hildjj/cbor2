@@ -18,11 +18,11 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "http://github.com/hildjj/cbor2.git"
+    "url": "git+ssh://git@github.com/hildjj/cbor2.git"
   },
   "homepage": "https://github.com/hildjj/cbor2",
   "scripts": {
-    "clean": "rimraf lib coverage docs",
+    "clean": "rimraf lib coverage docs src/version.ts",
     "docs": "typedoc && cd web && npm run build",
     "lint": "eslint .",
     "start": "cd web && npm start",
@@ -31,10 +31,11 @@
     "posttest": "tsup --silent",
     "test:noBuild": "c8 node --enable-source-maps --test test/*.test.js",
     "test:web": "cd web && npm test",
-    "build": "tsup",
+    "build": "npm run ver && tsup",
     "build:sourcemap": "npm run build -- --sourcemap inline",
     "watch": "tsup --sourcemap inline --watch src/ --watch test/ --onSuccess 'npm run test:noBuild'",
-    "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild"
+    "ci": "npm run clean && npm run build:sourcemap && npm run lint && npm run test:noBuild",
+    "ver": "package-extract -st -o src/version.ts"
   },
   "keywords": [
     "coap",
@@ -54,20 +55,11 @@
     "eslint": "9.9.1",
     "eslint-plugin-jsdoc": "50.2.2",
     "eslint-plugin-markdown": "5.1.0",
+    "package-extract": "2.0.2",
     "rimraf": "^6.0.1",
     "tsup": "8.2.4",
     "typedoc": "0.26.6",
     "typescript-eslint": "8.3.0"
-  },
-  "overrides": {
-    "@typescript-eslint/utils": "8.0.0-alpha.44",
-    "@typescript-eslint/parser": "8.0.0-alpha.44"
-  },
-  "pnpm": {
-    "overrides": {
-      "@typescript-eslint/utils": "8.0.0-alpha.44",
-      "@typescript-eslint/parser": "8.0.0-alpha.44"
-    }
   },
   "packageManager": "pnpm@9.9.0",
   "engines": {

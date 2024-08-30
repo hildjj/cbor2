@@ -13,7 +13,7 @@
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "1.46.1",
-    "cbor-edn": "0.0.6",
+    "cbor-edn": "0.1.0",
     "cbor2": "link:..",
     "css-loader": "7.1.2",
     "five-server": "0.3.3",
@@ -22,11 +22,6 @@
     "style-loader": "4.0.0",
     "webpack": "5.94.0",
     "webpack-cli": "5.1.4"
-  },
-  "pnpm": {
-    "overrides": {
-      "cbor2": "link:.."
-    }
   },
   "engines": {
     "node": ">=18"
