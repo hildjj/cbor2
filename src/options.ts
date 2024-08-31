@@ -74,6 +74,7 @@ export interface Parent {
   children: Decodeable | unknown[];
   left: number;
   offset: number;
+  depth: number;
   get done(): boolean;
   get isStreaming(): boolean;
   push(child: unknown, stream: Sliceable, offset: number): number;
@@ -159,6 +160,12 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * produced.
    */
   preferMap?: boolean;
+
+  /**
+   * Pretty-print diagnostic format.
+   * @default false
+   */
+  pretty?: boolean;
 
   /**
    * Reject negative integers in the range [CBOR_NEGATIVE_INT_MAX ...

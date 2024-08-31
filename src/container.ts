@@ -44,6 +44,7 @@ export class CBORcontainer {
     dcbor: false,
     diagnosticSizes: DiagnosticSizes.PREFERRED,
     convertUnsafeIntsToFloat: false,
+    pretty: false,
     preferMap: false,
     rejectLargeNegatives: false,
     rejectBigInts: false,
@@ -111,6 +112,7 @@ export class CBORcontainer {
   public offset: number;
   public count = 0;
   public children: Tag | unknown[] = [];
+  public depth = 0;
   #opts: RequiredDecodeOptions;
   #encodedChildren: Uint8Array[] | null = null;
 
@@ -125,6 +127,9 @@ export class CBORcontainer {
     this.left = left;
     this.parent = parent;
     this.#opts = opts;
+    if (parent) {
+      this.depth = parent.depth + 1;
+    }
 
     if (this.mt === MT.MAP) {
       if (this.#opts.sortKeys || this.#opts.rejectDuplicateKeys) {
