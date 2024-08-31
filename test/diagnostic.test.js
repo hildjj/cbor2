@@ -52,3 +52,22 @@ test('never use lengths', () => {
     '2'
   );
 });
+
+test('pretty', () => {
+  assert.equal(
+    diagnose('a26474797065f563666f6fa4f40203820204048005a0', {pretty: true}),
+    `\
+{
+  "type": true,
+  "foo": {
+    false: 2,
+    3: [
+      2,
+      4
+    ],
+    4: [],
+    5: {}
+  }
+}`
+  );
+});

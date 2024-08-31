@@ -62,6 +62,7 @@ test('Conversions', async({page}) => {
 
   await page.locator('#output-fmt').selectOption('diagnostic');
   await expect(page.getByRole('button', {name: 'Copy to input'})).toBeEnabled();
+  await checkOutputs(page);
 
   await page.locator('#output-fmt').selectOption('hex');
   await page.getByRole('button', {name: 'Copy to input'}).click();

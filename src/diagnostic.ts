@@ -18,6 +18,7 @@ import {Simple} from './simple.js';
 import {halfToUint} from './float.js';
 import {u8toHex} from './utils.js';
 
+const INDENT = '  ';
 const TE = new TextEncoder();
 
 /**
@@ -143,11 +144,21 @@ export function diagnose(
 
   for (const mav of stream) {
     const [mt, ai, val] = mav;
-    if (parent && (parent.count > 0) && (val !== SYMS.BREAK)) {
-      if ((parent.mt === MT.MAP) && (parent.count % 2)) {
-        str += ': ';
-      } else {
-        str += ', ';
+    if (parent) {
+      if ((parent.count > 0) && (val !== SYMS.BREAK)) {
+        if ((parent.mt === MT.MAP) && (parent.count % 2)) {
+          str += ': ';
+        } else {
+          str += ',';
+          if (!opts.pretty) {
+            str += ' ';
+          }
+        }
+      }
+      if (opts.pretty) {
+        if ((parent.mt !== MT.MAP) || (parent.count % 2 === 0)) {
+          str += `\n${INDENT.repeat(parent.depth + 1)}`;
+        }
       }
     }
     ret = CBORcontainer.create(mav, parent, opts, stream);
@@ -204,7 +215,11 @@ export function diagnose(
         if (s) {
           str += ' ';
         }
-        ret.close = ']';
+        if (opts.pretty && val) {
+          ret.close = `\n${INDENT.repeat(ret.depth)}]`;
+        } else {
+          ret.close = ']';
+        }
         break;
       }
       case MT.MAP: {
@@ -214,7 +229,11 @@ export function diagnose(
         if (s) {
           str += ' ';
         }
-        ret.close = '}';
+        if (opts.pretty && val) {
+          ret.close = `\n${INDENT.repeat(ret.depth)}}`;
+        } else {
+          ret.close = '}';
+        }
         break;
       }
       case MT.TAG:
