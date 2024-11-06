@@ -2,6 +2,11 @@ name: Publish Package to npmjs
 on:
   release:
     types: [published]
+  workflow_call:
+    secrets:
+      NPM_TOKEN:
+        required: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
