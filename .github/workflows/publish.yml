@@ -31,6 +31,7 @@ jobs:
           publish_dir: docs
           publish_branch: gh-pages
           destination_dir: docs
+      - run: npm pkg delete devDependencies scripts packageManager
       - run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
