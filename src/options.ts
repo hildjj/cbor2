@@ -36,7 +36,7 @@ export type DecodeValue = Simple | Symbol | Uint8Array | bigint | boolean |
   number | string | null | undefined;
 
 export interface Sliceable {
-  toHere(begin?: number | undefined): Uint8Array;
+  toHere(begin?: number): Uint8Array;
 }
 
 /**

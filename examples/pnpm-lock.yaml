@@ -16,7 +16,6 @@ packages:
 
   cbor2@file:..:
     resolution: {directory: .., type: directory}
-    name: cbor2
     engines: {node: '>=18'}
 
 snapshots:

@@ -11,6 +11,8 @@ export default [
       'lib/**',
       'web/dist/**',
       'dcbor-test-vectors/**',
+      'web/playwright-report/**',
+      'web/test-results/**',
     ],
   },
   ...base,

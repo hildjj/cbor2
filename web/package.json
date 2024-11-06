@@ -5,22 +5,22 @@
   "private": true,
   "scripts": {
     "build": "webpack",
-    "start": "five-server",
+    "start": "hostlocal",
     "test": "playwright test"
   },
   "type": "module",
   "author": "Joe Hildebrand <joe-github@cursive.net>",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "1.46.1",
+    "@playwright/test": "1.48.2",
     "cbor-edn": "0.1.0",
     "cbor2": "link:..",
     "css-loader": "7.1.2",
-    "five-server": "0.3.3",
-    "html-webpack-plugin": "5.6.0",
+    "hostlocal": "1.4.0",
+    "html-webpack-plugin": "5.6.3",
     "node-inspect-extracted": "3.0.2",
     "style-loader": "4.0.0",
-    "webpack": "5.94.0",
+    "webpack": "5.96.1",
     "webpack-cli": "5.1.4"
   },
   "engines": {
