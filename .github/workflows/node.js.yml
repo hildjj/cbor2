@@ -6,13 +6,17 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+    secrets:
+      codecov_token:
+        required: true
 
 jobs:
   build:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [18.x, 20.x, 22.x, 23.x]
         platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
@@ -33,5 +37,7 @@ jobs:
       - name: Test ${{ matrix.node-version }} ${{ matrix.platform }}
         run: npm run ci
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
