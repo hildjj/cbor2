@@ -108,10 +108,27 @@ export class Tag implements ToCBOR, Decodeable {
    * @param tag Tag number.
    * @returns Old decoder, if there was one.
    */
-  public static clearDecoder(tag: number): TagDecoder | undefined {
+  public static clearDecoder(tag: TagNumber): TagDecoder | undefined {
     const old = this.#tags.get(tag);
     this.#tags.delete(tag);
     return old;
+  }
+
+  /**
+   * Get the decoder for a given tag number.
+   *
+   * @param tag The tag number.
+   * @returns The decoder function, if there is one.
+   */
+  public static getDecoder(tag: TagNumber): TagDecoder | undefined {
+    return this.#tags.get(tag);
+  }
+
+  /**
+   * Get all registered decoders as object
+   */
+  public static getAllDecoders() {
+    return Object.fromEntries(this.#tags);
   }
 
   /**
