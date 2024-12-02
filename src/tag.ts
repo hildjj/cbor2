@@ -127,7 +127,9 @@ export class Tag implements ToCBOR, Decodeable {
   /**
    * Get all registered decoders as object
    */
-  public static getAllDecoders() {
+  public static getAllDecoders(): {
+    [key: string]: TagDecoder;
+  } {
     return Object.fromEntries(this.#tags);
   }
 

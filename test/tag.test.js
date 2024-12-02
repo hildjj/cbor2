@@ -34,7 +34,7 @@ test('Tag Register and verify decoders', () => {
   }
 
   // Register a decoder with a tag
-  const t0 = Tag.registerDecoder(9999, myDecoder);
+  Tag.registerDecoder(9999, myDecoder);
 
   // Verify the we added decoder to the registry
   assert.equal(Tag.getDecoder(9999), myDecoder);
