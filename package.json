@@ -51,6 +51,13 @@
     "name": "Joe Hildebrand",
     "email": "joe-github@cursive.net"
   },
+  "contributors": [
+    {
+      "name": "İrfan Bilaloğlu",
+      "email": "irfanbilaloglu@gmail.com",
+      "url": "https://github.com/irfan798"
+    }
+  ],
   "license": "MIT",
   "devDependencies": {
     "@cto.af/eslint-config": "5.0.5",
