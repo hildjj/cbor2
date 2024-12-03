@@ -252,15 +252,16 @@ Tag.registerDecoder(21065, (tag: Tag): RegExp => {
   // For any unescaped dots (.) outside character classes (first alternative
   // of charClass production): replace dot by [^\n\r].
   //
-  // (This is wrong in two ways: it also needs U+2028 and U+2029, and just
-  // using the s flag gets all of that.)
+  // (This is wrong in two ways: it also needs U+2028 and U+2029, and
+  // JS already doesn't match those characters with . unless the 's' flag
+  // is on.)
 
   // Envelope the result in ^(?: and )$.
   const str = `^(?:${tag.contents})$`;
 
   // The ECMAScript regexp is to be interpreted as a Unicode pattern ("u"
   // flag; see Section 21.2.2 "Pattern Semantics" of [ECMA-262]).
-  return new RegExp(str, 'su');
+  return new RegExp(str, 'u');
 }, 'I-RegExp');
 
 Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
