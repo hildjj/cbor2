@@ -286,7 +286,7 @@ Tag.registerDecoder(64, (tag: Tag): Uint8Array => {
 
 interface TypedArray {
   [n: number]: bigint | number;
-  buffer: ArrayBuffer;
+  buffer: ArrayBufferLike;
   byteLength: number;
   byteOffset: number;
   [Symbol.iterator](): IterableIterator<bigint | number>;
