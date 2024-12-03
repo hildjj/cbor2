@@ -27,3 +27,33 @@ test('Tag', () => {
 
   assert.deepEqual([...t], ['2023-07-21T22:16:20-0600']);
 });
+
+test('Tag Register and verify decoders', () => {
+  function myDecoder(_tag) {
+    return 'myDecoder';
+  }
+
+  // Register a decoder with a tag
+  Tag.registerDecoder(9999, myDecoder);
+
+  // Verify the we added decoder to the registry
+  assert.equal(Tag.getDecoder(9999), myDecoder);
+
+  // Verify execution is the same as the decoder
+  assert.equal(Tag.getDecoder(9999)(), myDecoder());
+
+  // Verify decoder is in all decoder list
+  const allDecoders = Tag.getAllDecoders();
+  assert.equal(allDecoders.get(9999), myDecoder);
+  assert.equal(allDecoders.has(9999), true);
+
+  // Remove the decoder from the registry
+  Tag.clearDecoder(9999);
+
+  // Verify the decoder is removed
+  assert.equal(Tag.getDecoder(9999), undefined);
+
+  // Verify the decoder is removed from all decoder list
+  assert.equal(Tag.getAllDecoders()[9999], undefined);
+});
+
