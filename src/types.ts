@@ -251,17 +251,16 @@ Tag.registerDecoder(21065, (tag: Tag): RegExp => {
 
   // For any unescaped dots (.) outside character classes (first alternative
   // of charClass production): replace dot by [^\n\r].
-  // ... yeah, we're not writing a full parser for this.  We'll give it a try,
-  // though.  This regexp is like 95% of what's needed.
-  // See https://regex101.com/r/UtCcwh/1
-  let str = tag.contents.replace(/(?<!\\)(?<!\[(?:[^\]]|\\\])*)\./g, '[^\n\r]');
+  //
+  // (This is wrong in two ways: it also needs U+2028 and U+2029, and just
+  // using the s flag gets all of that.)
 
   // Envelope the result in ^(?: and )$.
-  str = `^(?:${str})$`;
+  const str = `^(?:${tag.contents})$`;
 
   // The ECMAScript regexp is to be interpreted as a Unicode pattern ("u"
   // flag; see Section 21.2.2 "Pattern Semantics" of [ECMA-262]).
-  return new RegExp(str, 'u');
+  return new RegExp(str, 'su');
 }, 'I-RegExp');
 
 Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
