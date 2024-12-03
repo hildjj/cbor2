@@ -125,12 +125,10 @@ export class Tag implements ToCBOR, Decodeable {
   }
 
   /**
-   * Get all registered decoders as object
+   * Get all registered decoders clone of the map.
    */
-  public static getAllDecoders(): {
-    [key: string]: TagDecoder;
-  } {
-    return Object.fromEntries(this.#tags);
+  public static getAllDecoders(): ReadonlyMap<TagNumber, TagDecoder> {
+    return new Map(this.#tags);
   }
 
   /**

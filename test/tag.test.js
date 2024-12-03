@@ -44,7 +44,8 @@ test('Tag Register and verify decoders', () => {
 
   // Verify decoder is in all decoder list
   const allDecoders = Tag.getAllDecoders();
-  assert.equal(allDecoders[9999], myDecoder);
+  assert.equal(allDecoders.get(9999), myDecoder);
+  assert.equal(allDecoders.has(9999), true);
 
   // Remove the decoder from the registry
   Tag.clearDecoder(9999);
