@@ -2,18 +2,52 @@
   "name": "cbor2",
   "version": "1.7.1",
   "description": "Encode and parse data in the Concise Binary Object Representation (CBOR) data format (RFC8949).",
+  "main": "./lib/index.cjs",
   "exports": {
-    ".": "./lib/index.js",
-    "./comment": "./lib/comment.js",
-    "./decoder": "./lib/decoder.js",
-    "./diagnostic": "./lib/diagnostic.js",
-    "./encoder": "./lib/encoder.js",
-    "./simple": "./lib/simple.js",
-    "./sorts": "./lib/sorts.js",
-    "./tag": "./lib/tag.js",
-    "./types": "./lib/types.js",
-    "./utils": "./lib/utils.js",
-    "./writer": "./lib/writer.js"
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
+    },
+    "./comment": {
+      "import": "./lib/comment.js",
+      "require": "./lib/comment.cjs"
+    },
+    "./decoder": {
+      "import": "./lib/decoder.js",
+      "require": "./lib/decoder.cjs"
+    },
+    "./diagnostic": {
+      "import": "./lib/diagnostic.js",
+      "require": "./lib/diagnostic.cjs"
+    },
+    "./encoder": {
+      "import": "./lib/encoder.js",
+      "require": "./lib/encoder.cjs"
+    },
+    "./simple": {
+      "import": "./lib/simple.js",
+      "require": "./lib/simple.cjs"
+    },
+    "./sorts": {
+      "import": "./lib/sorts.js",
+      "require": "./lib/sorts.cjs"
+    },
+    "./tag": {
+      "import": "./lib/tag.js",
+      "require": "./lib/tag.cjs"
+    },
+    "./types": {
+      "import": "./lib/types.js",
+      "require": "./lib/types.cjs"
+    },
+    "./utils": {
+      "import": "./lib/utils.js",
+      "require": "./lib/utils.cjs"
+    },
+    "./writer": {
+      "import": "./lib/writer.js",
+      "require": "./lib/writer.cjs"
+    }
   },
   "files": [
     "lib"

@@ -15,7 +15,7 @@ export default defineConfig({
   clean: true,
   dts: true,
   entry,
-  format: 'esm',
+  format: ['esm', 'cjs'],
   minify: true,
   outDir: 'lib',
   sourcemap: false,
