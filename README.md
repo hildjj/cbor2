@@ -35,7 +35,7 @@ See the full API [documentation](http://hildjj.github.io/cbor2/).
 Example:
 
 ```js
-import {decode, diagnose, encode} from 'cbor';
+import {decode, diagnose, encode} from 'cbor2';
 
 const encoded = encode(true); // Returns Uint8Array(1) [ 245 ]
 decode(encoded); // Returns true
