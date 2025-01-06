@@ -86,7 +86,7 @@ test('Conversions', async({page}) => {
 });
 
 test('Encode Options', async({page}) => {
-  await page.getByRole('button', {name: 'Encoding \u2795'}).click();
+  await page.getByRole('button', {name: 'Encoding Options \u2795'}).click();
   await page.locator('#dcborEncode').check();
   await expect(page.getByLabel('avoidInts')).not.toBeChecked();
   await expect(page.locator('#cdeEncode')).toBeChecked();
@@ -106,7 +106,7 @@ test('Encode Options', async({page}) => {
 });
 
 test('Decode Options', async({page}) => {
-  await page.getByRole('button', {name: 'Decoding \u2795'}).click();
+  await page.getByRole('button', {name: 'Decoding Options \u2795'}).click();
   await page.locator('#dcbor').check();
   await expect(page.getByLabel('boxed')).not.toBeChecked();
   await expect(page.locator('#cde')).toBeChecked();
