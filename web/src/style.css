@@ -57,13 +57,14 @@ li * {
   background-color: #eee;
   color: #444;
   cursor: pointer;
-  width: 90%;
+  width: 99%;
   text-align: left;
   border: none;
   outline: none;
   transition: 0.4s;
   font-weight: bold;
   font-size: 1.1em;
+  margin-top: 1.1em;
 }
 
 .active, .accordion:hover {
