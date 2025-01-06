@@ -159,14 +159,15 @@ type.  In this case, call `registerEncoder(type, encodeFunction)`. The
 `toCBOR` above:
 
 ```js
+import {Buffer} from 'node:buffer';
 import {registerEncoder} from 'cbor2/encoder';
 
-class Bar {
-  constructor() {
-    this.three = 3;
-  }
-}
-registerEncoder(Bar, (b, _writer, _options) => [NaN, b.three]);
+registerEncoder(Buffer, b => [
+  // Don't write a tag
+  NaN,
+  // New view on the ArrayBuffer, without copying bytes
+  new Uint8Array(b.buffer, b.byteOffset, b.byteLength),
+]);
 ```
 
 ## Adding new decoders
