@@ -13,6 +13,7 @@ export default [
       'dcbor-test-vectors/**',
       'web/playwright-report/**',
       'web/test-results/**',
+      'test-vectors/*',
     ],
   },
   ...base,

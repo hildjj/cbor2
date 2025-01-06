@@ -31,27 +31,7 @@
         <span id="to">&rarr;&rarr;&rarr; to &rarr;&rarr;&rarr;</span>
       </div>
       <div id="input-text" class="monaco"></div>
-    </div>
-    <div class="output col">
-      <h3>Output</h3>
-      <div class="cmd">
-        <select id="output-fmt">
-          <option>commented</option>
-          <option>diagnostic</option>
-          <option>hex</option>
-          <option>base64</option>
-          <option>base64url</option>
-          <option>js</option>
-          <option>JSON</option>
-        </select>
-        <button id="copy">Copy to input</button>
-      </div>
-      <div id="output-text" class="monaco"></div>
-    </div>
-    <div class="options col">
-      <h3>Options</h3>
-      <div class="cmd">&nbsp;</div>
-      <button class="accordion">Encoding</button>
+      <button class="accordion">Encoding Options</button>
       <ul id="encodeOpts" class="panel">
         <li>
           <input type="checkbox" id="avoidIntsEncode">
@@ -140,7 +120,23 @@
           </select>
         </li>
       </ul>
-      <button class="accordion">Decoding</button>
+    </div>
+    <div class="output col">
+      <h3>Output</h3>
+      <div class="cmd">
+        <select id="output-fmt">
+          <option>commented</option>
+          <option>diagnostic</option>
+          <option>hex</option>
+          <option>base64</option>
+          <option>base64url</option>
+          <option>js</option>
+          <option>JSON</option>
+        </select>
+        <button id="copy">Copy to input</button>
+      </div>
+      <div id="output-text" class="monaco"></div>
+      <button class="accordion">Decoding Options</button>
       <ul id="decodeOpts" class="panel">
         <li>
           <input type="checkbox" id="boxed">
@@ -251,7 +247,7 @@
       </ul>
       <div class="power">
         Powered by <a href="https://github.com/hildjj/cbor2/">cbor2<span id="cbor2-version"></span></span></a> and
-        <a href="https://github.com/hildjj/cbor-edn/">cbor-edn<span id="cbor-edn-version"></span></a>.<br />
+        <a href="https://github.com/hildjj/cbor-edn/">cbor-edn<span id="cbor-edn-version"></span></a>.
         <a href="https://github.com/hildjj/cbor2/tree/main/web">Source</a>
       </div>
     </div>
