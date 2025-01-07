@@ -2,23 +2,10 @@
   "name": "cbor2",
   "version": "1.8.1",
   "description": "Encode and parse data in the Concise Binary Object Representation (CBOR) data format (RFC8949).",
-  "exports": {
-    ".": "./lib/index.js",
-    "./comment": "./lib/comment.js",
-    "./decoder": "./lib/decoder.js",
-    "./diagnostic": "./lib/diagnostic.js",
-    "./encoder": "./lib/encoder.js",
-    "./simple": "./lib/simple.js",
-    "./sorts": "./lib/sorts.js",
-    "./tag": "./lib/tag.js",
-    "./types": "./lib/types.js",
-    "./utils": "./lib/utils.js",
-    "./writer": "./lib/writer.js"
-  },
+  "type": "module",
   "files": [
     "lib"
   ],
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/hildjj/cbor2.git"
@@ -74,5 +61,54 @@
   "packageManager": "pnpm@9.15.3",
   "engines": {
     "node": ">=18"
-  }
+  },
+  "main": "./lib/cjs/index.cjs",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/cjs/index.cjs",
+      "import": "./lib/index.js"
+    },
+    "./comment": {
+      "require": "./lib/cjs/comment.cjs",
+      "import": "./lib/comment.js"
+    },
+    "./decoder": {
+      "require": "./lib/cjs/decoder.cjs",
+      "import": "./lib/decoder.js"
+    },
+    "./diagnostic": {
+      "require": "./lib/cjs/diagnostic.cjs",
+      "import": "./lib/diagnostic.js"
+    },
+    "./encoder": {
+      "require": "./lib/cjs/encoder.cjs",
+      "import": "./lib/encoder.js"
+    },
+    "./simple": {
+      "require": "./lib/cjs/simple.cjs",
+      "import": "./lib/simple.js"
+    },
+    "./sorts": {
+      "require": "./lib/cjs/sorts.cjs",
+      "import": "./lib/sorts.js"
+    },
+    "./tag": {
+      "require": "./lib/cjs/tag.cjs",
+      "import": "./lib/tag.js"
+    },
+    "./types": {
+      "require": "./lib/cjs/types.cjs",
+      "import": "./lib/types.js"
+    },
+    "./utils": {
+      "require": "./lib/cjs/utils.cjs",
+      "import": "./lib/utils.js"
+    },
+    "./writer": {
+      "require": "./lib/cjs/writer.cjs",
+      "import": "./lib/writer.js"
+    }
+  }  
 }
