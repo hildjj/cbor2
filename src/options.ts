@@ -1,4 +1,4 @@
-import type {KeySorter} from './sorts.js';
+import type {KeySorter, KeyValueEncoded} from './sorts.js';
 import type {Simple} from './simple.js';
 
 /**
@@ -104,6 +104,9 @@ export enum DiagnosticSizes {
   ALWAYS = 1,
 }
 
+type ObjectCreator =
+  (kve: KeyValueEncoded[], opts: RequiredDecodeOptions) => unknown;
+
 /**
  * Decoding options.
  */
@@ -152,6 +155,14 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * @default DiagnosticSizes.PREFERRED
    */
   diagnosticSizes?: DiagnosticSizes;
+
+  /**
+   * Create an object from an array of key-value pairs.  The default
+   * implementation creates a plain JS object if all of the keys are strings,
+   * otherwise creates a Map (unless preferMap or boxed is set, in which case
+   * a Map is always created).
+   */
+  createObject?: ObjectCreator;
 
   /**
    * Always generate Map instances when decoding, instead of trying to

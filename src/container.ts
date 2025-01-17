@@ -25,6 +25,16 @@ const LENGTH_FOR_AI = new Map([
 
 const EMPTY_BUF = new Uint8Array(0);
 
+function createObject(
+  kve: KeyValueEncoded[],
+  opts: RequiredDecodeOptions
+): unknown {
+  // Extra array elements are ignored in both branches.
+  return !opts.boxed && !opts.preferMap && kve.every(([k]) => typeof k === 'string') ?
+    Object.fromEntries(kve) :
+    new Map<unknown, unknown>(kve as unknown as [unknown, unknown][]);
+}
+
 /**
  * A CBOR data item that can contain other items.  One of:
  *
@@ -44,6 +54,7 @@ export class CBORcontainer {
     dcbor: false,
     diagnosticSizes: DiagnosticSizes.PREFERRED,
     convertUnsafeIntsToFloat: false,
+    createObject,
     pretty: false,
     preferMap: false,
     rejectLargeNegatives: false,
@@ -366,10 +377,7 @@ export class CBORcontainer {
           }
         }
 
-        // Extra array elements are ignored in both branches.
-        ret = !this.#opts.boxed && !this.#opts.preferMap && pu.every(([k]) => typeof k === 'string') ?
-          Object.fromEntries(pu) :
-          new Map<unknown, unknown>(pu as unknown as [unknown, unknown][]);
+        ret = this.#opts.createObject(pu, this.#opts);
         break;
       }
       case MT.BYTE_STRING: {

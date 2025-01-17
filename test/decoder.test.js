@@ -1,5 +1,6 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
+import {CBORcontainer} from '../lib/container.js';
 import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
 import {decode} from '../lib/decoder.js';
@@ -191,4 +192,18 @@ a1   -- Map (Length: 1 pair)
   61 --   [val 0] UTF8 (Length: 1): "b"
     62\n`],
   ], {preferMap: true});
+});
+
+test('createObject', () => {
+  testAll([
+    [new Map(), 'Map(0) {}', `0xa0
+a0 -- Map (Length: 0 pairs)\n`],
+  ], {
+    createObject(kvs, opts) {
+      if (kvs.length === 0) {
+        return new Map();
+      }
+      return CBORcontainer.defaultDecodeOptions.createObject(kvs, opts);
+    },
+  });
 });
