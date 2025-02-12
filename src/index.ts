@@ -21,12 +21,14 @@ export type {
   DecodeValue,
   EncodeOptions,
   MtAiValue,
+  ObjectCreator,
   Parent,
   ParentConstructor,
   RequiredCommentOptions,
   RequiredDecodeOptions,
   RequiredEncodeOptions,
   Sliceable,
+  StringNormalization,
   WriterOptions,
 } from './options.js';
 export {DiagnosticSizes} from './options.js';
@@ -43,7 +45,7 @@ export {
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
 export type {TagNumber, TaggedValue, ToCBOR, Writer} from './writer.js';
-export {saveEncoded, saveEncodedLength, unbox, getEncoded} from './box.js';
+export {saveEncoded, saveEncodedLength, unbox, getEncoded, type OriginalEncoding} from './box.js';
 export const {
   cdeDecodeOptions,
   dcborDecodeOptions,

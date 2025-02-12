@@ -8,6 +8,29 @@
  * @module
  */
 
+export const CBOR_RANGES = Symbol('CBOR_RANGES');
+export type CborRange = [start: number, len: number, string?];
+export type Range8Array = Uint8Array & {
+  [CBOR_RANGES]?: CborRange[];
+};
+
+export function setRanges(u8: Range8Array, ranges: CborRange[]): void {
+  Object.defineProperty(u8, CBOR_RANGES, {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: ranges,
+  });
+}
+
+export function getRanges(u8: Range8Array): CborRange[] | undefined {
+  return u8[CBOR_RANGES];
+}
+
+export function hasRanges(u8: Range8Array): boolean {
+  return getRanges(u8) !== undefined;
+}
+
 /**
  * Convert hex string to Uint8Array.
  *
@@ -44,13 +67,28 @@ export function u8toHex(u8: Uint8Array): string {
  * @param u8s Zero or more arrays to concatenate.
  * @returns Combined array.
  */
-export function u8concat(u8s: Uint8Array[]): Uint8Array {
+export function u8concat(u8s: Range8Array[]): Range8Array {
   const sz = u8s.reduce((t, v) => t + v.length, 0);
+  const ranged = u8s.some(v => hasRanges(v));
+  const ranges: CborRange[] = [];
   const ret = new Uint8Array(sz);
   let len = 0;
   for (const u8 of u8s) {
+    if (!(u8 instanceof Uint8Array)) {
+      throw new TypeError(`Invalid array: ${u8}`);
+    }
     ret.set(u8, len);
+    if (ranged) {
+      const rgs: CborRange[] = u8[CBOR_RANGES] ?? [[0, u8.length]];
+      for (const r of rgs) {
+        r[0] += len;
+      }
+      ranges.push(...rgs);
+    }
     len += u8.length;
+  }
+  if (ranged) {
+    setRanges(ret, ranges);
   }
   return ret;
 }

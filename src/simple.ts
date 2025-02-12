@@ -43,7 +43,6 @@ export class Simple implements ToCBOR {
   /**
    * Convert this simple value to a useful data type, if possible.
    *
-   * @param options Options for decoding.
    * @returns The converted value.
    */
   public decode(): SimpleValue {

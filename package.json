@@ -61,19 +61,19 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@cto.af/eslint-config": "5.1.6",
+    "@cto.af/eslint-config": "5.1.9",
     "c8": "10.1.3",
-    "eslint": "9.18.0",
-    "eslint-plugin-jsdoc": "50.6.2",
+    "eslint": "9.20.1",
+    "eslint-plugin-jsdoc": "50.6.3",
     "eslint-plugin-markdown": "5.1.0",
     "package-extract": "2.3.0",
     "rimraf": "^5.0.10",
-    "tsup": "8.3.5",
-    "typedoc": "0.27.6",
-    "typescript-eslint": "8.20.0"
+    "tsup": "8.3.6",
+    "typedoc": "0.27.7",
+    "typescript-eslint": "8.24.0"
   },
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.3.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=18.7"
   }
 }
