@@ -1,7 +1,6 @@
 import '../lib/types.js';
 import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 import util from 'node:util';
 

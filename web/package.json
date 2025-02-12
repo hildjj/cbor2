@@ -12,7 +12,7 @@
   "author": "Joe Hildebrand <joe-github@cursive.net>",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "1.49.1",
+    "@playwright/test": "1.50.1",
     "cbor-edn": "0.1.0",
     "cbor2": "link:..",
     "css-loader": "7.1.2",

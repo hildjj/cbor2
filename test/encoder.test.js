@@ -8,7 +8,6 @@ import {isBigEndian, u8toHex} from '../lib/utils.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
 import {sortLengthFirstDeterministic} from '../lib/sorts.js';
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 import util from 'node:util';
 

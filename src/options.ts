@@ -104,7 +104,7 @@ export enum DiagnosticSizes {
   ALWAYS = 1,
 }
 
-type ObjectCreator =
+export type ObjectCreator =
   (kve: KeyValueEncoded[], opts: RequiredDecodeOptions) => unknown;
 
 /**

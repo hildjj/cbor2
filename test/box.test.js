@@ -3,8 +3,6 @@ import {box, saveEncodedLength} from '../lib/box.js';
 import {hexToU8, u8toHex} from '../lib/utils.js';
 import assert from 'node:assert/strict';
 import {encode} from '../lib/encoder.js';
-
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 
 function eh(obj) {

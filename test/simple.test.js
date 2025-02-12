@@ -1,6 +1,5 @@
 import {Simple} from '../lib/simple.js';
 import assert from 'node:assert/strict';
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import test from 'node:test';
 import util from 'node:util';
 
