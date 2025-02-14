@@ -6,11 +6,14 @@ import type {
 } from './options.js';
 import {MT, NUMBYTES, SYMS} from './constants.js';
 import {type OriginalEncoding, getEncoded, saveEncoded} from './box.js';
+import {getRanges, subarrayRanges, u8toHex} from './utils.js';
 import {CBORcontainer} from './container.js';
 import {DecodeStream} from './decodeStream.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
-import {u8toHex} from './utils.js';
+import {diagnose} from './diagnostic.js';
+
+const TD = new TextDecoder();
 
 class CommentContainer extends CBORcontainer implements OriginalEncoding {
   public depth = 0;
@@ -156,10 +159,70 @@ function output(
     ret += '\n';
     if (enc.length > numLen + 1) {
       const ind = spaces((container.depth + 1) * 2);
-      for (let i = numLen + 1; i < enc.length; i += 8) {
-        ret += ind;
-        ret += u8toHex(enc.subarray(i, i + 8));
-        ret += '\n';
+      const ranges = getRanges(enc);
+      if (ranges?.length) {
+        ranges.sort((a, b) => {
+          const start = a[0] - b[0];
+          if (start) {
+            return start;
+          }
+          return b[1] - a[1];
+        });
+        let max = 0;
+        for (const [start, len, type] of ranges) {
+          if (start < max) {
+            continue;
+          }
+          max = start + len;
+          if (type === '<<') {
+            ret += spaces(options.minCol + 1);
+            ret += '--';
+            ret += ind;
+            ret += '<< ';
+            const buf = subarrayRanges(enc, start, start + len);
+            const bufRanges = getRanges(buf);
+            if (bufRanges) {
+              // The current range will always be start 0 in bufRanges, since
+              // we just subtracted start from it.
+              const rInd = bufRanges.findIndex(
+                ([s2, l2, t2]) => (s2 === 0) && (l2 === len) && (t2 === '<<')
+              );
+              if (rInd >= 0) {
+                bufRanges.splice(rInd, 1);
+              }
+            }
+            ret += diagnose(buf);
+            ret += ' >>\n';
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            ret += comment(buf, {
+              initialDepth: container.depth + 1,
+              minCol: options.minCol,
+              noPrefixHex: true,
+            });
+            continue;
+          } else if (type === "'") {
+            ret += spaces(options.minCol + 1);
+            ret += '--';
+            ret += ind;
+            ret += "'";
+            ret += TD.decode(enc.subarray(start, start + len));
+            ret += "'\n";
+          }
+          if (start > numLen) {
+            for (let i = start; i < start + len; i += 8) {
+              const end = Math.min(i + 8, start + len);
+              ret += ind;
+              ret += u8toHex(enc.subarray(i, end));
+              ret += '\n';
+            }
+          }
+        }
+      } else {
+        for (let i = numLen + 1; i < enc.length; i += 8) {
+          ret += ind;
+          ret += u8toHex(enc.subarray(i, i + 8));
+          ret += '\n';
+        }
       }
     }
   } else {
