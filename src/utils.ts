@@ -31,6 +31,29 @@ export function hasRanges(u8: Range8Array): boolean {
   return getRanges(u8) !== undefined;
 }
 
+export function subarrayRanges(
+  u8: Range8Array,
+  begin = 0,
+  end = u8.length - 1
+): Range8Array {
+  const ret = u8.subarray(begin, end);
+  const ranges = getRanges(u8);
+  if (ranges) {
+    const rng: CborRange[] = [];
+    for (const r of ranges) {
+      if ((r[0] >= begin) && ((r[0] + r[1]) <= end)) {
+        const s: CborRange = [...r];
+        s[0] -= begin;
+        rng.push(s);
+      }
+    }
+    if (rng.length) {
+      setRanges(ret, rng);
+    }
+  }
+  return ret;
+}
+
 /**
  * Convert hex string to Uint8Array.
  *

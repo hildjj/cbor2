@@ -4,7 +4,7 @@ import {
   NUMBYTES,
   SYMS,
 } from './constants.js';
-import {base64ToBytes, hexToU8} from './utils.js';
+import {base64ToBytes, hexToU8, subarrayRanges} from './utils.js';
 import {Simple} from './simple.js';
 import {parseHalf} from './float.js';
 
@@ -58,7 +58,7 @@ export class DecodeStream implements Sliceable {
   }
 
   public toHere(begin: number): Uint8Array {
-    return this.#src.subarray(begin, this.#offset);
+    return subarrayRanges(this.#src, begin, this.#offset);
   }
 
   /**
@@ -237,7 +237,7 @@ export class DecodeStream implements Sliceable {
   }
 
   #read(size: number): Uint8Array {
-    const a = this.#src.subarray(this.#offset, (this.#offset += size));
+    const a = subarrayRanges(this.#src, this.#offset, (this.#offset += size));
     if (a.length !== size) {
       throw new Error(`Unexpected end of stream reading ${size} bytes, got ${a.length}`);
     }

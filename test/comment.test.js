@@ -2,6 +2,8 @@ import '../lib/types.js';
 import * as cases from './cases.js';
 import assert from 'node:assert/strict';
 import {comment} from '../lib/comment.js';
+import {parseEDN} from 'cbor-edn';
+import {setRanges} from '../lib/utils.js';
 import test from 'node:test';
 
 function testAll(list, opts) {
@@ -31,4 +33,17 @@ test('comment bad', () => {
   failAll([
     '0xff',
   ]);
+});
+
+test('EDN ranges', () => {
+  // This is why the pnpm override is needed in package.json for cbor2.
+  const bytes = parseEDN("<< 'abc' >>");
+  assert.equal(comment(bytes), `\
+0x4443616263
+44 -- Bytes (Length: 4)
+   --  << h'616263' >>
+  43 -- Bytes (Length: 3)
+     --    'abc'
+    616263
+`);
 });
