@@ -3,7 +3,6 @@ import * as cases from './cases.js';
 import assert from 'node:assert/strict';
 import {comment} from '../lib/comment.js';
 import {parseEDN} from 'cbor-edn';
-import {setRanges} from '../lib/utils.js';
 import test from 'node:test';
 
 function testAll(list, opts) {
