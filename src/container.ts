@@ -5,15 +5,16 @@ import {
   type MtAiValue,
   type Parent,
   type RequiredDecodeOptions,
+  RequiredEncodeOptions,
 } from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {box, getEncoded, saveEncoded} from './box.js';
+import {defaultEncodeOptions, encode} from './encoder.js';
 import {stringToHex, u8concat, u8toHex} from './utils.js';
 import {DecodeStream} from './decodeStream.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
 import {checkSubnormal} from './float.js';
-import {encode} from './encoder.js';
 
 const LENGTH_FOR_AI = new Map([
   [NUMBYTES.ZERO, 1],
@@ -279,6 +280,27 @@ export class CBORcontainer {
       }
     }
     throw new TypeError(`Invalid major type: ${mt}`);
+  }
+
+  public static decodeToEncodeOpts(
+    decode: RequiredDecodeOptions
+  ): RequiredEncodeOptions {
+    // Options to re-encode when decoding, to check for sort order in tags
+    // Most important is ignoreOriginalEncoding=false,
+    // which should make most of the rest of these moot, except for numbers
+    // when we are not boxed.
+    // Of all of these, sortKeys is the one that is likely to be relevant
+    // and non-trivial.
+    // This is almost certainly not quite right, and is currently only used
+    // for tag 258.
+    return {
+      ...defaultEncodeOptions,
+      avoidInts: decode.rejectInts,
+      float64: !decode.rejectLongFloats,
+      flushToZero: decode.rejectSubnormals,
+      largeNegativeAsBigInt: decode.rejectLargeNegatives,
+      sortKeys: decode.sortKeys,
+    };
   }
 
   /**
