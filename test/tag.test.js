@@ -1,6 +1,8 @@
 import '../lib/types.js';
 import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
+import {decode} from '../lib/decoder.js';
+import {encode} from '../lib/encoder.js';
 import test from 'node:test';
 import util from 'node:util';
 
@@ -56,3 +58,14 @@ test('Tag Register and verify decoders', () => {
   assert.equal(Tag.getAllDecoders()[9999], undefined);
 });
 
+test('Set with CDE', () => {
+  const s = new Set([2, 1]);
+  const bytes = encode(s);
+  const bytesOrdered = encode(s, {cde: true});
+  assert.notDeepEqual(bytes, bytesOrdered);
+  const s1 = decode(bytes);
+  assert(s1 instanceof Set);
+  assert.throws(() => decode(bytes, {cde: true}));
+  const s2 = decode(bytesOrdered, {cde: true});
+  assert(s2 instanceof Set);
+});

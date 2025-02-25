@@ -27,6 +27,7 @@ import {
   writeTag,
   writeUnknown,
 } from './encoder.js';
+import {CBORcontainer} from './container.js';
 import {KeyValueEncoded} from './sorts.js';
 import {comment} from './comment.js';
 
@@ -491,12 +492,37 @@ registerEncoder(Float64Array, (
   opts: RequiredEncodeOptions
 ): undefined => writeTyped(w, 86, 82, obj, opts));
 
-Tag.registerDecoder(TAG.SET, (tag: Tag) => {
+Tag.registerDecoder(TAG.SET, (tag: Tag, opts: RequiredDecodeOptions) => {
   assertArray(tag.contents);
+  if (opts.sortKeys) {
+    const eopts = CBORcontainer.decodeToEncodeOpts(opts);
+    let lastVal: KeyValueEncoded | null = null;
+    for (const v of tag.contents) {
+      const nextVal: KeyValueEncoded = [v, undefined, encode(v, eopts)];
+      if (lastVal && (opts.sortKeys(lastVal, nextVal) >= 0)) {
+        throw new Error(`Set items out of order in tag #${TAG.SET}`);
+      }
+      lastVal = nextVal;
+    }
+  }
   return new Set(tag.contents);
 }, 'Set');
 
-registerEncoder(Set, (obj: Set<unknown>) => [TAG.SET, [...obj]]);
+registerEncoder(
+  Set,
+  (obj: Set<unknown>, _w: Writer, opts: RequiredEncodeOptions) => {
+    let items = [...obj];
+    if (opts.sortKeys) {
+      // See https://github.com/input-output-hk/cbor-sets-spec/blob/master/CBOR_SETS.md#canonical-cbor
+      // Use the sorter we have for map keys, if it exists.
+      const noValues =
+        items.map<KeyValueEncoded>(v => [v, undefined, encode(v, opts)]);
+      noValues.sort(opts.sortKeys);
+      items = noValues.map(([v]) => v);
+    }
+    return [TAG.SET, items];
+  }
+);
 
 Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
   assertString(tag.contents);
