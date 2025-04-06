@@ -80,6 +80,12 @@ export class DecodeStream implements Sliceable {
     }
   }
 
+  public *seq(): ValueGenerator {
+    while (this.#offset < this.#src.length) {
+      yield *this.#nextVal(0);
+    }
+  }
+
   /**
    * Get the next CBOR value from the input stream.  Yields Value tuples.
    *
