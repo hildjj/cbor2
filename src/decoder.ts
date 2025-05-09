@@ -1,4 +1,4 @@
-import type {DecodeOptions, Parent, MtAiValue as Tuple} from './options.js';
+import type {DecodeOptions, MtAiValue, Parent} from './options.js';
 import {DecodeStream, type ValueGenerator} from './decodeStream.js';
 import {CBORcontainer} from './container.js';
 import {SYMS} from './constants.js';
@@ -73,14 +73,12 @@ export function decode<T = unknown>(
   return ret as T;
 }
 
-export {Tuple};
-
 /**
  * Decode CBOR Sequence bytes to major-type/additional-information/value tuples.
  */
 export class Sequence {
   #seq: ValueGenerator;
-  #peeked: Tuple | undefined;
+  #peeked: MtAiValue | undefined;
 
   public constructor(src: Uint8Array | string, options: DecodeOptions = {}) {
     const stream = new DecodeStream(src, normalizeOptions(options));
@@ -88,7 +86,7 @@ export class Sequence {
   }
 
   /** Peek at the next tuple, allowing for later reads. */
-  public peek(): Tuple | undefined {
+  public peek(): MtAiValue | undefined {
     if (!this.#peeked) {
       this.#peeked = this.#next();
     }
@@ -96,14 +94,14 @@ export class Sequence {
   }
 
   /** Read the next tuple. */
-  public read(): Tuple | undefined {
+  public read(): MtAiValue | undefined {
     const mav = this.#peeked ?? this.#next();
     this.#peeked = undefined;
     return mav;
   }
 
   /** Iterate over all tuples. */
-  public *[Symbol.iterator](): Generator<Tuple, void, undefined> {
+  public *[Symbol.iterator](): Generator<MtAiValue, void, undefined> {
     while (true) {
       const tuple = this.read();
 
@@ -115,7 +113,7 @@ export class Sequence {
     }
   }
 
-  #next(): Tuple | undefined {
+  #next(): MtAiValue | undefined {
     const {value: tuple, done} = this.#seq.next();
     if (done) {
       return undefined;
