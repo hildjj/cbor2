@@ -531,7 +531,6 @@ Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
 }, 'JSON-encoded');
 
 Tag.registerDecoder(TAG.WTF8, (tag: Tag) => {
-  console.log(tag.contents)
   assertU8(tag.contents);
   const WD = new Wtf8Decoder();
   return WD.decode(tag.contents);
