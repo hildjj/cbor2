@@ -4,16 +4,6 @@ import assert from 'node:assert/strict';
 import {hexToU8} from '../lib/utils.js';
 import test from 'node:test';
 
-test('Sequence constructor', () => {
-  // Test with Uint8Array input
-  const seq1 = new Sequence(hexToU8('0102')); // Two integers: 1, 2
-  assert.ok(seq1, 'Should create Sequence from Uint8Array');
-
-  // Test with hex string and explicit encoding
-  const seq2 = new Sequence('0102', {encoding: 'hex'}); // Two integers: 1, 2
-  assert.ok(seq2, 'Should create Sequence from hex string');
-});
-
 test('Sequence read and peek', () => {
   // Simple sequence of two integers: 1, 2
   // 01 -- Unsigned: 1
@@ -44,7 +34,25 @@ test('Sequence read and peek', () => {
   assert.equal(seq.read(), undefined, 'Should return undefined when no more tuples');
 });
 
-test('Sequence iteration', () => {
+test('Sequence iteration with Uint8Array input', () => {
+  // Sequence of three integers: 1, 2, 3
+  // 01 -- Unsigned: 1
+  // 02 -- Unsigned: 2
+  // 03 -- Unsigned: 3
+  const seq = new Sequence(new Uint8Array([1, 2, 3]));
+
+  const values = [];
+  for (const tuple of seq) {
+    values.push(tuple[2]);
+  }
+
+  assert.deepEqual(values, [1, 2, 3], 'Should iterate through all values');
+
+  // Sequence should be exhausted
+  assert.equal(seq.peek(), undefined, 'Peek should return undefined after iteration');
+});
+
+test('Sequence iteration with hex input', () => {
   // Sequence of three integers: 1, 2, 3
   // 01 -- Unsigned: 1
   // 02 -- Unsigned: 2
