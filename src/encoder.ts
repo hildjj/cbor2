@@ -329,7 +329,7 @@ export function writeString(
   if (opts.wtf8 && !val.isWellFormed()) {
     const wtf8 = WE.encode(s);
     writeTag(TAG.WTF8, w, opts);
-    writeInt(wtf8.length, w, MT.UTF8_STRING);
+    writeInt(wtf8.length, w, MT.BYTE_STRING);
     w.write(wtf8);
   } else {
     const utf8 = TE.encode(s);
