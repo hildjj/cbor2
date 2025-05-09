@@ -1,6 +1,6 @@
 import './style.css';
 // eslint-disable-next-line n/no-missing-import
-import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/+esm';
+import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/+esm';
 
 import {
   Simple,
