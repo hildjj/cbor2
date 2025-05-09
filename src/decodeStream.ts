@@ -80,6 +80,23 @@ export class DecodeStream implements Sliceable {
     }
   }
 
+  /**
+   * Get a stream of events describing all CBOR items in the input.  Yields
+   * Value tuples.
+   *
+   * Note that this includes items indicating the start of an array or map, and
+   * the end of an indefinite-length item, and tag numbers separate from the tag
+   * content. Does not validate whether the input is a valid CBOR item.
+   *
+   * @throws On insufficient data.
+   * @example
+   * ```js
+   * const s = new DecodeStream(buffer);
+   * for (const [majorType, additionalInfo, value] of s.seq()) {
+   *  ...
+   * }
+   * ```
+   */
   public *seq(): ValueGenerator {
     while (this.#offset < this.#src.length) {
       yield *this.#nextVal(0);

@@ -74,7 +74,23 @@ export function decode<T = unknown>(
 }
 
 /**
- * Decode CBOR Sequence bytes to major-type/additional-information/value tuples.
+ * Decode (a sequence of) CBOR bytes to
+ * major-type/additional-information/value tuples.
+ *
+ * Note that this includes items indicating the start of an array or map, and
+ * the end of an indefinite-length item, and tag numbers separate from the tag
+ * content. Does not validate whether the input is a valid CBOR item.
+ *
+ * @param src CBOR bytes to decode.
+ * @param options Options for decoding.
+ * @throws {Error} On insufficient data.
+ * @example
+ * ```js
+ * const s = new Sequence(buffer);
+ * for (const [majorType, additionalInfo, value] of s.seq()) {
+ *  ...
+ * }
+ * ```
  */
 export class Sequence {
   #seq: ValueGenerator;
