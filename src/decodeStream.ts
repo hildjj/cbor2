@@ -98,6 +98,14 @@ export class DecodeStream implements Sliceable {
    * ```
    */
   public *seq(): ValueGenerator {
+    // Repeatedly read the next value from the input, until the offset of the
+    // next possible value is past the input length.
+    //
+    // Throws if their is insufficient data to read the next value. Otherwise,
+    // within #nextVal the offset will be incremented to where it expects the
+    // next item to be.
+    //
+    // Note that since we're producting each item, we don't need to track depth.
     while (this.#offset < this.#src.length) {
       yield *this.#nextVal(0);
     }
