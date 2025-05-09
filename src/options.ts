@@ -445,6 +445,18 @@ export interface EncodeOptions extends WriterOptions {
    * @default undefined
    */
   stringNormalization?: StringNormalization | null;
+
+  /**
+   * Allow non-wellformed strings (strings containing unpaired surrogates) to
+   * be encoded as tag 273.  This is optional since a) most protocol use cases
+   * should use string UTF8 and b) this adds a potentially-slow for large
+   * strings check for well-formedness.  You may want this if you are storing
+   * test inputs or outputs and want to ensure that you have the full range of
+   * JS strings as possibilities.  Note: I doubt that tag 273 is
+   * widely-implemented at this time, so this is another reason you should not
+   * use this if you are trying to interoperate.
+   */
+  wtf8?: boolean;
 }
 
 export type RequiredEncodeOptions = Required<EncodeOptions>;

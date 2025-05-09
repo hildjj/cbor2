@@ -323,3 +323,9 @@ test('encodedNumber', () => {
     util.inspect({value, encoding, mt})
   ));
 });
+
+test('wtf8', () => {
+  testAll([
+    ['\ud800', 'Invalid UTF encoded as WTF8', '0xd9011163eda080'],
+  ], {wtf8: true});
+});

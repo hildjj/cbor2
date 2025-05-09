@@ -108,6 +108,9 @@ test('types', () => {
   // 262
   assert.deepEqual(decode('d901066c7b2261223a2066616c73657d'), {a: false});
 
+  // 273
+  assert.deepEqual(decode('d9011143eda080'), '\ud800');
+
   // Always invalid
   assert.throws(() => decode('d9ffff00'));
   assert.throws(() => decode('daffffffff00'));
