@@ -29,6 +29,7 @@ import {
 } from './encoder.js';
 import {CBORcontainer} from './container.js';
 import {KeyValueEncoded} from './sorts.js';
+import {Wtf8Decoder} from '@cto.af/wtf8';
 import {comment} from './comment.js';
 
 const LE = !isBigEndian();
@@ -528,6 +529,12 @@ Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
   assertString(tag.contents);
   return JSON.parse(tag.contents);
 }, 'JSON-encoded');
+
+Tag.registerDecoder(TAG.WTF8, (tag: Tag) => {
+  assertU8(tag.contents);
+  const WD = new Wtf8Decoder();
+  return WD.decode(tag.contents);
+});
 
 Tag.registerDecoder(TAG.SELF_DESCRIBED,
   (tag: Tag): unknown => tag.contents,

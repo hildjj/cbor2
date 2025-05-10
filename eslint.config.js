@@ -28,6 +28,7 @@ export default [
     rules: {
       // Lots of wrapper-object processing in this lib.
       '@typescript-eslint/no-wrapper-object-types': 'off',
+      '@typescript-eslint/no-unnecessary-type-conversion': 'off',
     },
   },
   {

@@ -6,6 +6,7 @@ import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
 import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
 import {box, getEncodedLength} from './box.js';
 import {flushToZero, halfToUint} from './float.js';
+import {Wtf8Encoder} from '@cto.af/wtf8';
 import {hexToU8} from './utils.js';
 
 export const {
@@ -20,6 +21,7 @@ const FALSE = (MT.SIMPLE_FLOAT << 5) | SIMPLE.FALSE;
 const UNDEFINED = (MT.SIMPLE_FLOAT << 5) | SIMPLE.UNDEFINED;
 const NULL = (MT.SIMPLE_FLOAT << 5) | SIMPLE.NULL;
 const TE = new TextEncoder();
+const WE = new Wtf8Encoder();
 
 export const defaultEncodeOptions: RequiredEncodeOptions = {
   ...Writer.defaultOptions,
@@ -41,6 +43,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   simplifyNegativeZero: false,
   sortKeys: null,
   stringNormalization: null,
+  wtf8: false,
 };
 
 /**
@@ -323,9 +326,16 @@ export function writeString(
   const s = (opts.stringNormalization) ?
     val.normalize(opts.stringNormalization) :
     val;
-  const utf8 = TE.encode(s);
-  writeInt(utf8.length, w, MT.UTF8_STRING);
-  w.write(utf8);
+  if (opts.wtf8 && !val.isWellFormed()) {
+    const wtf8 = WE.encode(s);
+    writeTag(TAG.WTF8, w, opts);
+    writeInt(wtf8.length, w, MT.BYTE_STRING);
+    w.write(wtf8);
+  } else {
+    const utf8 = TE.encode(s);
+    writeInt(utf8.length, w, MT.UTF8_STRING);
+    w.write(utf8);
+  }
 }
 
 /**
