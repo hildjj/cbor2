@@ -46,7 +46,8 @@
     "cbor",
     "json",
     "rfc7049",
-    "rfc8949"
+    "rfc8949",
+    "rfc8742"
   ],
   "author": {
     "name": "Joe Hildebrand",
