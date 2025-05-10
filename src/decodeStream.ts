@@ -60,7 +60,7 @@ export class DecodeStream implements Sliceable {
   /**
    * Get the chunk of this stream from the given position to the current offset.
    *
-   * @param begin Positiion to read from.  Should be <= current offset.
+   * @param begin Position to read from.  Should be <= current offset.
    * @returns Subarray of input stream (not copy).
    */
   public toHere(begin: number): Uint8Array {
