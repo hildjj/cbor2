@@ -46,3 +46,32 @@ test('EDN ranges', () => {
     616263
 `);
 });
+
+test('wtf8 comment', () => {
+  testAll([
+    ['\ud800', '', `0xd9011143eda080
+d9 0111 -- Tag #273: (WTF8 string): "\\ud800"
+  43    --   Bytes (Length: 3)
+    eda080
+`],
+  ], {wtf8: true});
+});
+
+test('local tags comment', () => {
+  function foo() {
+    return 'foo';
+  }
+  foo.comment = t => `foo (${t.contents})`;
+
+  assert.equal(
+    comment('daffffffff00', {
+      // Override the "never valid" tag to return "foo"
+      tags: new Map([[4294967295, foo]]),
+    }),
+    `\
+0xdaffffffff00
+da ffffffff -- Tag #4294967295: foo (0)
+  00        --   Unsigned: 0
+`
+  );
+});

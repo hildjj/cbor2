@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 import {DCBOR_INT, MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
-import type {EncodeOptions, RequiredEncodeOptions} from './options.js';
+import type {EncodeOptions, RequiredEncodeOptions, TagNumber} from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
-import {type TagNumber, type TaggedValue, type ToCBOR, Writer} from './writer.js';
+import {type TaggedValue, type ToCBOR, Writer} from './writer.js';
 import {box, getEncodedLength} from './box.js';
 import {flushToZero, halfToUint} from './float.js';
 import {Wtf8Encoder} from '@cto.af/wtf8';

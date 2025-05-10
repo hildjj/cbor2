@@ -1,6 +1,44 @@
 import type {KeySorter, KeyValueEncoded} from './sorts.js';
 import type {Simple} from './simple.js';
 
+export type TagNumber = bigint | number | Number;
+
+export interface ITag {
+  readonly tag: TagNumber;
+  readonly contents: unknown;
+}
+
+/**
+ * Apply this to a TagDecoder function to get commenting support.
+ */
+export interface ICommenter {
+
+  /**
+   * If true, do not output text for child nodes.  The comment function
+   * will handle that.  If true, ensure that the text returned by the comment
+   * function ends in a newline.
+   * @default false
+   */
+  noChildren?: boolean;
+
+  /**
+   * When commenting on this tag, if this function returns a string, it will
+   * be appended after the tag number and a colon.
+   *
+   * @param tag The tag to comment on.
+   * @param opts Options.
+   * @param depth How deep are we in indentation clicks so far?
+   */
+  comment?(
+    tag: ITag,
+    opts: RequiredCommentOptions,
+    depth: number
+  ): string;
+}
+export type BaseDecoder = (tag: ITag, opts: RequiredDecodeOptions) => unknown;
+export type TagDecoder = BaseDecoder & ICommenter;
+export type TagDecoderMap = Map<TagNumber, TagDecoder>;
+
 /**
  * Options for decoding.
  */
@@ -282,6 +320,12 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * @default null
    */
   sortKeys?: KeySorter | null;
+
+  /**
+   * If non-null, prefer any tags in the map to ones have have been registered
+   * with Tag.registerDecoder.
+   */
+  tags?: TagDecoderMap | null;
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;

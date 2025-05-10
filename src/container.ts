@@ -74,6 +74,7 @@ export class CBORcontainer {
     rejectUnsafeFloatInts: false,
     saveOriginal: false,
     sortKeys: null,
+    tags: null,
   };
 
   /**

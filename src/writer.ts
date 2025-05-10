@@ -1,6 +1,7 @@
 import type {
   RequiredEncodeOptions,
   RequiredWriterOptions,
+  TagNumber,
   WriterOptions,
 } from './options.js';
 
@@ -161,8 +162,6 @@ export class Writer {
     this.#length += sz;
   }
 }
-
-export type TagNumber = bigint | number | Number;
 
 /**
  * A potentially-tagged value.  If the tag is NaN, it will not be used.

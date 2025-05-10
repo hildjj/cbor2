@@ -58,7 +58,7 @@ The following types are supported for encoding:
 
 - boolean
 - number (including -0, NaN, and ±Infinity)
-- string
+- string (Set the wtf8 option to enable encoding invalid UTF-16 strings to tag 273)
 - bigint
 - Array
 - Set
@@ -230,6 +230,22 @@ encode(encodedNumber(4)); // 0xf94400
 
 Note that the default format for `encodedNumber` is the preferred floating
 point representation, which can be explicitly selected with an encoding of `'f'`.
+
+## CBOR Sequences
+
+If you would like to decode a
+[CBOR Sequence](https://www.rfc-editor.org/rfc/rfc8742.html),
+use the `decodeSequence` method, which returns an iterator:
+
+```js
+import {decodeSequence} from 'cbor';
+
+for (const item of decodeSequence('0102')) {
+  console.log(item); // First 1, then 2
+}
+// Or
+const seq = [...decodeSequence('0102')]; // [1, 2]
+``
 
 ## Developers
 

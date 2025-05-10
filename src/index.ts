@@ -29,6 +29,7 @@ export type {
   RequiredEncodeOptions,
   Sliceable,
   StringNormalization,
+  TagNumber,
   WriterOptions,
 } from './options.js';
 export {DiagnosticSizes} from './options.js';
@@ -44,7 +45,7 @@ export {
 } from './encoder.js';
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
-export type {TagNumber, TaggedValue, ToCBOR, Writer} from './writer.js';
+export type {TaggedValue, ToCBOR, Writer} from './writer.js';
 export {saveEncoded, saveEncodedLength, unbox, getEncoded, type OriginalEncoding} from './box.js';
 export const {
   cdeDecodeOptions,
