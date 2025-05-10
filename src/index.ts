@@ -32,7 +32,7 @@ export type {
   WriterOptions,
 } from './options.js';
 export {DiagnosticSizes} from './options.js';
-export {decode} from './decoder.js';
+export {decode, Sequence} from './decoder.js';
 export {diagnose} from './diagnostic.js';
 export {comment} from './comment.js';
 export {

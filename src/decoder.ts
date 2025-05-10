@@ -1,21 +1,11 @@
-import type {DecodeOptions, Parent} from './options.js';
+import type {DecodeOptions, MtAiValue, Parent} from './options.js';
+import {DecodeStream, type ValueGenerator} from './decodeStream.js';
 import {CBORcontainer} from './container.js';
-import {DecodeStream} from './decodeStream.js';
 import {SYMS} from './constants.js';
 
-/**
- * Decode CBOR bytes to a JS value.
- *
- * @param src CBOR bytes to decode.
- * @param options Options for decoding.
- * @returns JS value decoded from cbor.
- * @throws {Error} No value found, decoding errors.
- */
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
-export function decode<T = unknown>(
-  src: Uint8Array | string,
-  options: DecodeOptions = {}
-): T {
+function normalizeOptions(
+  options: DecodeOptions
+): Required<DecodeOptions> {
   const opts = {...CBORcontainer.defaultDecodeOptions};
   if (options.dcbor) {
     Object.assign(opts, CBORcontainer.dcborDecodeOptions);
@@ -31,6 +21,24 @@ export function decode<T = unknown>(
   if (opts.boxed) {
     opts.saveOriginal = true;
   }
+
+  return opts;
+}
+
+/**
+ * Decode CBOR bytes to a JS value.
+ *
+ * @param src CBOR bytes to decode.
+ * @param options Options for decoding.
+ * @returns JS value decoded from cbor.
+ * @throws {Error} No value found, decoding errors.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+export function decode<T = unknown>(
+  src: Uint8Array | string,
+  options: DecodeOptions = {}
+): T {
+  const opts = normalizeOptions(options);
   const stream = new DecodeStream(src, opts);
   let parent: Parent | undefined = undefined;
   let ret: unknown = undefined;
@@ -63,4 +71,74 @@ export function decode<T = unknown>(
     }
   }
   return ret as T;
+}
+
+/**
+ * Decode (a sequence of) CBOR bytes to
+ * major-type/additional-information/value tuples.
+ *
+  * Note that this includes items indicating the start of an array or map, and
+  * the end of an indefinite-length item, and tag numbers separate from the tag
+  * content. Does not guarantee that the input is valid.
+  *
+  * Will attempt to read all items in an array or map, even if indefinite.
+  * Throws when there is insufficient data to do so. The same applies when
+  * reading tagged items, byte strings and text strings.
+ *
+ * @param src CBOR bytes to decode.
+ * @param options Options for decoding.
+ * @throws {Error} On insufficient data.
+ * @example
+ * ```js
+ * const s = new Sequence(buffer);
+ * for (const [majorType, additionalInfo, value] of s.seq()) {
+ *  ...
+ * }
+ * ```
+ */
+export class Sequence {
+  #seq: ValueGenerator;
+  #peeked: MtAiValue | undefined;
+
+  public constructor(src: Uint8Array | string, options: DecodeOptions = {}) {
+    const stream = new DecodeStream(src, normalizeOptions(options));
+    this.#seq = stream.seq();
+  }
+
+  /** Peek at the next tuple, allowing for later reads. */
+  public peek(): MtAiValue | undefined {
+    if (!this.#peeked) {
+      this.#peeked = this.#next();
+    }
+    return this.#peeked;
+  }
+
+  /** Read the next tuple. */
+  public read(): MtAiValue | undefined {
+    const mav = this.#peeked ?? this.#next();
+    this.#peeked = undefined;
+    return mav;
+  }
+
+  /** Iterate over all tuples. */
+  public *[Symbol.iterator](): Generator<MtAiValue, void, undefined> {
+    while (true) {
+      const tuple = this.read();
+
+      if (!tuple) {
+        return;
+      }
+
+      yield tuple;
+    }
+  }
+
+  #next(): MtAiValue | undefined {
+    const {value: tuple, done} = this.#seq.next();
+    if (done) {
+      return undefined;
+    }
+
+    return tuple;
+  }
 }
