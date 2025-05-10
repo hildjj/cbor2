@@ -134,7 +134,7 @@ export class SequenceEvents {
   #peeked: MtAiValue | undefined;
 
   /**
-   * Create an Even
+   * Create an Event
    * @param src CBOR bytes to decode.
    * @param options Options for decoding.
    */
