@@ -57,6 +57,12 @@ export class DecodeStream implements Sliceable {
     );
   }
 
+  /**
+   * Get the chunk of this stream from the given position to the current offset.
+   *
+   * @param begin Position to read from.  Should be <= current offset.
+   * @returns Subarray of input stream (not copy).
+   */
   public toHere(begin: number): Uint8Array {
     return subarrayRanges(this.#src, begin, this.#offset);
   }
@@ -81,8 +87,8 @@ export class DecodeStream implements Sliceable {
   }
 
   /**
-   * Get a stream of events describing all CBOR items in the input.  Yields
-   * Value tuples.
+   * Get a stream of events describing all CBOR items in the input CBOR Sequence
+   * consisting of multiple CBOR items. Yields Value tuples.
    *
    * Note that this includes items indicating the start of an array or map, and
    * the end of an indefinite-length item, and tag numbers separate from the tag
@@ -109,10 +115,12 @@ export class DecodeStream implements Sliceable {
     // within #nextVal the offset will be incremented to where it expects the
     // next item to be.
     //
-    // Note that since we're producting each item, we don't need to track depth.
+    // Note that since we're producing each item, we don't need to track depth.
     //
     // Note that #nextVal takes care of reading array and map items and tag
     // content, which means this can still throw if there is insufficient data.
+    //
+    // Note that #nextVal ALWAYS consumes at least one byte.
     while (this.#offset < this.#src.length) {
       yield *this.#nextVal(0);
     }
