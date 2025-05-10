@@ -243,15 +243,114 @@ test('Tagged values in sequence', () => {
   assert.equal(tuples[3][2], 3, 'Fourth item should be 3');
 });
 
-test('Incomplete CBOR data', () => {
-  // String claiming length 10 but only 5 bytes provided
-  // 6A          -- UTF8 (Length: 10)
-  //   48656c6c6f -- "Hello" (only 5 bytes)
-  const hex = '6a48656c6c6f';
+test('Incomplete fixed length array', () => {
+  // Array claiming length 3 but only 2 elements provided
+  // 83       -- Array (Length: 3 items)
+  //   01     --   [0] Unsigned: 1
+  //   02     --   [1] Unsigned: 2
+  //   (missing third element)
+  const hex = '830102';
   const seq = new Sequence(hexToU8(hex));
 
-  // Should throw when trying to read past available bytes
-  assert.throws(() => seq.read(), {
+  // Should throw when reading array with insufficient elements
+  assert.throws(() => [...seq], {
+    name: 'RangeError',
+  }, 'Should throw when reading incomplete array');
+});
+
+test('Incomplete fixed length map', () => {
+  // Map claiming 2 pairs but only 1.5 pairs provided
+  // A2       -- Map (Length: 2 pairs)
+  //   01     --   [0] Key: 1
+  //   02     --   [0] Value: 2
+  //   03     --   [1] Key: 3
+  //   (missing second value)
+  const hex = 'a2010203';
+  const seq = new Sequence(hexToU8(hex));
+
+  // Should throw when reading map with insufficient key-value pairs
+  assert.throws(() => [...seq], {
+    name: 'RangeError',
+  }, 'Should throw when reading incomplete map');
+});
+
+test('Incomplete tagged value', () => {
+  // Tag 0 without its content
+  // C0       -- Tag #0
+  //   (missing tagged content)
+  const hex = 'c0';
+  const seq = new Sequence(hexToU8(hex));
+
+  // Should throw when attempting to read tag without content
+  assert.throws(() => [...seq], {
+    name: 'RangeError',
+  }, 'Should throw when reading tag without content');
+});
+
+test('Incomplete byte string', () => {
+  // Byte string claiming length 10 but only 3 bytes provided
+  // 4A          -- Byte String (Length: 10)
+  //   010203    -- Only 3 bytes provided
+  const hex = '4a010203';
+  const seq = new Sequence(hexToU8(hex));
+
+  // Should throw when trying to read byte string with insufficient data
+  assert.throws(() => [...seq], {
     message: /Unexpected end of stream/,
-  }, 'Should throw when reading incomplete string');
+  }, 'Should throw when reading incomplete byte string');
+});
+
+test('Incomplete text string', () => {
+  // Text string claiming length 10 but only 3 bytes provided
+  // 6A          -- Text String (Length: 10)
+  //   616263    -- Only 3 bytes provided ("abc")
+  const hex = '6a616263';
+  const seq = new Sequence(hexToU8(hex));
+
+  // Should throw when trying to read text string with insufficient data
+  assert.throws(() => [...seq], {
+    message: /Unexpected end of stream/,
+  }, 'Should throw when reading incomplete text string');
+});
+
+test('Incomplete indefinite length array', () => {
+  // Indefinite length array without break code
+  // 9F          -- Array (Length: Indefinite)
+  //   01        --   [0] Unsigned: 1
+  //   02        --   [1] Unsigned: 2
+  //   (missing break code)
+  const hex = '9f0102';
+  const seq = new Sequence(hexToU8(hex));
+
+  // Partially reading should work
+  const firstTuple = seq.read();
+  assert.equal(firstTuple[0], 4, 'First tuple should be array type');
+  assert.equal(firstTuple[1], 31, 'Additional info should be 31 for indef length');
+
+  const secondTuple = seq.read();
+  assert.equal(secondTuple[2], 1, 'Second tuple should be 1');
+
+  const thirdTuple = seq.read();
+  assert.equal(thirdTuple[2], 2, 'Third tuple should be 2');
+
+  // But when trying to read past available bytes, it should throw
+  assert.throws(() => seq.read(), {
+    name: 'RangeError',
+  }, 'Should throw when reading indefinite array without break code');
+});
+
+test('Incomplete nested structure', () => {
+  // Nested array with incomplete inner array
+  // 81          -- Array (Length: 1)
+  //   83        --   [0] Array (Length: 3)
+  //     01      --     [0] Unsigned: 1
+  //     02      --     [1] Unsigned: 2
+  //     (missing third element)
+  const hex = '81830102';
+  const seq = new Sequence(hexToU8(hex));
+
+  // Should throw when trying to read the incomplete nested structure
+  assert.throws(() => [...seq], {
+    name: 'RangeError',
+  }, 'Should throw when reading incomplete nested structure');
 });

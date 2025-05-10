@@ -77,9 +77,13 @@ export function decode<T = unknown>(
  * Decode (a sequence of) CBOR bytes to
  * major-type/additional-information/value tuples.
  *
- * Note that this includes items indicating the start of an array or map, and
- * the end of an indefinite-length item, and tag numbers separate from the tag
- * content. Does not validate whether the input is a valid CBOR item.
+  * Note that this includes items indicating the start of an array or map, and
+  * the end of an indefinite-length item, and tag numbers separate from the tag
+  * content. Does not guarantee that the input is valid.
+  *
+  * Will attempt to read all items in an array or map, even if indefinite.
+  * Throws when there is insufficient data to do so. The same applies when
+  * reading tagged items, byte strings and text strings.
  *
  * @param src CBOR bytes to decode.
  * @param options Options for decoding.

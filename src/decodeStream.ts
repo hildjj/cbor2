@@ -86,7 +86,11 @@ export class DecodeStream implements Sliceable {
    *
    * Note that this includes items indicating the start of an array or map, and
    * the end of an indefinite-length item, and tag numbers separate from the tag
-   * content. Does not validate whether the input is a valid CBOR item.
+   * content. Does not guarantee that the input is valid.
+   *
+   * Will attempt to read all items in an array or map, even if indefinite.
+   * Throws when there is insufficient data to do so. The same applies when
+   * reading tagged items, byte strings and text strings.
    *
    * @throws On insufficient data.
    * @example
@@ -106,6 +110,9 @@ export class DecodeStream implements Sliceable {
     // next item to be.
     //
     // Note that since we're producting each item, we don't need to track depth.
+    //
+    // Note that #nextVal takes care of reading array and map items and tag
+    // content, which means this can still throw if there is insufficient data.
     while (this.#offset < this.#src.length) {
       yield *this.#nextVal(0);
     }
