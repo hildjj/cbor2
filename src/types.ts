@@ -530,7 +530,7 @@ Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
   return JSON.parse(tag.contents);
 }, 'JSON-encoded');
 
-function decodeWTF8(tag: Tag) {
+function decodeWTF8(tag: Tag): string {
   assertU8(tag.contents);
   const WD = new Wtf8Decoder();
   return WD.decode(tag.contents);
@@ -538,8 +538,8 @@ function decodeWTF8(tag: Tag) {
 decodeWTF8.comment = (tag: Tag): string => {
   assertU8(tag.contents);
   const WD = new Wtf8Decoder();
-  return `(WTF8 string): ${JSON.stringify(WD.decode(tag.contents))}`
-}
+  return `(WTF8 string): ${JSON.stringify(WD.decode(tag.contents))}`;
+};
 Tag.registerDecoder(TAG.WTF8, decodeWTF8);
 
 Tag.registerDecoder(TAG.SELF_DESCRIBED,
