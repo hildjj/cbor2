@@ -17,7 +17,6 @@ import type {
   TagDecoder,
 } from './options.js';
 import {MT, TAG} from './constants.js';
-import {type TaggedValue, Writer} from './writer.js';
 import {type ValueOf, box, getEncoded} from './box.js';
 import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
 import {
@@ -31,6 +30,8 @@ import {
 import {CBORcontainer} from './container.js';
 import {KeyValueEncoded} from './sorts.js';
 import {Tag} from './tag.js';
+import type {TaggedValue} from './typeEncoderMap.js';
+import {Writer} from './writer.js';
 import {Wtf8Decoder} from '@cto.af/wtf8';
 import {comment} from './comment.js';
 

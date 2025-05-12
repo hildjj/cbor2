@@ -1,5 +1,6 @@
 import type {KeySorter, KeyValueEncoded} from './sorts.js';
 import type {Simple} from './simple.js';
+import type {TypeEncoderMap} from './typeEncoderMap.js';
 
 export type TagNumber = bigint | number | Number;
 
@@ -489,6 +490,11 @@ export interface EncodeOptions extends WriterOptions {
    * @default undefined
    */
   stringNormalization?: StringNormalization | null;
+
+  /**
+   * If spcified, override how these types are encoded for this call to encode.
+   */
+  types?: TypeEncoderMap | null;
 
   /**
    * Allow non-wellformed strings (strings containing unpaired surrogates) to

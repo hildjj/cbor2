@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
+import {type AbstractClassType, type TypeEncoder, TypeEncoderMap} from './typeEncoderMap.js';
 import {DCBOR_INT, MT, NUMBYTES, SIMPLE, SYMS, TAG} from './constants.js';
-import type {EncodeOptions, RequiredEncodeOptions, TagNumber} from './options.js';
+import type {
+  EncodeOptions,
+  RequiredEncodeOptions,
+  TagNumber,
+} from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
-import {type TaggedValue, type ToCBOR, Writer} from './writer.js';
+import {type ToCBOR, Writer} from './writer.js';
 import {box, getEncodedLength} from './box.js';
 import {flushToZero, halfToUint} from './float.js';
 import {Wtf8Encoder} from '@cto.af/wtf8';
@@ -43,6 +48,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   simplifyNegativeZero: false,
   sortKeys: null,
   stringNormalization: null,
+  types: null,
   wtf8: false,
 };
 
@@ -82,18 +88,6 @@ export const dcborEncodeOptions: EncodeOptions = {
   simplifyNegativeZero: true,
   stringNormalization: 'NFC',
 };
-
-/**
- * Any class.  Ish.
- */
-export type AbstractClassType<T extends abstract new (...args: any) => any> =
-  abstract new (...args: any) => InstanceType<T>;
-
-export type TypeEncoder<T> = (
-  obj: T,
-  w: Writer,
-  opts: RequiredEncodeOptions
-) => TaggedValue | undefined;
 
 export interface ToJSON {
   /**
@@ -367,17 +361,15 @@ export function writeArray(
  * @param obj Buffer.
  * @param w Writer.
  */
-export function writeUint8Array(obj: unknown, w: Writer): undefined {
-  const u = obj as Uint8Array;
+export function writeUint8Array(u: Uint8Array, w: Writer): undefined {
   writeInt(u.length, w, MT.BYTE_STRING);
   w.write(u);
 }
 
 // Only add ones here that have to be in for compliance.
-const TYPES = new Map<unknown, unknown>([
-  [Array, writeArray],
-  [Uint8Array, writeUint8Array],
-]);
+const TYPES = new TypeEncoderMap();
+TYPES.registerEncoder(Array, writeArray);
+TYPES.registerEncoder(Uint8Array, writeUint8Array);
 
 /**
  * Add a known converter for the given type to CBOR.
@@ -390,9 +382,7 @@ export function registerEncoder<T extends AbstractClassType<T>>(
   typ: T,
   encoder: TypeEncoder<InstanceType<T>>
 ): TypeEncoder<T> | undefined {
-  const old = TYPES.get(typ) as TypeEncoder<T> | undefined;
-  TYPES.set(typ, encoder);
-  return old;
+  return TYPES.registerEncoder(typ, encoder);
 }
 
 /**
@@ -440,19 +430,24 @@ function writeObject(
     return;
   }
 
-  const encoder = TYPES.get(obj.constructor) as
-    TypeEncoder<unknown> | undefined;
-  if (encoder) {
-    const res = encoder(obj, w, opts);
-    if (res) {
-      if ((typeof res[0] === 'bigint') || isFinite(Number(res[0]))) {
-        writeTag(res[0], w, opts);
-      }
+  const constructor = obj.constructor as AbstractClassType<any>;
+  if (constructor) { // Not Object.create(null)
+    const encoder = opts.types?.get(constructor) ?? TYPES.get(constructor);
+    if (encoder) {
+      const res = encoder(obj, w, opts);
+      if (res !== undefined) {
+        if (!Array.isArray(res) || (res.length !== 2)) {
+          throw new Error('Invalid encoder return value');
+        }
+        if ((typeof res[0] === 'bigint') || isFinite(Number(res[0]))) {
+          writeTag(res[0], w, opts);
+        }
 
-      // Circular
-      writeUnknown(res[1], w, opts);
+        // Circular
+        writeUnknown(res[1], w, opts);
+      }
+      return;
     }
-    return;
   }
 
   if (typeof (obj as ToCBOR).toCBOR === 'function') {

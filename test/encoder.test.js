@@ -5,6 +5,7 @@ import {
   clearEncoder, encode, encodedNumber, registerEncoder, writeInt,
 } from '../lib/encoder.js';
 import {isBigEndian, u8toHex} from '../lib/utils.js';
+import {TypeEncoderMap} from '../lib/typeEncoderMap.js';
 import {Writer} from '../lib/writer.js';
 import assert from 'node:assert/strict';
 import {sortLengthFirstDeterministic} from '../lib/sorts.js';
@@ -328,4 +329,27 @@ test('wtf8', () => {
   testAll([
     ['\ud800', 'Invalid UTF encoded as WTF8', '0xd9011143eda080'],
   ], {wtf8: true});
+});
+
+test('null prototype', () => {
+  testAll([
+    [
+      Object.assign(Object.create(null), {a: 1}),
+      'Object with null constructor',
+      '0xa1616101',
+    ],
+  ]);
+});
+
+test('local types', () => {
+  const types = new TypeEncoderMap();
+  types.registerEncoder(Uint8Array, u => [NaN, u.length]);
+  types.registerEncoder(Uint16Array, () => 0); // Will fail.
+  testAll([
+    [new Uint8Array([255]), 'Local types', '0x01'],
+  ], {types});
+
+  failAll([
+    [new Uint16Array([255])],
+  ], {types});
 });

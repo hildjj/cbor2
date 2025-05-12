@@ -45,10 +45,16 @@ export {
 } from './encoder.js';
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
-export type {TaggedValue, ToCBOR, Writer} from './writer.js';
+export type {ToCBOR, Writer} from './writer.js';
 export {saveEncoded, saveEncodedLength, unbox, getEncoded, type OriginalEncoding} from './box.js';
 export const {
   cdeDecodeOptions,
   dcborDecodeOptions,
   defaultDecodeOptions,
 } = CBORcontainer;
+export {
+  type AbstractClassType,
+  type TaggedValue,
+  type TypeEncoder,
+  TypeEncoderMap,
+} from './typeEncoderMap.js';

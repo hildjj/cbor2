@@ -171,6 +171,23 @@ registerEncoder(Buffer, b => [
 ]);
 ```
 
+If you want to have different encoders for different calls to `encode`, you
+can pass a `types` parameter to `encode`:
+
+```js
+import {TypeEncoderMap, encode} from 'cbor2';
+import {Buffer} from 'node:buffer';
+
+const types = new TypeEncoderMap();
+types.registerEncoder(Buffer, b => [
+  // Don't write a tag
+  NaN,
+  // New view on the ArrayBuffer, without copying bytes
+  new Uint8Array(b.buffer, b.byteOffset, b.byteLength),
+]);
+encode(Buffer.from('foo'), {types});
+```
+
 ## Adding new decoders
 
 Most of the time, you will want to add support for decoding a new tag type.  If
@@ -193,6 +210,16 @@ import 'cbor2/types';
 import {Tag} from 'cbor2/tag';
 
 Tag.registerDecoder(0, ({contents}) => Temporal.Instant.from(contents));
+```
+
+Finally, you can pass a `tags` parameter to `decode` to specify tag decoding
+for a single call to `decode`:
+
+```js
+const tags = new Map([
+  [64000, ({contents}) => new Foo(contents[0], contents[1])],
+]);
+decode('d9fa00820102', {tags});
 ```
 
 ## Boxed Types
@@ -245,7 +272,7 @@ for (const item of decodeSequence('0102')) {
 }
 // Or
 const seq = [...decodeSequence('0102')]; // [1, 2]
-``
+```
 
 ## Developers
 
