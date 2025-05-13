@@ -358,7 +358,7 @@ export function writeArray(
  * Write the length of a buffer with BYTE_STRING major type, then the contents
  * of the buffer.
  *
- * @param obj Buffer.
+ * @param u Buffer.
  * @param w Writer.
  */
 export function writeUint8Array(u: Uint8Array, w: Writer): undefined {

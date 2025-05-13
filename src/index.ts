@@ -14,6 +14,7 @@ export {version} from './version.js';
 import {CBORcontainer} from './container.js';
 export type {DecodeStream, ValueGenerator} from './decodeStream.js';
 export type {
+  BaseDecoder,
   CommentOptions,
   Decodeable,
   DecodeOptions,
@@ -21,6 +22,8 @@ export type {
   DecodeValue,
   EncodeOptions,
   MtAiValue,
+  ICommenter,
+  ITag,
   ObjectCreator,
   Parent,
   ParentConstructor,
@@ -29,6 +32,8 @@ export type {
   RequiredEncodeOptions,
   Sliceable,
   StringNormalization,
+  TagDecoder,
+  TagDecoderMap,
   TagNumber,
   WriterOptions,
 } from './options.js';
