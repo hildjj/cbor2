@@ -74,12 +74,12 @@
     "c8": "10.1.3",
     "cbor-edn": "0.2.2",
     "eslint": "9.26.0",
-    "eslint-plugin-jsdoc": "50.6.11",
+    "eslint-plugin-jsdoc": "50.6.14",
     "package-extract": "3.1.0",
     "rimraf": "^5.0.10",
     "tsup": "8.4.0",
     "typedoc": "0.28.4",
-    "typescript-eslint": "8.32.0"
+    "typescript-eslint": "8.32.1"
   },
   "pnpm": {
     "overrides": {
@@ -89,7 +89,7 @@
       "esbuild"
     ]
   },
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.11.0",
   "engines": {
     "node": ">=20"
   }

@@ -209,3 +209,19 @@ a0 -- Map (Length: 0 pairs)\n`],
     },
   });
 });
+
+test('wtf8 decode', () => {
+  testAll([
+    ['\ud800', '', '0xd9011143eda080'],
+  ], {wtf8: true});
+});
+
+test('local tags decode', () => {
+  assert.equal(
+    decode('daffffffff00', {
+      // Override the "never valid" tag to return "foo"
+      tags: new Map([[4294967295, () => 'foo']]),
+    }),
+    'foo'
+  );
+});

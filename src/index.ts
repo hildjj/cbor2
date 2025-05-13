@@ -14,6 +14,7 @@ export {version} from './version.js';
 import {CBORcontainer} from './container.js';
 export type {DecodeStream, ValueGenerator} from './decodeStream.js';
 export type {
+  BaseDecoder,
   CommentOptions,
   Decodeable,
   DecodeOptions,
@@ -21,6 +22,8 @@ export type {
   DecodeValue,
   EncodeOptions,
   MtAiValue,
+  ICommenter,
+  ITag,
   ObjectCreator,
   Parent,
   ParentConstructor,
@@ -29,6 +32,9 @@ export type {
   RequiredEncodeOptions,
   Sliceable,
   StringNormalization,
+  TagDecoder,
+  TagDecoderMap,
+  TagNumber,
   WriterOptions,
 } from './options.js';
 export {DiagnosticSizes} from './options.js';
@@ -44,10 +50,16 @@ export {
 } from './encoder.js';
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
-export type {TagNumber, TaggedValue, ToCBOR, Writer} from './writer.js';
+export type {ToCBOR, Writer} from './writer.js';
 export {saveEncoded, saveEncodedLength, unbox, getEncoded, type OriginalEncoding} from './box.js';
 export const {
   cdeDecodeOptions,
   dcborDecodeOptions,
   defaultDecodeOptions,
 } = CBORcontainer;
+export {
+  type AbstractClassType,
+  type TaggedValue,
+  type TypeEncoder,
+  TypeEncoderMap,
+} from './typeEncoderMap.js';

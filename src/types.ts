@@ -9,14 +9,14 @@
  *
  * @module
  */
-import {MT, TAG} from './constants.js';
 import type {
+  ITag,
   RequiredCommentOptions,
   RequiredDecodeOptions,
   RequiredEncodeOptions,
+  TagDecoder,
 } from './options.js';
-import {Tag, type TagDecoder} from './tag.js';
-import {type TaggedValue, Writer} from './writer.js';
+import {MT, TAG} from './constants.js';
 import {type ValueOf, box, getEncoded} from './box.js';
 import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
 import {
@@ -29,6 +29,9 @@ import {
 } from './encoder.js';
 import {CBORcontainer} from './container.js';
 import {KeyValueEncoded} from './sorts.js';
+import {Tag} from './tag.js';
+import type {TaggedValue} from './typeEncoderMap.js';
+import {Writer} from './writer.js';
 import {Wtf8Decoder} from '@cto.af/wtf8';
 import {comment} from './comment.js';
 
@@ -94,22 +97,22 @@ registerEncoder(Map, (
   }
 });
 
-function dateString(tag: Tag): Date {
+function dateString(tag: ITag): Date {
   assertString(tag.contents);
   return new Date(tag.contents);
 }
-dateString.comment = (tag: Tag): string => {
+dateString.comment = (tag: ITag): string => {
   assertString(tag.contents);
   const decoded = new Date(tag.contents);
   return `(String Date) ${decoded.toISOString()}`;
 };
 Tag.registerDecoder(TAG.DATE_STRING, dateString);
 
-function dateEpoch(tag: Tag): Date {
+function dateEpoch(tag: ITag): Date {
   assertNumber(tag.contents);
   return new Date(tag.contents * 1000);
 }
-dateEpoch.comment = (tag: Tag): string => {
+dateEpoch.comment = (tag: ITag): string => {
   assertNumber(tag.contents);
   const decoded = new Date(tag.contents * 1000);
   return `(Epoch Date) ${(decoded as Date).toISOString()}`;
@@ -121,7 +124,7 @@ registerEncoder(Date,
 
 function u8toBigInt(
   neg: boolean,
-  tag: Tag,
+  tag: ITag,
   opts: RequiredDecodeOptions
 ): BigInt | bigint {
   assertU8(tag.contents);
@@ -151,11 +154,11 @@ function u8toBigInt(
 }
 const u8toBigIntPos: TagDecoder = u8toBigInt.bind(null, false);
 const u8toBigIntNeg: TagDecoder = u8toBigInt.bind(null, true);
-u8toBigIntPos.comment = (tag: Tag, opts: RequiredCommentOptions): string => {
+u8toBigIntPos.comment = (tag: ITag, opts: RequiredCommentOptions): string => {
   const bi = u8toBigInt(false, tag, opts);
   return `(Positive BigInt) ${bi}n`;
 };
-u8toBigIntNeg.comment = (tag: Tag, opts: RequiredCommentOptions): string => {
+u8toBigIntNeg.comment = (tag: ITag, opts: RequiredCommentOptions): string => {
   const bi = u8toBigInt(true, tag, opts);
   return `(Negative BigInt) ${bi}n`;
 };
@@ -166,12 +169,12 @@ Tag.registerDecoder(TAG.NEG_BIGINT, u8toBigIntNeg);
 // 24: Encoded CBOR data item; see Section 3.4.5.1
 // To turn on decoding of the embedded CBOR, do this:
 // cbor.Tag.registerDecoder(24, (tag, opts) => decode(tag.contents, opts));
-function embeddedCBOR(tag: Tag, _opts: RequiredDecodeOptions): unknown {
+function embeddedCBOR(tag: ITag, _opts: RequiredDecodeOptions): unknown {
   assertU8(tag.contents);
   return tag;
 }
 embeddedCBOR.comment = (
-  tag: Tag,
+  tag: ITag,
   opts: RequiredCommentOptions,
   depth: number
 ): string => {
@@ -222,31 +225,31 @@ embeddedCBOR.comment = (
 embeddedCBOR.noChildren = true;
 Tag.registerDecoder(TAG.CBOR, embeddedCBOR);
 
-Tag.registerDecoder(TAG.URI, (tag: Tag): URL => {
+Tag.registerDecoder(TAG.URI, (tag: ITag): URL => {
   assertString(tag.contents);
   return new URL(tag.contents);
 }, 'URI');
 
 registerEncoder(URL, (obj: URL) => [TAG.URI, obj.toString()]);
 
-Tag.registerDecoder(TAG.BASE64URL, (tag: Tag): Uint8Array => {
+Tag.registerDecoder(TAG.BASE64URL, (tag: ITag): Uint8Array => {
   assertString(tag.contents);
   return base64UrlToBytes(tag.contents);
 }, 'Base64url-encoded');
 
-Tag.registerDecoder(TAG.BASE64, (tag: Tag): Uint8Array => {
+Tag.registerDecoder(TAG.BASE64, (tag: ITag): Uint8Array => {
   assertString(tag.contents);
   return base64ToBytes(tag.contents);
 }, 'Base64-encoded');
 
 // Old/deprecated regexp tag
-Tag.registerDecoder(35, (tag: Tag): RegExp => {
+Tag.registerDecoder(35, (tag: ITag): RegExp => {
   assertString(tag.contents);
   return new RegExp(tag.contents);
 }, 'RegExp');
 
 // I-Regexp
-Tag.registerDecoder(21065, (tag: Tag): RegExp => {
+Tag.registerDecoder(21065, (tag: ITag): RegExp => {
   assertString(tag.contents);
   // Perform the following steps on an I-Regexp to obtain an ECMAScript regexp
   // [ECMA-262]:
@@ -266,7 +269,7 @@ Tag.registerDecoder(21065, (tag: Tag): RegExp => {
   return new RegExp(str, 'u');
 }, 'I-RegExp');
 
-Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
+Tag.registerDecoder(TAG.REGEXP, (tag: ITag): RegExp => {
   assertArray(tag.contents);
   if (tag.contents.length < 1 || tag.contents.length > 2) {
     throw new Error(`Invalid RegExp Array: ${tag.contents}`);
@@ -277,7 +280,7 @@ Tag.registerDecoder(TAG.REGEXP, (tag: Tag): RegExp => {
 registerEncoder(RegExp, (obj: RegExp) => [TAG.REGEXP, [obj.source, obj.flags]]);
 
 // 64:uint8 Typed Array
-Tag.registerDecoder(64, (tag: Tag): Uint8Array => {
+Tag.registerDecoder(64, (tag: ITag): Uint8Array => {
   assertU8(tag.contents);
   return tag.contents;
 }, 'uint8 Typed Array');
@@ -301,7 +304,7 @@ interface TypedArrayConstructor<T> {
 
 function convertToTyped<
   S extends TypedArray
->(tag: Tag, Typ: TypedArrayConstructor<S>, littleEndian: boolean): S {
+>(tag: ITag, Typ: TypedArrayConstructor<S>, littleEndian: boolean): S {
   assertU8(tag.contents);
   let len = tag.contents.length;
   if ((len % Typ.BYTES_PER_ELEMENT) !== 0) {
@@ -348,21 +351,21 @@ function writeTyped(
 
 // 65: uint16, big endian, Typed Array
 Tag.registerDecoder(65,
-  (tag: Tag): Uint16Array => convertToTyped(tag, Uint16Array, false),
+  (tag: ITag): Uint16Array => convertToTyped(tag, Uint16Array, false),
   'uint16, big endian, Typed Array');
 
 // 66: uint32, big endian, Typed Array
 Tag.registerDecoder(66,
-  (tag: Tag): Uint32Array => convertToTyped(tag, Uint32Array, false),
+  (tag: ITag): Uint32Array => convertToTyped(tag, Uint32Array, false),
   'uint32, big endian, Typed Array');
 
 // 67: uint64, big endian, Typed Array
 Tag.registerDecoder(67,
-  (tag: Tag): BigUint64Array => convertToTyped(tag, BigUint64Array, false),
+  (tag: ITag): BigUint64Array => convertToTyped(tag, BigUint64Array, false),
   'uint64, big endian, Typed Array');
 
 // 68: uint8 Typed Array, clamped arithmetic
-Tag.registerDecoder(68, (tag: Tag): Uint8ClampedArray => {
+Tag.registerDecoder(68, (tag: ITag): Uint8ClampedArray => {
   assertU8(tag.contents);
   return new Uint8ClampedArray(tag.contents);
 }, 'uint8 Typed Array, clamped arithmetic');
@@ -374,7 +377,7 @@ registerEncoder(Uint8ClampedArray, (u: Uint8ClampedArray) => [
 
 // 69: uint16, little endian, Typed Array
 Tag.registerDecoder(69,
-  (tag: Tag): Uint16Array => convertToTyped(tag, Uint16Array, true),
+  (tag: ITag): Uint16Array => convertToTyped(tag, Uint16Array, true),
   'uint16, little endian, Typed Array');
 
 registerEncoder(Uint16Array, (
@@ -385,7 +388,7 @@ registerEncoder(Uint16Array, (
 
 // 70: uint32, little endian, Typed Array
 Tag.registerDecoder(70,
-  (tag: Tag): Uint32Array => convertToTyped(tag, Uint32Array, true),
+  (tag: ITag): Uint32Array => convertToTyped(tag, Uint32Array, true),
   'uint32, little endian, Typed Array');
 registerEncoder(Uint32Array, (
   obj: Uint32Array,
@@ -395,7 +398,7 @@ registerEncoder(Uint32Array, (
 
 // 71: uint64, little endian, Typed Array
 Tag.registerDecoder(71,
-  (tag: Tag): BigUint64Array => convertToTyped(tag, BigUint64Array, true),
+  (tag: ITag): BigUint64Array => convertToTyped(tag, BigUint64Array, true),
   'uint64, little endian, Typed Array');
 registerEncoder(BigUint64Array, (
   obj: BigUint64Array,
@@ -404,7 +407,7 @@ registerEncoder(BigUint64Array, (
 ): undefined => writeTyped(w, 71, 67, obj, opts));
 
 // 72: sint8 Typed Array
-Tag.registerDecoder(72, (tag: Tag): Int8Array => {
+Tag.registerDecoder(72, (tag: ITag): Int8Array => {
   assertU8(tag.contents);
   return new Int8Array(tag.contents); // Wraps
 }, 'sint8 Typed Array');
@@ -415,23 +418,23 @@ registerEncoder(Int8Array, (u: Int8Array) => [
 
 // 73: sint16, big endian, Typed Array
 Tag.registerDecoder(73,
-  (tag: Tag): Int16Array => convertToTyped(tag, Int16Array, false),
+  (tag: ITag): Int16Array => convertToTyped(tag, Int16Array, false),
   'sint16, big endian, Typed Array');
 
 // 74: sint32, big endian, Typed Array
 Tag.registerDecoder(74,
-  (tag: Tag): Int32Array => convertToTyped(tag, Int32Array, false),
+  (tag: ITag): Int32Array => convertToTyped(tag, Int32Array, false),
   'sint32, big endian, Typed Array');
 
 // 75: sint64, big endian, Typed Array
 Tag.registerDecoder(75,
-  (tag: Tag): BigInt64Array => convertToTyped(tag, BigInt64Array, false),
+  (tag: ITag): BigInt64Array => convertToTyped(tag, BigInt64Array, false),
   'sint64, big endian, Typed Array');
 
 // 76: Reserved
 // 77: sint16, little endian, Typed Array
 Tag.registerDecoder(77,
-  (tag: Tag): Int16Array => convertToTyped(tag, Int16Array, true),
+  (tag: ITag): Int16Array => convertToTyped(tag, Int16Array, true),
   'sint16, little endian, Typed Array');
 registerEncoder(Int16Array, (
   obj: Int16Array,
@@ -441,7 +444,7 @@ registerEncoder(Int16Array, (
 
 // 78: sint32, little endian, Typed Array
 Tag.registerDecoder(78,
-  (tag: Tag): Int32Array => convertToTyped(tag, Int32Array, true),
+  (tag: ITag): Int32Array => convertToTyped(tag, Int32Array, true),
   'sint32, little endian, Typed Array');
 registerEncoder(Int32Array, (
   obj: Int32Array,
@@ -451,7 +454,7 @@ registerEncoder(Int32Array, (
 
 // 79: sint64, little endian, Typed Array
 Tag.registerDecoder(79,
-  (tag: Tag): BigInt64Array => convertToTyped(tag, BigInt64Array, true),
+  (tag: ITag): BigInt64Array => convertToTyped(tag, BigInt64Array, true),
   'sint64, little endian, Typed Array');
 registerEncoder(BigInt64Array, (
   obj: BigInt64Array,
@@ -462,12 +465,12 @@ registerEncoder(BigInt64Array, (
 // 80: IEEE 754 binary16, big endian, Typed Array.  Not implemented.
 // 81: IEEE 754 binary32, big endian, Typed Array
 Tag.registerDecoder(81,
-  (tag: Tag): Float32Array => convertToTyped(tag, Float32Array, false),
+  (tag: ITag): Float32Array => convertToTyped(tag, Float32Array, false),
   'IEEE 754 binary32, big endian, Typed Array');
 
 // 82: IEEE 754 binary64, big endian, Typed Array
 Tag.registerDecoder(82,
-  (tag: Tag): Float64Array => convertToTyped(tag, Float64Array, false),
+  (tag: ITag): Float64Array => convertToTyped(tag, Float64Array, false),
   'IEEE 754 binary64, big endian, Typed Array');
 
 // 83: IEEE 754 binary128, big endian, Typed Array.  Not implemented.
@@ -475,7 +478,7 @@ Tag.registerDecoder(82,
 
 // 85: IEEE 754 binary32, little endian, Typed Array
 Tag.registerDecoder(85,
-  (tag: Tag): Float32Array => convertToTyped(tag, Float32Array, true),
+  (tag: ITag): Float32Array => convertToTyped(tag, Float32Array, true),
   'IEEE 754 binary32, little endian, Typed Array');
 registerEncoder(Float32Array, (
   obj: Float32Array,
@@ -485,7 +488,7 @@ registerEncoder(Float32Array, (
 
 // 86: IEEE 754 binary64, big endian, Typed Array
 Tag.registerDecoder(86,
-  (tag: Tag): Float64Array => convertToTyped(tag, Float64Array, true),
+  (tag: ITag): Float64Array => convertToTyped(tag, Float64Array, true),
   'IEEE 754 binary64, big endian, Typed Array');
 registerEncoder(Float64Array, (
   obj: Float64Array,
@@ -493,7 +496,7 @@ registerEncoder(Float64Array, (
   opts: RequiredEncodeOptions
 ): undefined => writeTyped(w, 86, 82, obj, opts));
 
-Tag.registerDecoder(TAG.SET, (tag: Tag, opts: RequiredDecodeOptions) => {
+Tag.registerDecoder(TAG.SET, (tag: ITag, opts: RequiredDecodeOptions) => {
   assertArray(tag.contents);
   if (opts.sortKeys) {
     const eopts = CBORcontainer.decodeToEncodeOpts(opts);
@@ -525,17 +528,17 @@ registerEncoder(
   }
 );
 
-Tag.registerDecoder(TAG.JSON, (tag: Tag) => {
+Tag.registerDecoder(TAG.JSON, (tag: ITag) => {
   assertString(tag.contents);
   return JSON.parse(tag.contents);
 }, 'JSON-encoded');
 
-function decodeWTF8(tag: Tag): string {
+function decodeWTF8(tag: ITag): string {
   assertU8(tag.contents);
   const WD = new Wtf8Decoder();
   return WD.decode(tag.contents);
 }
-decodeWTF8.comment = (tag: Tag): string => {
+decodeWTF8.comment = (tag: ITag): string => {
   assertU8(tag.contents);
   const WD = new Wtf8Decoder();
   return `(WTF8 string): ${JSON.stringify(WD.decode(tag.contents))}`;
@@ -543,7 +546,7 @@ decodeWTF8.comment = (tag: Tag): string => {
 Tag.registerDecoder(TAG.WTF8, decodeWTF8);
 
 Tag.registerDecoder(TAG.SELF_DESCRIBED,
-  (tag: Tag): unknown => tag.contents,
+  (tag: ITag): unknown => tag.contents,
   'Self-Described');
 
 Tag.registerDecoder(TAG.INVALID_16, () => {

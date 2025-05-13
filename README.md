@@ -58,7 +58,7 @@ The following types are supported for encoding:
 
 - boolean
 - number (including -0, NaN, and ±Infinity)
-- string
+- string (Set the wtf8 option to enable encoding invalid UTF-16 strings to tag 273)
 - bigint
 - Array
 - Set
@@ -171,6 +171,23 @@ registerEncoder(Buffer, b => [
 ]);
 ```
 
+If you want to have different encoders for different calls to `encode`, you
+can pass a `types` parameter to `encode`:
+
+```js
+import {TypeEncoderMap, encode} from 'cbor2';
+import {Buffer} from 'node:buffer';
+
+const types = new TypeEncoderMap();
+types.registerEncoder(Buffer, b => [
+  // Don't write a tag
+  NaN,
+  // New view on the ArrayBuffer, without copying bytes
+  new Uint8Array(b.buffer, b.byteOffset, b.byteLength),
+]);
+encode(Buffer.from('foo'), {types});
+```
+
 ## Adding new decoders
 
 Most of the time, you will want to add support for decoding a new tag type.  If
@@ -193,6 +210,16 @@ import 'cbor2/types';
 import {Tag} from 'cbor2/tag';
 
 Tag.registerDecoder(0, ({contents}) => Temporal.Instant.from(contents));
+```
+
+Finally, you can pass a `tags` parameter to `decode` to specify tag decoding
+for a single call to `decode`:
+
+```js
+const tags = new Map([
+  [64000, ({contents}) => new Foo(contents[0], contents[1])],
+]);
+decode('d9fa00820102', {tags});
 ```
 
 ## Boxed Types
@@ -230,6 +257,22 @@ encode(encodedNumber(4)); // 0xf94400
 
 Note that the default format for `encodedNumber` is the preferred floating
 point representation, which can be explicitly selected with an encoding of `'f'`.
+
+## CBOR Sequences
+
+If you would like to decode a
+[CBOR Sequence](https://www.rfc-editor.org/rfc/rfc8742.html),
+use the `decodeSequence` method, which returns an iterator:
+
+```js
+import {decodeSequence} from 'cbor';
+
+for (const item of decodeSequence('0102')) {
+  console.log(item); // First 1, then 2
+}
+// Or
+const seq = [...decodeSequence('0102')]; // [1, 2]
+```
 
 ## Developers
 

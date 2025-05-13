@@ -3,6 +3,7 @@ import type {
   RequiredWriterOptions,
   WriterOptions,
 } from './options.js';
+import type {TaggedValue} from './typeEncoderMap.js';
 
 // Don't inherit from stream.Writable, so it's more portable.
 export class Writer {
@@ -161,15 +162,6 @@ export class Writer {
     this.#length += sz;
   }
 }
-
-export type TagNumber = bigint | number | Number;
-
-/**
- * A potentially-tagged value.  If the tag is NaN, it will not be used.
- * Otherwise, it must be an integer that will be written as a CBOR tag
- * before the value is encoded.
- */
-export type TaggedValue = [tag: TagNumber, value: unknown];
 
 export interface ToCBOR {
   /**

@@ -1,49 +1,20 @@
 import type {
   Decodeable,
+  ITag,
   RequiredCommentOptions,
   RequiredDecodeOptions,
+  TagDecoder,
+  TagDecoderMap,
+  TagNumber,
 } from './options.js';
-import {type TagNumber, ToCBOR} from './writer.js';
-
-/**
- * Apply this to a TagDecoder function to get commenting support.
- */
-export interface Commenter {
-
-  /**
-   * If true, do not output text for child nodes.  The comment function
-   * will handle that.  If true, ensure that the text returned by the comment
-   * function ends in a newline.
-   * @default false
-   */
-  noChildren?: boolean;
-
-  /**
-   * When commenting on this tag, if this function returns a string, it will
-   * be appended after the tag number and a colon.
-   *
-   * @param tag The tag to comment on.
-   * @param opts Options.
-   * @param depth How deep are we in indentation clicks so far?
-   */
-  comment?(
-    // Circular
-    tag: Tag,
-    opts: RequiredCommentOptions,
-    depth: number
-  ): string;
-}
-
-// Circular
-export type BaseDecoder = (tag: Tag, opts: RequiredDecodeOptions) => unknown;
-export type TagDecoder = BaseDecoder & Commenter;
+import {ToCBOR} from './writer.js';
 
 /**
  * A CBOR tagged value.
- * @see [IANA Registry](https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml)
+ * @see https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
  */
-export class Tag implements ToCBOR, Decodeable {
-  static #tags = new Map<TagNumber, TagDecoder>();
+export class Tag implements ToCBOR, Decodeable, ITag {
+  static #tags = new Map<TagNumber, TagDecoder>() as TagDecoderMap;
   public readonly tag: TagNumber;
   public contents: unknown;
 
@@ -158,7 +129,7 @@ export class Tag implements ToCBOR, Decodeable {
    * @returns The converted value.
    */
   public decode(options: RequiredDecodeOptions): unknown {
-    const decoder = Tag.#tags.get(this.tag);
+    const decoder = options?.tags?.get(this.tag) ?? Tag.#tags.get(this.tag);
     if (decoder) {
       return decoder(this, options);
     }
@@ -169,7 +140,7 @@ export class Tag implements ToCBOR, Decodeable {
     options: RequiredCommentOptions,
     depth: number
   ): string | undefined {
-    const decoder = Tag.#tags.get(this.tag);
+    const decoder = options?.tags?.get(this.tag) ?? Tag.#tags.get(this.tag);
     if (decoder?.comment) {
       return decoder.comment(this, options, depth);
     }
