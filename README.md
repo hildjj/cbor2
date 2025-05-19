@@ -20,7 +20,7 @@ interactive view of how the library works.
 
 This project now only supports versions of Node.js that the Node team is
 [currently supporting](https://github.com/nodejs/Release#release-schedule).
-Currently, that means Node `18`+ is required.
+Currently, that means Node `20`+ is required.
 
 ## Installation
 
