@@ -492,7 +492,7 @@ export interface EncodeOptions extends WriterOptions {
   stringNormalization?: StringNormalization | null;
 
   /**
-   * If spcified, override how these types are encoded for this call to encode.
+   * If specified, override how these types are encoded for this call to encode.
    */
   types?: TypeEncoderMap | null;
 
