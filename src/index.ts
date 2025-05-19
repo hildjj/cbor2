@@ -50,7 +50,7 @@ export {
 } from './encoder.js';
 export {Simple} from './simple.js';
 export {Tag} from './tag.js';
-export type {ToCBOR, Writer} from './writer.js';
+export {type ToCBOR, Writer} from './writer.js';
 export {saveEncoded, saveEncodedLength, unbox, getEncoded, type OriginalEncoding} from './box.js';
 export const {
   cdeDecodeOptions,
