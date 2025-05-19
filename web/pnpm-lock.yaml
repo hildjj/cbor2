@@ -24,8 +24,8 @@ importers:
         specifier: 7.1.2
         version: 7.1.2(webpack@5.99.8)
       hostlocal:
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: 2.0.1
+        version: 2.0.1
       html-webpack-plugin:
         specifier: 5.6.3
         version: 5.6.3(webpack@5.99.8)
@@ -44,8 +44,8 @@ importers:
 
 packages:
 
-  '@cto.af/ca@1.0.0':
-    resolution: {integrity: sha512-uUYD3KxzYql6TIXc6rpPgDntB5JYWqYjtOHnhxYoUsIBD4zJAEb3r7jaeGXrPhpZy5mlnAhMTZFjoNE7UodfSQ==}
+  '@cto.af/ca@1.1.0':
+    resolution: {integrity: sha512-L/P6LzAYnXTO6xIFJZX9ivKFSpXP6s+wogrd1aJYwcddbzHopsQlIiCtJ4dvAFsa7+XVkU1wXh29I7YL2IyQ+Q==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -114,8 +114,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@22.15.17':
-    resolution: {integrity: sha512-wIX2aSZL5FE+MR0JlvF87BNVrtFWf6AE6rxSE9X7OwnVvoyCQjpzSRJ+M87se/4QCkCiebQAqrJ0y6fwIyi7nw==}
+  '@types/node@22.15.19':
+    resolution: {integrity: sha512-3vMNr4TzNQyjHcRZadojpRaD9Ofr6LsonZAoQ+HMUa/9ORTPoxVIw0e0mpqWpdjj8xybyCM+oKOUH2vwFu/oEw==}
 
   '@webassemblyjs/ast@1.14.1':
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
@@ -282,6 +282,10 @@ packages:
     resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
     engines: {node: '>=18'}
 
+  commander@14.0.0:
+    resolution: {integrity: sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==}
+    engines: {node: '>=20'}
+
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
@@ -351,8 +355,8 @@ packages:
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
 
-  electron-to-chromium@1.5.152:
-    resolution: {integrity: sha512-xBOfg/EBaIlVsHipHl2VdTPJRSvErNUaqW8ejTq5OlOlIYx1wOllCHsAvAIrr55jD1IYEfdR86miUEt8H5IeJg==}
+  electron-to-chromium@1.5.155:
+    resolution: {integrity: sha512-ps5KcGGmwL8VaeJlvlDlu4fORQpv3+GIcF5I3f9tUKUlJ/wsysh6HU8P5L1XWRYeXfA0oJd4PyM8ds8zTFf6Ng==}
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
@@ -484,8 +488,8 @@ packages:
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
 
-  hostlocal@2.0.0:
-    resolution: {integrity: sha512-0IdFHd51WCxcGlV04W6QC5QsGOND4Ozd6LNJg87udnxjug01R0zzhoN0EOQ0UmJ8QaRljM5siUc7NbHEzcwd+g==}
+  hostlocal@2.0.1:
+    resolution: {integrity: sha512-DkxqIYdGGwgZHOAeGD0I7qqfds8oOIwmvAa0hLAKSAx8ckNhPSBMD8YM6TvfTgBVfRlfp3ZlI9S7HB0cuYcI3g==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -934,8 +938,8 @@ packages:
       uglify-js:
         optional: true
 
-  terser@5.39.1:
-    resolution: {integrity: sha512-Mm6+uad0ZuDtcV8/4uOZQDQ8RuiC5Pu+iZRedJtF7yA/27sPL7d++In/AJKpWZlU3SYMPPkVfwetn6sgZ66pUA==}
+  terser@5.39.2:
+    resolution: {integrity: sha512-yEPUmWve+VA78bI71BW70Dh0TuV4HHd+I5SHOAfS1+QBOmvmCiiffgjR8ryyEd3KIfvPGFqoADt8LdQ6XpXIvg==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -1028,7 +1032,7 @@ packages:
 
 snapshots:
 
-  '@cto.af/ca@1.0.0':
+  '@cto.af/ca@1.1.0':
     dependencies:
       '@cto.af/log': 1.0.0
       commander: 13.1.0
@@ -1099,7 +1103,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@22.15.17':
+  '@types/node@22.15.19':
     dependencies:
       undici-types: 6.21.0
 
@@ -1231,7 +1235,7 @@ snapshots:
   browserslist@4.24.5:
     dependencies:
       caniuse-lite: 1.0.30001718
-      electron-to-chromium: 1.5.152
+      electron-to-chromium: 1.5.155
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.5)
 
@@ -1273,6 +1277,8 @@ snapshots:
   commander@12.1.0: {}
 
   commander@13.1.0: {}
+
+  commander@14.0.0: {}
 
   commander@2.20.3: {}
 
@@ -1347,7 +1353,7 @@ snapshots:
       no-case: 3.0.4
       tslib: 2.8.1
 
-  electron-to-chromium@1.5.152: {}
+  electron-to-chromium@1.5.155: {}
 
   end-of-stream@1.4.4:
     dependencies:
@@ -1449,13 +1455,13 @@ snapshots:
 
   help-me@5.0.0: {}
 
-  hostlocal@2.0.0:
+  hostlocal@2.0.1:
     dependencies:
-      '@cto.af/ca': 1.0.0
+      '@cto.af/ca': 1.1.0
       '@cto.af/http-headers': 1.0.0
       '@cto.af/log': 1.0.0
       chokidar: 4.0.3
-      commander: 13.1.0
+      commander: 14.0.0
       fast-glob: 3.3.3
       jsrsasign: 11.1.0
       markdown-it: 14.1.0
@@ -1474,7 +1480,7 @@ snapshots:
       he: 1.2.0
       param-case: 3.0.4
       relateurl: 0.2.7
-      terser: 5.39.1
+      terser: 5.39.2
 
   html-webpack-plugin@5.6.3(webpack@5.99.8):
     dependencies:
@@ -1536,7 +1542,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.15.17
+      '@types/node': 22.15.19
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -1872,10 +1878,10 @@ snapshots:
       jest-worker: 27.5.1
       schema-utils: 4.3.2
       serialize-javascript: 6.0.2
-      terser: 5.39.1
+      terser: 5.39.2
       webpack: 5.99.8(webpack-cli@6.0.1)
 
-  terser@5.39.1:
+  terser@5.39.2:
     dependencies:
       '@jridgewell/source-map': 0.3.6
       acorn: 8.14.1
