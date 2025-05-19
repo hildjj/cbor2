@@ -24,8 +24,8 @@ importers:
         specifier: 7.1.2
         version: 7.1.2(webpack@5.99.8)
       hostlocal:
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: 2.0.1
+        version: 2.0.1
       html-webpack-plugin:
         specifier: 5.6.3
         version: 5.6.3(webpack@5.99.8)
@@ -44,8 +44,8 @@ importers:
 
 packages:
 
-  '@cto.af/ca@1.0.0':
-    resolution: {integrity: sha512-uUYD3KxzYql6TIXc6rpPgDntB5JYWqYjtOHnhxYoUsIBD4zJAEb3r7jaeGXrPhpZy5mlnAhMTZFjoNE7UodfSQ==}
+  '@cto.af/ca@1.1.0':
+    resolution: {integrity: sha512-L/P6LzAYnXTO6xIFJZX9ivKFSpXP6s+wogrd1aJYwcddbzHopsQlIiCtJ4dvAFsa7+XVkU1wXh29I7YL2IyQ+Q==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -282,6 +282,10 @@ packages:
     resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
     engines: {node: '>=18'}
 
+  commander@14.0.0:
+    resolution: {integrity: sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==}
+    engines: {node: '>=20'}
+
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
@@ -484,8 +488,8 @@ packages:
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
 
-  hostlocal@2.0.0:
-    resolution: {integrity: sha512-0IdFHd51WCxcGlV04W6QC5QsGOND4Ozd6LNJg87udnxjug01R0zzhoN0EOQ0UmJ8QaRljM5siUc7NbHEzcwd+g==}
+  hostlocal@2.0.1:
+    resolution: {integrity: sha512-DkxqIYdGGwgZHOAeGD0I7qqfds8oOIwmvAa0hLAKSAx8ckNhPSBMD8YM6TvfTgBVfRlfp3ZlI9S7HB0cuYcI3g==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -1028,7 +1032,7 @@ packages:
 
 snapshots:
 
-  '@cto.af/ca@1.0.0':
+  '@cto.af/ca@1.1.0':
     dependencies:
       '@cto.af/log': 1.0.0
       commander: 13.1.0
@@ -1274,6 +1278,8 @@ snapshots:
 
   commander@13.1.0: {}
 
+  commander@14.0.0: {}
+
   commander@2.20.3: {}
 
   commander@8.3.0: {}
@@ -1449,13 +1455,13 @@ snapshots:
 
   help-me@5.0.0: {}
 
-  hostlocal@2.0.0:
+  hostlocal@2.0.1:
     dependencies:
-      '@cto.af/ca': 1.0.0
+      '@cto.af/ca': 1.1.0
       '@cto.af/http-headers': 1.0.0
       '@cto.af/log': 1.0.0
       chokidar: 4.0.3
-      commander: 13.1.0
+      commander: 14.0.0
       fast-glob: 3.3.3
       jsrsasign: 11.1.0
       markdown-it: 14.1.0
