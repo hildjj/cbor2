@@ -16,11 +16,11 @@
     "cbor-edn": "0.2.2",
     "cbor2": "link:..",
     "css-loader": "7.1.2",
-    "hostlocal": "2.0.1",
+    "hostlocal": "2.1.2",
     "html-webpack-plugin": "5.6.3",
     "node-inspect-extracted": "3.1.0",
     "style-loader": "4.0.0",
-    "webpack": "5.99.8",
+    "webpack": "5.99.9",
     "webpack-cli": "6.0.1"
   },
   "pnpm": {
