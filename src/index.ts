@@ -30,6 +30,7 @@ export type {
   RequiredCommentOptions,
   RequiredDecodeOptions,
   RequiredEncodeOptions,
+  RequiredWriterOptions,
   Sliceable,
   StringNormalization,
   TagDecoder,
