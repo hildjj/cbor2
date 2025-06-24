@@ -1,6 +1,3 @@
 {
-  "dep": ["prod", "dev", "packageManager"],
-  "reject": [
-    "rimraf"
-  ]
+  "dep": ["prod", "dev", "packageManager"]
 }
