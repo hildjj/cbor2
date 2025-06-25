@@ -64,3 +64,4 @@ export {
   type TypeEncoder,
   TypeEncoderMap,
 } from './typeEncoderMap.js';
+export {NAN} from './float.js';

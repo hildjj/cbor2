@@ -159,6 +159,12 @@ export interface DecodeOptions extends DecodeStreamOptions {
   ParentType?: ParentConstructor;
 
   /**
+   * Keep NaN payloads by creating an instance of NAN when needed.  Ignored if
+   * rejectLongLoundNaN is true.
+   */
+  keepNanPayloads?: boolean;
+
+  /**
    * Should numbers and strings be created as boxed instances, which retain
    * their original encoding for round-tripping?  If this is true,
    * saveOriginal is also set to true.  Think of this as "saveOriginal +

@@ -63,6 +63,7 @@ test('decode with dCBOR', () => {
     '0xa280008001',
     '0xa200010002',
     '0x6345cc88',
+    '0xFB7FF0000000000001', // Not shortest
   ], {dcbor: true});
 });
 
@@ -231,4 +232,10 @@ test('ignoreGlobalTags', () => {
   testAll([
     [new Tag(TAG.REGEXP, ['foo', '']), '', 'd9524a8263666f6f60'],
   ], {ignoreGlobalTags: true});
+});
+
+test('keep nan payloads', () => {
+  failAll([
+    '0xFB7FF0000000000001',
+  ], {rejectLongFloats: true, keepNanPayloads: true});
 });
