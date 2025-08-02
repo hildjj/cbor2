@@ -236,6 +236,6 @@ test('ignoreGlobalTags', () => {
 
 test('keep nan payloads', () => {
   failAll([
-    '0xFB7FF0000000000001',
+    '0xFB7FF1000000000000',
   ], {rejectLongFloats: true, keepNanPayloads: true});
 });

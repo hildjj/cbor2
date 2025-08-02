@@ -1,5 +1,6 @@
 .cache/
 .cert/
+.pnpm-store/
 .vscode/
 coverage/
 docs/

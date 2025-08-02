@@ -34,7 +34,7 @@ class DiagContainer extends CBORcontainer {
    * stream?
    *
    * @readonly
-   * @returns {boolean} True if cleanup needed.
+   * @returns True if cleanup needed.
    */
   public get isEmptyStream(): boolean {
     return (this.mt === MT.UTF8_STRING || this.mt === MT.BYTE_STRING) &&
@@ -50,6 +50,7 @@ class DiagContainer extends CBORcontainer {
  * @param mt Major Type.
  * @param ai Additional info.
  * @param value Numeric value to annotate.
+ * @param opts Decode options.
  * @returns String version, marked up as needed.
  */
 function sized(

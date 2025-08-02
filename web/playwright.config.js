@@ -82,7 +82,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run start -- -O',
+    command: 'npm run start -- -O --temp',
     url: 'https://localhost:5500/cbor2/',
     reuseExistingServer: !isCI,
     ignoreHTTPSErrors: true,

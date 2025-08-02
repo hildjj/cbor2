@@ -71,6 +71,7 @@ export class DecodeStream implements Sliceable {
    * Get the stream of events describing the CBOR item.  Yields Value tuples.
    *
    * @throws On invalid input or extra data in input.
+   * @yields MtAiValue for each value in the stream.
    * @example
    * ```js
    * const s = new DecodeStream(buffer);
@@ -99,6 +100,7 @@ export class DecodeStream implements Sliceable {
    * reading tagged items, byte strings and text strings.
    *
    * @throws On insufficient data.
+   * @yields MtAiValue for each value in the sequence.
    * @example
    * ```js
    * const s = new DecodeStream(buffer);
@@ -130,9 +132,8 @@ export class DecodeStream implements Sliceable {
    * Get the next CBOR value from the input stream.  Yields Value tuples.
    *
    * @param depth The current depth in the CBOR tree.
-   * @returns A generator that yields information about every sub-item
-   *   found in the input.
    * @throws Maximum depth exceeded, invalid input.
+   * @yields Information about every sub-item found in the input.
    */
   *#nextVal(depth: number): ValueGenerator {
     if (depth++ > this.#opts.maxDepth) {

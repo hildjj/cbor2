@@ -67,7 +67,7 @@ export class TypeEncoderMap {
    * Delete the encoder for a given class.
    *
    * @param typ Constructor function.
-   * @returns true if class found and deleted, otherwise false.
+   * @returns True if class found and deleted, otherwise false.
    */
   public delete<T extends AbstractClassType<T>>(typ: T): boolean {
     return this.#types.delete(typ);

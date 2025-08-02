@@ -4,7 +4,8 @@ const path = require('node:path');
 
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
 
-/** @type {import('typedoc').TypeDocOptions} */
+/** @import {TypeDocOptions} from 'typedoc' */
+/** @type {TypeDocOptions} */
 module.exports = {
   entryPoints: Object.values(pkg.exports).map(f => path.resolve(__dirname, f.replace('/lib/', '/src/').replace('.js', '.ts'))),
   out: 'docs',

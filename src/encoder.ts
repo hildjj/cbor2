@@ -196,6 +196,7 @@ export function writeInt(val: number, w: Writer, mt?: number): void {
  *
  * @param tag Tag number.
  * @param w Stream to write to.
+ * @param opts Options.
  */
 export function writeTag(
   tag: TagNumber,
@@ -312,6 +313,7 @@ export function writeNumber(
  *
  * @param val String.
  * @param w Writer.
+ * @param opts Options.
  */
 export function writeString(
   val: string,
@@ -400,6 +402,16 @@ export function clearEncoder<T extends AbstractClassType<T>>(
   return old;
 }
 
+/**
+ * Writes the length of the given object.  If we are using the original
+ * encoding, use its length.
+ *
+ * @param obj Object whose length to write.
+ * @param len Preferred size.
+ * @param mt Major type.
+ * @param w Writer.
+ * @param opts Options.
+ */
 // eslint-disable-next-line @typescript-eslint/max-params
 export function writeLength(
   obj: object,
@@ -554,17 +566,16 @@ export function encode(val: unknown, options: EncodeOptions = {}): Uint8Array {
  * be ignored.  The `cde` and `dcbor` options turn on `ignoreOriginalEncoding`
  * by default, so it must be exlicitly disabled.
  *
+ * @param value Number to be encoded later.
+ * @param encoding Desired encoding.  Default: 'f', which uses the preferred
+ *   float encoding, even for integers.
+ * @returns Boxed number or bigint object with hidden property set containing
+ *   the desired encoding.
  * @example
  * const num = encodedNumber(2, 'i32');
  * // [Number: 2]
  * const enc = encode(num, {cde: true, ignoreOriginalEncoding: false});
  * // Uint8Array(3) [ 25, 0, 2 ]
- *
- * @param value Number to be encoded later
- * @param encoding Desired encoding.  Default: 'f', which uses the preferred
- *   float encoding, even for integers.
- * @returns Boxed number or bigint object with hidden property set containing
- *   the desired encoding.
  */
 export function encodedNumber(value: bigint | number, encoding: 'bigint'): BigInt;
 export function encodedNumber(value: bigint | number, encoding: 'i' | 'i64', majorType?: number): Number | BigInt;

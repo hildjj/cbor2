@@ -97,6 +97,8 @@ export class Tag implements ToCBOR, Decodeable, ITag {
 
   /**
    * Get all registered decoders clone of the map.
+   *
+   * @returns Map containing current decoders, as a copy.
    */
   public static getAllDecoders(): ReadonlyMap<TagNumber, TagDecoder> {
     return new Map(this.#tags);
@@ -104,7 +106,9 @@ export class Tag implements ToCBOR, Decodeable, ITag {
 
   /**
    * Iterate over just the contents, so that the tag works more like an
-   * array.  Yields One time, the contained value.
+   * array.
+   *
+   * @yields One time, the contained value.
    */
   public *[Symbol.iterator](): Generator<unknown, void, undefined> {
     yield this.contents;

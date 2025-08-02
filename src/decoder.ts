@@ -48,9 +48,10 @@ class StateMachine {
   /**
    * Go to the next state based on the event.
    *
-   * @param mav Next event to process
-   * @param opts Stream options
+   * @param mav Next event to process.
+   * @param opts Stream options.
    * @param stream Currently-reading stream.  Will be advanced.
+   * @throws On unexpected BREAK.
    */
   public step(
     mav: MtAiValue,
@@ -109,16 +110,16 @@ export function decode<T = unknown>(
 }
 
 /**
-  * Decode the bytes of a CBOR Sequence to major-type/additional-information/
-  * value tuples.  Each of these tuples is an event in parsing the sequence.
-  *
-  * Note that this includes items indicating the start of an array or map, and
-  * the end of an indefinite-length item, and tag numbers separate from the
-  * tag content. Does not guarantee that the input is valid.
-  *
-  * Will attempt to read all items in an array or map, even if indefinite.
-  * Throws when there is insufficient data to do so. The same applies when
-  * reading tagged items, byte strings and text strings.
+ * Decode the bytes of a CBOR Sequence to major-type/additional-information/
+ * value tuples.  Each of these tuples is an event in parsing the sequence.
+ *
+ * Note that this includes items indicating the start of an array or map, and
+ * the end of an indefinite-length item, and tag numbers separate from the
+ * tag content. Does not guarantee that the input is valid.
+ *
+ * Will attempt to read all items in an array or map, even if indefinite.
+ * Throws when there is insufficient data to do so. The same applies when
+ * reading tagged items, byte strings and text strings.
  *
  * @see https://www.rfc-editor.org/rfc/rfc8742.html
  * @example
@@ -134,7 +135,8 @@ export class SequenceEvents {
   #peeked: MtAiValue | undefined;
 
   /**
-   * Create an Event
+   * Create an Event.
+   *
    * @param src CBOR bytes to decode.
    * @param options Options for decoding.
    */
@@ -146,6 +148,7 @@ export class SequenceEvents {
   /**
    * Peek at the next tuple, allowing for later reads.
    *
+   * @returns A value if one exists, otherwise undefined.
    * @throws {Error} On insufficient data.
    */
   public peek(): MtAiValue | undefined {
@@ -158,6 +161,7 @@ export class SequenceEvents {
   /**
    * Read the next tuple.
    *
+   * @returns A value if one exists, otherwise undefined.
    * @throws {Error} On insufficient data.
    */
   public read(): MtAiValue | undefined {
@@ -170,6 +174,7 @@ export class SequenceEvents {
    * Iterate over all tuples.
    *
    * @throws {Error} On insufficient data.
+   * @yields An MtAiValue for each value in the sequence.
    */
   public *[Symbol.iterator](): Generator<MtAiValue, void, undefined> {
     while (true) {

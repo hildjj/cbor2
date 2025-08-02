@@ -1,0 +1,7 @@
+packages:
+  - .
+  - examples/
+  - web/
+linkWorkspacePackages: true
+onlyBuiltDependencies:
+  - esbuild

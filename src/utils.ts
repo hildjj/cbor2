@@ -14,6 +14,11 @@ export type Range8Array = Uint8Array & {
   [CBOR_RANGES]?: CborRange[];
 };
 
+/**
+ * Set the ranges as a hidden property.
+ * @param u8 Buffer.
+ * @param ranges Ranges.
+ */
 export function setRanges(u8: Range8Array, ranges: CborRange[]): void {
   Object.defineProperty(u8, CBOR_RANGES, {
     configurable: false,
@@ -23,14 +28,38 @@ export function setRanges(u8: Range8Array, ranges: CborRange[]): void {
   });
 }
 
+/**
+ * Get the ranges.
+ *
+ * @param u8 Buffer.
+ * @returns Ranges.
+ * @private
+ */
 export function getRanges(u8: Range8Array): CborRange[] | undefined {
   return u8[CBOR_RANGES];
 }
 
+/**
+ * Does this have ranges?
+ *
+ * @param u8 Buffer.
+ * @returns True if so.
+ * @private
+ */
 export function hasRanges(u8: Range8Array): boolean {
   return getRanges(u8) !== undefined;
 }
 
+/**
+ * I *think* this is doing caching.  No idea what I was thinking, but don't
+ * touch it until you understand it.
+ *
+ * @param u8 Original.
+ * @param begin Offset.
+ * @param end End of subarray.
+ * @returns A subarray with some stuff set on it.
+ * @private
+ */
 export function subarrayRanges(
   u8: Range8Array,
   begin = 0,
@@ -89,6 +118,8 @@ export function u8toHex(u8: Uint8Array): string {
  *
  * @param u8s Zero or more arrays to concatenate.
  * @returns Combined array.
+ * @throws If some of the u8s aren't Uint8Arrays.
+ * @private
  */
 export function u8concat(u8s: Range8Array[]): Range8Array {
   const sz = u8s.reduce((t, v) => t + v.length, 0);
@@ -165,8 +196,8 @@ export function isBigEndian(): boolean {
 /**
  * Convert a string to a U+xxxx notation for debugging.
  *
- * @param str String to convert
- * @returns "U+0000 U+0001"
+ * @param str String to convert.
+ * @returns "U+0000 U+0001".
  */
 export function stringToHex(str: string): string {
   let res = '';
