@@ -50,6 +50,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   stringNormalization: null,
   types: null,
   wtf8: false,
+  useGlobalTags: true
 };
 
 /**
@@ -432,7 +433,7 @@ function writeObject(
 
   const constructor = obj.constructor as AbstractClassType<any>;
   if (constructor) { // Not Object.create(null)
-    const encoder = opts.types?.get(constructor) ?? TYPES.get(constructor);
+    const encoder = opts.types?.get(constructor) ?? (opts.useGlobalTags ? TYPES.get(constructor) : undefined);
     if (encoder) {
       const res = encoder(obj, w, opts);
       if (res !== undefined) {
