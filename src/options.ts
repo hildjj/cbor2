@@ -501,7 +501,7 @@ export interface EncodeOptions extends WriterOptions {
    */
   types?: TypeEncoderMap | null;
 
-    /**
+  /**
    * If true or undefined, consider the global tag registry when encoding tags
    */
   useGlobalTags?: boolean;
