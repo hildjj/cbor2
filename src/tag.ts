@@ -130,7 +130,7 @@ export class Tag implements ToCBOR, Decodeable, ITag {
    */
   public decode(options: RequiredDecodeOptions): unknown {
     const decoder = options?.tags?.get(this.tag) ?? (
-      (options?.useGlobalTags ?? true) ? Tag.#tags.get(this.tag) : undefined
+      (options?.isgnoreGlobalTags ?? false) ? undefined : Tag.#tags.get(this.tag)
     );
     if (decoder) {
       return decoder(this, options);
