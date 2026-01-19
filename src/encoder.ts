@@ -434,7 +434,7 @@ function writeObject(
   const constructor = obj.constructor as AbstractClassType<any>;
   if (constructor) { // Not Object.create(null)
     const encoder = opts.types?.get(constructor) ?? (
-      (opts?.ignoreGlobalTags ?? false) ? undefined : TYPES.get(constructor)
+      opts.ignoreGlobalTags ? undefined : TYPES.get(constructor)
     );
     if (encoder) {
       const res = encoder(obj, w, opts);

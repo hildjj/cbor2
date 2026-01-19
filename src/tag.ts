@@ -130,7 +130,7 @@ export class Tag implements ToCBOR, Decodeable, ITag {
    */
   public decode(options: RequiredDecodeOptions): unknown {
     const decoder = options?.tags?.get(this.tag) ?? (
-      (options?.isgnoreGlobalTags ?? false) ? undefined : Tag.#tags.get(this.tag)
+      options?.ignoreGlobalTags ? undefined : Tag.#tags.get(this.tag)
     );
     if (decoder) {
       return decoder(this, options);
@@ -142,7 +142,9 @@ export class Tag implements ToCBOR, Decodeable, ITag {
     options: RequiredCommentOptions,
     depth: number
   ): string | undefined {
-    const decoder = options?.tags?.get(this.tag) ?? Tag.#tags.get(this.tag);
+    const decoder = options?.tags?.get(this.tag) ?? (
+      options?.ignoreGlobalTags ? undefined : Tag.#tags.get(this.tag)
+    );
     if (decoder?.comment) {
       return decoder.comment(this, options, depth);
     }

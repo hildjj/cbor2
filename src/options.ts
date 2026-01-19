@@ -331,7 +331,7 @@ export interface DecodeOptions extends DecodeStreamOptions {
   /**
    * If false or undefined, consider the global tag registry when decoding tags
    */
-  isgnoreGlobalTags?: boolean;
+  ignoreGlobalTags?: boolean;
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
