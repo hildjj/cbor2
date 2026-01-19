@@ -239,3 +239,15 @@ test('keep nan payloads', () => {
     '0xFB7FF1000000000000',
   ], {rejectLongFloats: true, keepNanPayloads: true});
 });
+
+test('preferBigInt', () => {
+  testAll([
+    [1n, '', '0x01'],
+    [-1n, '', '0x20'],
+    [BigInt(Number.MAX_SAFE_INTEGER), '', '0x1b001fffffffffffff'],
+    [BigInt(Number.MAX_SAFE_INTEGER) + 1n, '', '0x1b0020000000000000'],
+    [BigInt(Number.MIN_SAFE_INTEGER), '', '0x3b001ffffffffffffe'],
+    [BigInt(Number.MIN_SAFE_INTEGER) - 1n, '', '0x3b001fffffffffffff'],
+    [BigInt(Number.MIN_SAFE_INTEGER) - 2n, '', '0x3b0020000000000000'],
+  ], {preferBigInt: true});
+});

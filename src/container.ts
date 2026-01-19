@@ -58,6 +58,7 @@ export class CBORcontainer {
     createObject,
     keepNanPayloads: false,
     pretty: false,
+    preferBigInt: false,
     preferMap: false,
     rejectLargeNegatives: false,
     rejectBigInts: false,
@@ -194,13 +195,15 @@ export class CBORcontainer {
           throw new Error(`Invalid 65bit negative number: ${value}`);
         }
         let val = value;
-        if (opts.convertUnsafeIntsToFloat &&
+        if (opts.preferBigInt) {
+          val = BigInt(val as number);
+        } else if (opts.convertUnsafeIntsToFloat &&
           (val as bigint >= DCBOR_INT.MIN) &&
           (val as bigint <= DCBOR_INT.MAX)) {
           val = Number(value);
         }
         if (opts.boxed) {
-          return box(val as number, stream.toHere(offset));
+          return box(val as (number | bigint), stream.toHere(offset));
         }
         return val;
       }
