@@ -210,6 +210,15 @@ export interface DecodeOptions extends DecodeStreamOptions {
   createObject?: ObjectCreator;
 
   /**
+   * Always generate bigint numbers from CBOR integers (major type 0 or 1).
+   * This would be used in profiles that want to crisply distinguish between
+   * float and int types.  On the encode side, you might want
+   * avoidInts=true and collapseBigInts=true to pair with this.  If true,
+   * convertUnsafeIntsToFloat is ignored.
+   */
+  preferBigInt?: boolean;
+
+  /**
    * Always generate Map instances when decoding, instead of trying to
    * generate object instances when all of the keys are strings.  If you
    * have the boxed option on, this option has no effect, and Maps are always
