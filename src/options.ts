@@ -15,7 +15,7 @@ export interface ITag {
 export interface ICommenter {
 
   /**
-   * If true, do not output text for child nodes.  The comment function
+   * Do not output text for child nodes.  The comment function
    * will handle that.  If true, ensure that the text returned by the comment
    * function ends in a newline.
    * @default false
@@ -60,8 +60,10 @@ export interface DecodeStreamOptions {
   encoding?: 'base64' | 'hex' | null;
 
   /**
-   * Reject integers and lengths that could have been encoded in a smaller
-   * encoding.
+   * Reject integers and additional-information lengths that could have been
+   * encoded in a smaller encoding.
+   *
+   * Usually `rejectLongFloats` is also desired.
    *
    * @default false
    */
@@ -159,26 +161,22 @@ export interface DecodeOptions extends DecodeStreamOptions {
   ParentType?: ParentConstructor;
 
   /**
-   * Keep NaN payloads by creating an instance of NAN when needed.  Ignored if
-   * rejectLongLoundNaN is true.
-   */
-  keepNanPayloads?: boolean;
-
-  /**
    * Should numbers and strings be created as boxed instances, which retain
-   * their original encoding for round-tripping?  If this is true,
-   * saveOriginal is also set to true.  Think of this as "saveOriginal +
-   * extras".  The thought is that most use cases for saveOriginal will want
-   * the original encoding of an object or array, and won't care about the
-   * original encoding of strings and numbers.  Turning this on also has the
-   * side-effect of making all CBOR maps decode as JS Map objects, rather than
-   * plain Objects.
+   * their original encoding for round-tripping?
+   *
+   * If this is true, saveOriginal is also set to true.  Think of this as
+   * "saveOriginal + extras".  The thought is that most use cases for
+   * saveOriginal will want the original encoding of an object or array, and
+   * won't care about the original encoding of strings and numbers.  Turning
+   * this on also has the side-effect of making all CBOR maps decode as JS Map
+   * objects, rather than plain Objects, since the string keys will need to be
+   * instances of String.
    * @default false
    */
   boxed?: boolean;
 
   /**
-   * Turn on options for draft-ietf-cbor-cde-05.
+   * Turn on all options for draft-ietf-cbor-cde-05.
    */
   cde?: boolean;
 
@@ -190,18 +188,6 @@ export interface DecodeOptions extends DecodeStreamOptions {
   convertUnsafeIntsToFloat?: boolean;
 
   /**
-   * Turn on options for draft-mcnally-deterministic-cbor-11.
-   */
-  dcbor?: boolean;
-
-  /**
-   * Should the size of an element always be appended to that element using
-   * an underscore when calling diagnose?
-   * @default DiagnosticSizes.PREFERRED
-   */
-  diagnosticSizes?: DiagnosticSizes;
-
-  /**
    * Create an object from an array of key-value pairs.  The default
    * implementation creates a plain JS object if all of the keys are strings,
    * otherwise creates a Map (unless preferMap or boxed is set, in which case
@@ -210,7 +196,31 @@ export interface DecodeOptions extends DecodeStreamOptions {
   createObject?: ObjectCreator;
 
   /**
+   * Turn on all options for draft-mcnally-deterministic-cbor-11.
+   */
+  dcbor?: boolean;
+
+  /**
+   * When producing diagnostic output, should the size of an element always be
+   * appended to that element using an underscore when calling diagnose?
+   * @default DiagnosticSizes.PREFERRED
+   */
+  diagnosticSizes?: DiagnosticSizes;
+
+  /**
+   * Do not consider the global tag registry when decoding tags.
+   */
+  ignoreGlobalTags?: boolean;
+
+  /**
+   * Keep NaN payloads by creating an instance of NAN when needed.  Ignored if
+   * rejectLongLoundNaN is true.
+   */
+  keepNanPayloads?: boolean;
+
+  /**
    * Always generate bigint numbers from CBOR integers (major type 0 or 1).
+   *
    * This would be used in profiles that want to crisply distinguish between
    * float and int types.  On the encode side, you might want
    * avoidInts=true and collapseBigInts=true to pair with this.  If true,
@@ -220,9 +230,11 @@ export interface DecodeOptions extends DecodeStreamOptions {
 
   /**
    * Always generate Map instances when decoding, instead of trying to
-   * generate object instances when all of the keys are strings.  If you
-   * have the boxed option on, this option has no effect, and Maps are always
-   * produced.
+   * generate object instances when all of the keys are strings.
+   *
+   * A slight performance improvement if you don't need plain objects.
+   * If you have the boxed option on, this option has no effect, and Maps are
+   * always produced.
    */
   preferMap?: boolean;
 
@@ -240,30 +252,35 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectLargeNegatives?: boolean;
 
   /**
-   * If there are bigint (tag 2/3) in the incoming data, exit with an error.
+   * If there are bigint (tag 2/3) in the incoming data, throw an exception.
    * @default false
    */
   rejectBigInts?: boolean;
 
   /**
-   * If there are duplicate keys in a map, should we throw an exception? Note:
-   * this is more compute-intensive than expected at the moment, but that will
-   * be fixed eventually.
+   * If there are duplicate keys in a map, should we throw an exception?
+   *
+   * Note: this is more compute-intensive than expected at the moment, but
+   * that will be fixed eventually.
    * @default false
    */
   rejectDuplicateKeys?: boolean;
 
   /**
-   * Reject any floating point numbers.  This might be used in profiles that
-   * are not expecting floats to prevent one from being coerced to an
-   * integer-looking number without the receiver knowing.
+   * Reject any floating point numbers.
+   *
+   * This might be used in profiles that are not expecting floats to prevent
+   * one from being coerced to an integer-looking number without the receiver
+   * knowing.
    * @default false
    */
   rejectFloats?: boolean;
 
   /**
-   * Reject any mt 0/1 numbers.  This might be used in profiles that expect
-   * all numbers to be encoded as floating point.
+   * Reject any mt 0/1 numbers.
+   *
+   * This might be used in profiles that expect all numbers to be encoded as
+   * floating point.
    * @default false
    */
   rejectInts?: boolean;
@@ -276,12 +293,16 @@ export interface DecodeOptions extends DecodeStreamOptions {
 
   /**
    * Reject NaNs that are not encoded as 0x7e00.
+   *
+   * This includes non-trivial NaNs without a quiet bit, with a sign bit,
+   * or with a payload.  It also includes NaNs that are encoded with a float
+   * larger than f16.
    * @default false
    */
   rejectLongLoundNaN?: boolean;
 
   /**
-   * If negative zero (-0) is received, throw an error.
+   * If negative zero (-0.0) is received, throw an error.
    * @default false
    */
   rejectNegativeZero?: boolean;
@@ -294,6 +315,8 @@ export interface DecodeOptions extends DecodeStreamOptions {
 
   /**
    * Reject any attempt to decode streaming CBOR.
+   *
+   * Enforces the Definite-Length-Only (DLO) constraint.
    * @default false
    */
   rejectStreaming?: boolean;
@@ -317,16 +340,18 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectUnsafeFloatInts?: boolean;
 
   /**
-   * Reject the `undefined` simple value.  Usually used with rejectSimple.
+   * Reject the `undefined` simple value.
+   *
+   * Usually used with rejectSimple.
    * @default false
    */
   rejectUndefined?: boolean;
 
   /**
    * Save the original bytes associated with every object as a property of
-   * that object.  Use `getEncoded(obj)` to retrieve the associated bytes.
-   * If you need the original encoded form of primitive items such as numbers
-   * and strings, set `boxed: true` as well.
+   * that object for exact round-tripping.  Use `getEncoded(obj)` to retrieve
+   * the associated bytes. If you need the original encoded form of primitive
+   * items such as numbers and strings, set `boxed: true` as well.
    */
   saveOriginal?: boolean;
 
@@ -342,11 +367,6 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * with Tag.registerDecoder.
    */
   tags?: TagDecoderMap | null;
-
-  /**
-   * If false or undefined, consider the global tag registry when decoding tags.
-   */
-  ignoreGlobalTags?: boolean;
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
@@ -363,7 +383,7 @@ export interface CommentOptions extends DecodeOptions {
   initialDepth?: number;
 
   /**
-   * If true, don't add the initial 0xHEX line to comment output.
+   * Don't add the initial 0xHEX line to comment output.
    * @default false
    */
   noPrefixHex?: boolean;
@@ -416,7 +436,7 @@ export interface EncodeOptions extends WriterOptions {
 
   /**
    * When writing floats, first flush any subnormal numbers to zero before
-   * decising on encoding.
+   * deciding on encoding.
    */
   flushToZero?: boolean;
 
@@ -428,6 +448,11 @@ export interface EncodeOptions extends WriterOptions {
    * @default null
    */
   forceEndian?: boolean | null;
+
+  /**
+   * Do not consider the global tag registry when encoding tags.
+   */
+  ignoreGlobalTags?: boolean;
 
   /**
    * Ignore sizes on boxed numbers; they might be overly-large.
@@ -466,7 +491,7 @@ export interface EncodeOptions extends WriterOptions {
   rejectBigInts?: boolean;
 
   /**
-   * If true, error instead of encoding an instance of Simple.
+   * Throw an error when an instance of Simple is encoded.
    * @default false
    */
   rejectCustomSimples?: boolean;
@@ -485,51 +510,52 @@ export interface EncodeOptions extends WriterOptions {
   rejectFloats?: boolean;
 
   /**
-   * If true, error instead of encoding `undefined`.
+   * Error instead of encoding `undefined`.
    * @default false
    */
   rejectUndefined?: boolean;
 
   /**
-   * If true, encode -0 as 0.
+   * Encode -0 as 0.
    * @default false
    */
   simplifyNegativeZero?: boolean;
 
   /**
-   * How should the key/value pairs be sorted before an object or Map
-   * gets created?  If null, no sorting is performed.
+   * How should the key/value pairs be sorted before an object or Map gets
+   * encoded?  If null, no sorting is performed.  Modern protocols use
+   * coreDeterministic, older ones use lengthFirstDeterministic.
    * @default null
    */
   sortKeys?: KeySorter | null;
 
   /**
-   * If specified, normalize strings on encoding.  'NFD' may optimize for CPU,
-   * 'NFC' may optimize for size.  Don't use this without Unicode
-   * expertise.  In particular, the 'K' forms are really unlikely to be useful.
+   * Normalize strings on encoding.
+   *
+   * 'NFD' may optimize for CPU, 'NFC' may or may not optimize for size.
+   * Don't use this unless your protocl calls for it, or if you have Unicode
+   * expertise.  In particular, the 'K' forms are really unlikely to be
+   * useful.
    * @default undefined
    */
   stringNormalization?: StringNormalization | null;
 
   /**
-   * If specified, override how these types are encoded for this call to encode.
+   * Override how these types are encoded for this call to encode.
    */
   types?: TypeEncoderMap | null;
 
   /**
-   * If false or undefined, consider the global tag registry when encoding tags.
-   */
-  ignoreGlobalTags?: boolean;
-
-  /**
    * Allow non-wellformed strings (strings containing unpaired surrogates) to
-   * be encoded as tag 273.  This is optional since a) most protocol use cases
-   * should use string UTF8 and b) this adds a potentially-slow for large
-   * strings check for well-formedness.  You may want this if you are storing
-   * test inputs or outputs and want to ensure that you have the full range of
-   * JS strings as possibilities.  Note: I doubt that tag 273 is
-   * widely-implemented at this time, so this is another reason you should not
-   * use this if you are trying to interoperate.
+   * be encoded as tag 273.
+   *
+   * This is optional since a) most protocol use cases should use strict UTF8
+   * and b) this adds a check for well-formedness that is potentially-slow for
+   * large strings.  You may want this if you are storing test inputs or
+   * outputs and want to ensure that you have the full range of JS strings as
+   * possibilities.  Note: I doubt that tag 273 is widely-implemented at this
+   * time, so this is another reason you should not use this if you are trying
+   * to interoperate.
    */
   wtf8?: boolean;
 }
