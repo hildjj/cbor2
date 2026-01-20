@@ -75,7 +75,7 @@ export class CBORcontainer {
     saveOriginal: false,
     sortKeys: null,
     tags: null,
-    ignoreGlobalTags: true,
+    ignoreGlobalTags: false,
   };
 
   /**

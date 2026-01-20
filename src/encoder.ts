@@ -50,7 +50,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   stringNormalization: null,
   types: null,
   wtf8: false,
-  ignoreGlobalTags: true,
+  ignoreGlobalTags: false,
 };
 
 /**
