@@ -75,3 +75,15 @@ da ffffffff -- Tag #4294967295: foo (0)
 `
   );
 });
+
+test('ignoreGlobalTags', () => {
+  testAll([
+    [/foo/, '', `0xd9524a8263666f6f60
+d9 524a -- Tag #21066
+  82    --   Array (Length: 2 items)
+    63  --     [0] UTF8 (Length: 3): "foo"
+      666f6f
+    60  --     [1] UTF8 (Length: 0): ""
+`],
+  ], {ignoreGlobalTags: true});
+});
