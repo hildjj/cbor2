@@ -353,3 +353,9 @@ test('local types', () => {
     [new Uint16Array([255])],
   ], {types});
 });
+
+test('ignoreGlobalTags', () => {
+  testAll([
+    [/foo/, '', '0xa0'],
+  ], {ignoreGlobalTags: true});
+});

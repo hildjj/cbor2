@@ -151,7 +151,7 @@ function showEncodeOpts() {
 
 function showDecodeOpts() {
   for (const inp of document.querySelectorAll('#decodeOpts input')) {
-    inp.checked = state.decodeOpts[inp.id];
+    inp.checked = state.decodeOpts[inp.id.replace(/Decode$/, '')];
   }
   diagnosticSizes.value = String(state.decodeOpts.diagnosticSizes);
   rejectStringsNotNormalizedAs.value =
@@ -347,14 +347,15 @@ stringNormalization.onChange = () => {
 stringNormalization.value = 'null';
 
 function changeDecodeOption({target}) {
-  state.decodeOpts[target.id] = target.checked;
+  const opt = target.id.replace(/Decode$/, '');
+  state.decodeOpts[opt] = target.checked;
   let modified = false;
-  if (target.id === 'dcbor') {
+  if (opt === 'dcbor') {
     modified = true;
     Object.assign(state.decodeOpts, target.checked ?
       dcborDecodeOptions :
       notDcborDecodeOptions);
-  } else if (target.id === 'cde') {
+  } else if (opt === 'cde') {
     modified = true;
     Object.assign(state.decodeOpts, target.checked ?
       cdeDecodeOptions :

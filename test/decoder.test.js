@@ -1,6 +1,7 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
 import {CBORcontainer} from '../lib/container.js';
+import {TAG} from '../lib/constants.js';
 import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
 import {decode} from '../lib/decoder.js';
@@ -224,4 +225,10 @@ test('local tags decode', () => {
     }),
     'foo'
   );
+});
+
+test('ignoreGlobalTags', () => {
+  testAll([
+    [new Tag(TAG.REGEXP, ['foo', '']), '', 'd9524a8263666f6f60'],
+  ], {ignoreGlobalTags: true});
 });
