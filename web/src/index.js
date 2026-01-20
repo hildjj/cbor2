@@ -423,7 +423,7 @@ for (let i = 0; i < acc.length; i++) {
   });
 }
 
-(async () => {
+(async() => {
   const u = new URL(window.location.href);
   if (u.hash) {
     const jsonState = await decompressString(u.hash.replace(/^#/, ''));
