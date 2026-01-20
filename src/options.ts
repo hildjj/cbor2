@@ -327,6 +327,11 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * with Tag.registerDecoder.
    */
   tags?: TagDecoderMap | null;
+
+  /**
+   * If false or undefined, consider the global tag registry when decoding tags
+   */
+  ignoreGlobalTags?: boolean;
 }
 
 export type RequiredDecodeOptions = Required<DecodeOptions>;
@@ -495,6 +500,11 @@ export interface EncodeOptions extends WriterOptions {
    * If specified, override how these types are encoded for this call to encode.
    */
   types?: TypeEncoderMap | null;
+
+  /**
+   * If false or undefined, consider the global tag registry when encoding tags
+   */
+  ignoreGlobalTags?: boolean;
 
   /**
    * Allow non-wellformed strings (strings containing unpaired surrogates) to
