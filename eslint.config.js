@@ -1,5 +1,6 @@
 import base from '@cto.af/eslint-config';
 import globals from '@cto.af/eslint-config/globals.js';
+import jsdoc from '@cto.af/eslint-config/jsdoc.js';
 import jsdoc_ts from '@cto.af/eslint-config/jsdoc_ts.js';
 import markdown from '@cto.af/eslint-config/markdown.js';
 import mod from '@cto.af/eslint-config/module.js';
@@ -19,6 +20,7 @@ export default [
   ...base,
   ...mod,
   ...ts,
+  ...jsdoc,
   ...jsdoc_ts,
   ...markdown,
   {

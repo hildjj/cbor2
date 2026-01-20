@@ -17,9 +17,11 @@ async function loadVectors(...paths) {
   let str = null;
   try {
     str = await readFile(fileName, {encoding: 'utf8'});
-  } catch (ignored) {
+  } catch (cause) {
     throw new Error(`"${fileName}" not found.
-  use command \`git submodule update --init\` to load test-vectors`);
+  use command \`git submodule update --init\` to load test-vectors`, {
+      cause,
+    });
   }
 
   // HACK: don't lose data when JSON parsing
@@ -84,7 +86,7 @@ function applesauce(v, opts) {
   return res;
 }
 
-test('vectors', async() => {
+test('vectors', async () => {
   const vectors = await loadVectors('..', 'test-vectors', 'appendix_a.json');
 
   for (const v of vectors) {
@@ -114,7 +116,7 @@ test('vectors', async() => {
   }
 });
 
-test('errors', async() => {
+test('errors', async () => {
   const failures = await loadVectors('..', 'test-vectors', 'fail.json');
 
   let count = 0;
@@ -129,7 +131,7 @@ test('errors', async() => {
   assert.equal(count, failures.length);
 });
 
-test('dcbor valid', async() => {
+test('dcbor valid', async () => {
   const tests = await loadVectors('..', 'dcbor-test-vectors', 'valid.json');
 
   for (const v of tests) {
@@ -155,7 +157,7 @@ test('dcbor valid', async() => {
   }
 });
 
-test('dcbor invalid', async() => {
+test('dcbor invalid', async () => {
   const failures = await loadVectors('..', 'dcbor-test-vectors', 'invalid.json');
 
   let count = 0;

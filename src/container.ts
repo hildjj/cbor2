@@ -8,13 +8,13 @@ import {
   RequiredEncodeOptions,
 } from './options.js';
 import {type KeyValueEncoded, sortCoreDeterministic} from './sorts.js';
+import {NAN, checkSubnormal} from './float.js';
 import {box, getEncoded, saveEncoded} from './box.js';
 import {defaultEncodeOptions, encode} from './encoder.js';
 import {stringToHex, u8concat, u8toHex} from './utils.js';
 import {DecodeStream} from './decodeStream.js';
 import {Simple} from './simple.js';
 import {Tag} from './tag.js';
-import {checkSubnormal} from './float.js';
 
 const LENGTH_FOR_AI = new Map([
   [NUMBYTES.ZERO, 1],
@@ -56,6 +56,7 @@ export class CBORcontainer {
     diagnosticSizes: DiagnosticSizes.PREFERRED,
     convertUnsafeIntsToFloat: false,
     createObject,
+    keepNanPayloads: false,
     pretty: false,
     preferMap: false,
     rejectLargeNegatives: false,
@@ -205,16 +206,30 @@ export class CBORcontainer {
       }
       case MT.SIMPLE_FLOAT:
         if (ai > NUMBYTES.ONE) {
+          if (typeof value === 'symbol') {
+            return value; // BREAK
+          }
           if (opts.rejectFloats) {
             throw new Error(`Decoding unwanted floating point number: ${value}`);
           }
           if (opts.rejectNegativeZero && Object.is(value, -0)) {
             throw new Error('Decoding negative zero');
           }
-          if (opts.rejectLongLoundNaN && isNaN(value as number)) {
+          if (isNaN(value as number)) {
             const buf = stream.toHere(offset);
-            if (buf.length !== 3 || buf[1] !== 0x7e || buf[2] !== 0) {
-              throw new Error(`Invalid NaN encoding: "${u8toHex(buf)}"`);
+            const val = new NAN(buf);
+            if (opts.rejectLongLoundNaN) {
+              // If not quiet, there will be a payload.
+              if (val.payload || (buf.length > 3)) {
+                throw new Error(`Invalid NaN encoding: "${u8toHex(buf)}"`);
+              }
+            } else if (opts.keepNanPayloads) {
+              if (val.payload) {
+                if (opts.rejectLongFloats && !val.isShortestEncoding) {
+                  throw new Error(`NaN should have been encoded shorter: ${value}`);
+                }
+                return val;
+              }
             }
           }
           if (opts.rejectSubnormals) {

@@ -19,14 +19,14 @@ const b64url = 'oWR0eXBlZGhlcmU';
 async function checkMonacoText(
   page: Page, modelName: string, value: string
 ): Promise<void> {
-  await expect.poll(async() => page.evaluate(
+  await expect.poll(async () => page.evaluate(
     // @ts-expect-error _cbor2testing added just for testability.
     (name: string) => window._cbor2testing[name].getValue(),
     modelName
   )).toBe(value);
 }
 
-test.beforeEach(async({page}) => {
+test.beforeEach(async ({page}) => {
   await page.goto('playground/');
   await expect(page).toHaveTitle(/cbor2 playground/);
 });
@@ -48,7 +48,7 @@ async function checkOutputs(page: Page): Promise<void> {
   await checkMonacoText(page, 'outModel', input);
 }
 
-test('Conversions', async({page}) => {
+test('Conversions', async ({page}) => {
   await expect(page.locator('#input-fmt')).toHaveValue('JSON');
   await checkMonacoText(page, 'inModel', input);
   await expect(page.locator('#output-fmt')).toHaveValue('commented');
@@ -85,7 +85,7 @@ test('Conversions', async({page}) => {
   await checkOutputs(page);
 });
 
-test('Encode Options', async({page}) => {
+test('Encode Options', async ({page}) => {
   await page.getByRole('button', {name: 'Encoding Options \u2795'}).click();
   await page.locator('#dcborEncode').check();
   await expect(page.getByLabel('avoidInts')).not.toBeChecked();
@@ -105,7 +105,7 @@ test('Encode Options', async({page}) => {
   await expect(page.locator('#sortKeysEncode')).toHaveValue('coreDeterministic');
 });
 
-test('Decode Options', async({page}) => {
+test('Decode Options', async ({page}) => {
   await page.getByRole('button', {name: 'Decoding Options \u2795'}).click();
   await page.locator('#dcbor').check();
   await expect(page.getByLabel('boxed')).not.toBeChecked();

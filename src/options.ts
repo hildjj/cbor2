@@ -159,6 +159,12 @@ export interface DecodeOptions extends DecodeStreamOptions {
   ParentType?: ParentConstructor;
 
   /**
+   * Keep NaN payloads by creating an instance of NAN when needed.  Ignored if
+   * rejectLongLoundNaN is true.
+   */
+  keepNanPayloads?: boolean;
+
+  /**
    * Should numbers and strings be created as boxed instances, which retain
    * their original encoding for round-tripping?  If this is true,
    * saveOriginal is also set to true.  Think of this as "saveOriginal +
@@ -329,7 +335,7 @@ export interface DecodeOptions extends DecodeStreamOptions {
   tags?: TagDecoderMap | null;
 
   /**
-   * If false or undefined, consider the global tag registry when decoding tags
+   * If false or undefined, consider the global tag registry when decoding tags.
    */
   ignoreGlobalTags?: boolean;
 }
@@ -428,7 +434,7 @@ export interface EncodeOptions extends WriterOptions {
   largeNegativeAsBigInt?: boolean;
 
   /**
-   * Per dcbor:
+   * From dcbor docs:
    *
    * "MUST check whether floating point values to be encoded have the
    * numerically equal value in DCBOR_INT = [-2^63, 2^64-1].  If that is the
@@ -437,7 +443,7 @@ export interface EncodeOptions extends WriterOptions {
    * length encoding is used.)  If a floating point value has a non-zero
    * fractional part, or an exponent that takes it out of DCBOR_INT, the
    * original floating point value is used for encoding.  (Specifically,
-   * conversion to a CBOR bignum is never considered.)"
+   * conversion to a CBOR bignum is never considered)".
    *
    * This should only apply to "integers" that are outside the JS safe range
    * of [-(2^53 - 1), 2^53-1].
@@ -502,7 +508,7 @@ export interface EncodeOptions extends WriterOptions {
   types?: TypeEncoderMap | null;
 
   /**
-   * If false or undefined, consider the global tag registry when encoding tags
+   * If false or undefined, consider the global tag registry when encoding tags.
    */
   ignoreGlobalTags?: boolean;
 

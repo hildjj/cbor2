@@ -1,4 +1,5 @@
-/** @type {import('hostlocal').HostOptions} */
+/** @import {HostOptions} from 'hostlocal' */
+/** @type {HostOptions} */
 export default {
   prefix: 'cbor2',
   dir: '../docs',

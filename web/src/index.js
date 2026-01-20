@@ -3,6 +3,8 @@ import './style.css';
 import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/+esm';
 
 import {
+  NAN,
+  NAN_SIZE,
   Simple,
   Tag,
   version as cbor2version,
@@ -136,6 +138,11 @@ const notDcborDecodeOptions = Object.fromEntries(
   Object.entries(dcborDecodeOptions).map(([k, v]) => [k, !v])
 );
 
+/**
+ * An error was received, update the UI.
+ *
+ * @param {Error} e The error.
+ */
 export function error(e) {
   copy.disabled = true;
   outModel.setValue(e.toString());
@@ -180,12 +187,17 @@ function input() {
       if (txt.trim().length > 0) {
         // eslint-disable-next-line no-new-func
         const fun = new Function(
+          'NAN',
+          'NAN_SIZE',
           'Simple',
           'Tag',
           'encodedNumber',
           `"use strict";return ${txt}`
         );
-        return encode(fun(Simple, Tag, encodedNumber), state.encodeOpts);
+        return encode(
+          fun(NAN, NAN_SIZE, Simple, Tag, encodedNumber),
+          state.encodeOpts
+        );
       }
       return new Uint8Array(0);
     }
@@ -423,7 +435,7 @@ for (let i = 0; i < acc.length; i++) {
   });
 }
 
-(async() => {
+(async () => {
   const u = new URL(window.location.href);
   if (u.hash) {
     const jsonState = await decompressString(u.hash.replace(/^#/, ''));
