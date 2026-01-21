@@ -423,6 +423,12 @@ export interface EncodeOptions extends WriterOptions {
   collapseBigInts?: boolean;
 
   /**
+   * Which tag to use to encode Date objects?
+   * @default 1
+   */
+  dateTag?: number;
+
+  /**
    * Turn on options for draft-mcnally-deterministic-cbor-11.
    */
   dcbor?: boolean;

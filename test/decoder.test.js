@@ -251,3 +251,19 @@ test('preferBigInt', () => {
     [BigInt(Number.MIN_SAFE_INTEGER) - 2n, '', '0x3b0020000000000000'],
   ], {preferBigInt: true});
 });
+
+test('DATE_EPOCH_DAYS', () => {
+  testAll([
+    [new Date(1363824000000), '', '0xd864193da9'],
+    [new Date('1940-10-09'), '', '0xd8643929b3'],
+    [new Date('1980-12-08'), '', '0xd864190f9a'],
+  ], {dateTag: TAG.DATE_EPOCH_DAYS});
+});
+
+test('DATE_FULL', () => {
+  testAll([
+    [new Date(1363824000000), '', '0xd903ec6a323031332d30332d3231'],
+    [new Date('1940-10-09'), '', '0xd903ec6a313934302d31302d3039'],
+    [new Date('1980-12-08'), '', '0xd903ec6a313938302d31322d3038'],
+  ], {dateTag: TAG.DATE_FULL});
+});

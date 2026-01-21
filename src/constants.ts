@@ -38,10 +38,12 @@ export const TAG = {
   BASE64URL: 33,
   BASE64: 34,
   MIME: 36,
+  DATE_EPOCH_DAYS: 100,
   // https://github.com/input-output-hk/cbor-sets-spec/blob/master/CBOR_SETS.md
   SET: 258,
   JSON: 262,
   WTF8: 273,
+  DATE_FULL: 1004,
   REGEXP: 21066,
   SELF_DESCRIBED: 55799,
   // Always invalid: https://www.ietf.org/archive/id/draft-bormann-cbor-notable-tags-10.html#name-invalid-tag
