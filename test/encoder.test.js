@@ -362,7 +362,7 @@ test('ignoreGlobalTags', () => {
 
 test('dateTag', () => {
   testAll([
-    [new Date(1363896240000), '', '0xc07818323031332d30332d32315432303a30343a30302e3030305a'],
+    [new Date(1363896240000), '', 'c074323031332d30332d32315432303a30343a30305a'],
   ], {dateTag: TAG.DATE_STRING});
 
   testAll([

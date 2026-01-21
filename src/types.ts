@@ -138,7 +138,8 @@ registerEncoder(Date,
       case TAG.DATE_EPOCH:
         return [opts.dateTag, obj.valueOf() / 1000];
       case TAG.DATE_STRING:
-        return [opts.dateTag, obj.toISOString()];
+        // Remove fractional seconds if not needed, to match example in 8949
+        return [opts.dateTag, obj.toISOString().replace(/\.000Z$/, 'Z')];
       case TAG.DATE_EPOCH_DAYS:
         return [opts.dateTag, Math.floor(obj.valueOf() / DAY_MS)];
       case TAG.DATE_FULL:
