@@ -53,6 +53,16 @@
             title="Should bigints that can fit into normal integers be collapsed into normal integers?">collapseBigInts</label>
         </li>
         <li>
+          <label for="dateTag"
+            title="Which tag to use to encode Date objects?">dateTag</label>
+          <select id="dateTag">
+            <option value="0">0 (RFC 3339 String)</option>
+            <option value="1" selected>1 (Float from epoch)</option>
+            <option value="100">100 (Number of dates from epoch)</option>
+            <option value="1004">1004 (RFC 3339 Full-Date)</option>
+          </select>
+        </li>
+        <li>
           <input type="checkbox" id="float64Encode">
           <label for="float64Encode"
             title="When writing floats, always use the 64-bit version.  Often combined with `avoidInts`.">float64</label>
