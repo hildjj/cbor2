@@ -1,5 +1,6 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
+import {TAG} from '../lib/constants.js';
 import assert from 'node:assert/strict';
 import {comment} from '../lib/comment.js';
 import {parseEDN} from 'cbor-edn';
@@ -86,4 +87,44 @@ d9 524a -- Tag #21066
     60  --     [1] UTF8 (Length: 0): ""
 `],
   ], {ignoreGlobalTags: true});
+});
+
+test('DATE_EPOCH_DAYS', () => {
+  testAll([
+    [new Date(1363824000000), '', `0xd864193da9
+d8 64     -- Tag #100: (Epoch Date) 2013-03-21T00:00:00.000Z
+  19 3da9 --   Unsigned: 15785
+`],
+    [new Date('1940-10-09'), '', `0xd8643929b3
+d8 64     -- Tag #100: (Epoch Date) 1940-10-09T00:00:00.000Z
+  39 29b3 --   Negative: -10676
+`],
+    [new Date('1980-12-08'), '', `0xd864190f9a
+d8 64     -- Tag #100: (Epoch Date) 1980-12-08T00:00:00.000Z
+  19 0f9a --   Unsigned: 3994
+`],
+  ], {dateTag: TAG.DATE_EPOCH_DAYS});
+});
+
+test('DATE_FULL', () => {
+  testAll([
+    [new Date(1363824000000), '', `0xd903ec6a323031332d30332d3231
+d9 03ec -- Tag #1004: (String Full Date) 2013-03-21T00:00:00.000Z
+  6a    --   UTF8 (Length: 10): "2013-03-21"
+    323031332d30332d
+    3231
+`],
+    [new Date('1940-10-09'), '', `0xd903ec6a313934302d31302d3039
+d9 03ec -- Tag #1004: (String Full Date) 1940-10-09T00:00:00.000Z
+  6a    --   UTF8 (Length: 10): "1940-10-09"
+    313934302d31302d
+    3039
+`],
+    [new Date('1980-12-08'), '', `0xd903ec6a313938302d31322d3038
+d9 03ec -- Tag #1004: (String Full Date) 1980-12-08T00:00:00.000Z
+  6a    --   UTF8 (Length: 10): "1980-12-08"
+    313938302d31322d
+    3038
+`],
+  ], {dateTag: TAG.DATE_FULL});
 });

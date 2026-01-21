@@ -33,6 +33,7 @@ export const defaultEncodeOptions: RequiredEncodeOptions = {
   avoidInts: false,
   cde: false,
   collapseBigInts: true,
+  dateTag: TAG.DATE_EPOCH,
   dcbor: false,
   float64: false,
   flushToZero: false,

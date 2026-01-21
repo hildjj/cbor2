@@ -105,9 +105,11 @@ Decoding supports the above types, including the following CBOR tag numbers:
 | 82  | Float64Array        |
 | 85  | Float32Array        |
 | 86  | Float64Array        |
+| 100 | Date                |
 | 258 | Set                 |
 | 262 | any                 |
 | 273 | string              |
+| 1004  | Date              |
 | 21065 | RegExp            |
 | 21066 | RegExp            |
 | 55799 | any               |

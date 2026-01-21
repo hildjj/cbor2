@@ -323,6 +323,13 @@ function changeEncodeOption({target}) {
   return convert();
 }
 
+const dateTag = document.querySelector('#dateTag');
+dateTag.onchange = () => {
+  state.encodeOpts.dateTag = Number(dateTag.value);
+  return convert();
+};
+dateTag.value = '1';
+
 const forceEndian = document.querySelector('#forceEndian');
 forceEndian.onchange = () => {
   state.encodeOpts.forceEndian = {

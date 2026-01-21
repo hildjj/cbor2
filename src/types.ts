@@ -104,9 +104,10 @@ function dateString(tag: ITag): Date {
 dateString.comment = (tag: ITag): string => {
   assertString(tag.contents);
   const decoded = new Date(tag.contents);
-  return `(String Date) ${decoded.toISOString()}`;
+  return `(String ${tag.tag === TAG.DATE_FULL ? 'Full ' : ''}Date) ${decoded.toISOString()}`;
 };
 Tag.registerDecoder(TAG.DATE_STRING, dateString);
+Tag.registerDecoder(TAG.DATE_FULL, dateString);
 
 function dateEpoch(tag: ITag): Date {
   assertNumber(tag.contents);
@@ -119,8 +120,33 @@ dateEpoch.comment = (tag: ITag): string => {
 };
 Tag.registerDecoder(TAG.DATE_EPOCH, dateEpoch);
 
+const DAY_MS = 1000 * 60 * 60 * 24;
+function dateEpochDays(tag: ITag): Date {
+  assertNumber(tag.contents);
+  return new Date(tag.contents * DAY_MS);
+}
+dateEpochDays.comment = (tag: ITag): string => {
+  assertNumber(tag.contents);
+  const decoded = new Date(tag.contents * DAY_MS);
+  return `(Epoch Date) ${(decoded as Date).toISOString()}`;
+};
+Tag.registerDecoder(TAG.DATE_EPOCH_DAYS, dateEpochDays);
+
 registerEncoder(Date,
-  (obj: Date) => [TAG.DATE_EPOCH, obj.valueOf() / 1000]);
+  (obj: Date, _w: Writer, opts: RequiredEncodeOptions): TaggedValue => {
+    switch (opts.dateTag) {
+      case TAG.DATE_EPOCH:
+        return [opts.dateTag, obj.valueOf() / 1000];
+      case TAG.DATE_STRING:
+        return [opts.dateTag, obj.toISOString()];
+      case TAG.DATE_EPOCH_DAYS:
+        return [opts.dateTag, Math.floor(obj.valueOf() / DAY_MS)];
+      case TAG.DATE_FULL:
+        return [opts.dateTag, obj.toISOString().split('T')[0]];
+      default:
+        throw new Error(`Unsupported date tag: ${opts.dateTag}`);
+    }
+  });
 
 function u8toBigInt(
   neg: boolean,

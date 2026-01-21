@@ -1,6 +1,6 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
-import {MT, SYMS} from '../lib/constants.js';
+import {MT, SYMS, TAG} from '../lib/constants.js';
 import {
   clearEncoder, encode, encodedNumber, registerEncoder, writeInt,
 } from '../lib/encoder.js';
@@ -358,4 +358,26 @@ test('ignoreGlobalTags', () => {
   testAll([
     [/foo/, '', '0xa0'],
   ], {ignoreGlobalTags: true});
+});
+
+test('dateTag', () => {
+  testAll([
+    [new Date(1363896240000), '', '0xc07818323031332d30332d32315432303a30343a30302e3030305a'],
+  ], {dateTag: TAG.DATE_STRING});
+
+  testAll([
+    [new Date(1363896240000), '', '0xd864193da9'],
+    [new Date('1940-10-09'), '', '0xd8643929b3'],
+    [new Date('1980-12-08'), '', '0xd864190f9a'],
+  ], {dateTag: TAG.DATE_EPOCH_DAYS});
+
+  testAll([
+    [new Date(1363896240000), '', '0xd903ec6a323031332d30332d3231'],
+    [new Date('1940-10-09'), '', '0xd903ec6a313934302d31302d3039'],
+    [new Date('1980-12-08'), '', 'd903ec6a313938302d31322d3038'],
+  ], {dateTag: TAG.DATE_FULL});
+
+  failAll([
+    [new Date()],
+  ], {dateTag: -1});
 });
