@@ -153,7 +153,7 @@ function u8toBigInt(
   neg: boolean,
   tag: ITag,
   opts: RequiredDecodeOptions
-): BigInt | bigint {
+): BigInt | Number | bigint | number {
   assertU8(tag.contents);
   if (opts.rejectBigInts) {
     throw new Error(`Decoding unwanted big integer: ${tag}(h'${u8toHex(tag.contents)}')`);
@@ -163,19 +163,25 @@ function u8toBigInt(
     // leading zeroes
     throw new Error(`Decoding overly-large bigint: ${tag.tag}(h'${u8toHex(tag.contents)})`);
   }
-  let bi = tag.contents.reduce((t, v) => (t << 8n) | BigInt(v), 0n);
+  let bi: number | bigint = tag.contents.reduce(
+    (t, v) => (t << 8n) | BigInt(v), 0n
+  );
   if (neg) {
     bi = -1n - bi;
   }
-  if (opts.requirePreferred &&
-    (bi >= Number.MIN_SAFE_INTEGER) &&
-    (bi <= Number.MAX_SAFE_INTEGER)) {
+  const safeInt = (bi >= Number.MIN_SAFE_INTEGER) &&
+    (bi <= Number.MAX_SAFE_INTEGER);
+
+  if (opts.requirePreferred && safeInt) {
     // The preferred serialization of an integer that can be represented using
     // major type 0 or 1 is to encode it this way instead of as a bignum
     throw new Error(`Decoding bigint that could have been int: ${bi}n`);
   }
+  if (opts.collapseBigInts && safeInt) {
+    bi = Number(bi);
+  }
   if (opts.boxed) {
-    return box(bi, tag.contents) as BigInt;
+    return box(bi, tag.contents) as BigInt | Number;
   }
   return bi;
 }
