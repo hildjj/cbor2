@@ -1,6 +1,6 @@
 {
   "name": "cbor2",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Encode and parse data in the Concise Binary Object Representation (CBOR) data format (RFC8949).",
   "exports": {
     ".": "./lib/index.js",
