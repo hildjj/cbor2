@@ -90,7 +90,7 @@ test('Encode Options', async ({page}) => {
   await page.locator('#dcborEncode').check();
   await expect(page.getByLabel('avoidInts')).not.toBeChecked();
   await expect(page.locator('#cdeEncode')).toBeChecked();
-  await expect(page.getByLabel('collapseBigInts')).toBeChecked();
+  await expect(page.locator('#collapseBigIntsEncode')).toBeChecked();
   await expect(page.getByLabel('float64')).not.toBeChecked();
   await expect(page.getByLabel('flushToZero')).not.toBeChecked();
   await expect(page.getByLabel('forceEndian')).toHaveValue('null');

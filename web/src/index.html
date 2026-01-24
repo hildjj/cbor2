@@ -187,6 +187,11 @@
             title="Should numbers and strings be created as boxed instances, which retain their original encoding for round-tripping?">boxed</label>
         </li>
         <li>
+          <input type="checkbox" id="collapseBigIntsDecode" checked>
+          <label for="collapseBigIntsDecode"
+            title="Should bigints that can fit into normal integers be collapsed into normal integers?">collapseBigInts</label>
+        </li>
+        <li>
           <input type="checkbox" id="convertUnsafeIntsToFloat">
           <label for="convertUnsafeIntsToFloat"
             title="In dCBOR, JS numbers between 2^53 and 2^64 get encoded as CBOR integers.  When decoding, present them as JS numbers instead of BigInt, losing accuracy.">convertUnsafeIntsToFloat</label>

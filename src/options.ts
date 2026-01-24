@@ -181,6 +181,13 @@ export interface DecodeOptions extends DecodeStreamOptions {
   cde?: boolean;
 
   /**
+   * Should bigints that can fit into normal integers be collapsed into
+   * normal integers?
+   * @default true
+   */
+  collapseBigInts?: boolean;
+
+  /**
    * In dCBOR, JS numbers between 2^53 and 2^64 get encoded as CBOR integers.
    * When decoding, present them as JS numbers instead of BigInt, losing
    * accuracy.

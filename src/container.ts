@@ -54,6 +54,7 @@ export class CBORcontainer {
     cde: false,
     dcbor: false,
     diagnosticSizes: DiagnosticSizes.PREFERRED,
+    collapseBigInts: false,
     convertUnsafeIntsToFloat: false,
     createObject,
     keepNanPayloads: false,

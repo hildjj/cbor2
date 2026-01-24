@@ -267,3 +267,12 @@ test('DATE_FULL', () => {
     [new Date('1980-12-08'), '', '0xd903ec6a313938302d31322d3038'],
   ], {dateTag: TAG.DATE_FULL});
 });
+
+test('collapseBigInts', () => {
+  testAll([
+    [0, '', '0xc240'],
+    [0, '', '0xc24100'],
+    [2, '', '0xc243000002'],
+    [18446744073709551616n, '', '0xc249010000000000000000'],
+  ], {collapseBigInts: true});
+});
