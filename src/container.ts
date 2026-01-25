@@ -228,7 +228,7 @@ export class CBORcontainer {
                 throw new Error(`Invalid NaN encoding: "${u8toHex(buf)}"`);
               }
             } else if (opts.keepNanPayloads) {
-              if (val.payload) {
+              if (val.payload || val.sign === -1) {
                 if (opts.rejectLongFloats && !val.isShortestEncoding) {
                   throw new Error(`NaN should have been encoded shorter: ${value}`);
                 }

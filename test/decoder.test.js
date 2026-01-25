@@ -1,6 +1,7 @@
 import '../lib/types.js';
 import * as cases from './cases.js';
 import {CBORcontainer} from '../lib/container.js';
+import {NAN} from '../lib/float.js';
 import {TAG} from '../lib/constants.js';
 import {Tag} from '../lib/tag.js';
 import assert from 'node:assert/strict';
@@ -235,6 +236,9 @@ test('ignoreGlobalTags', () => {
 });
 
 test('keep nan payloads', () => {
+  testAll([
+    [new NAN(-0), '', 'f9fe00'],
+  ], {keepNanPayloads: true});
   failAll([
     '0xFB7FF1000000000000',
   ], {rejectLongFloats: true, keepNanPayloads: true});
