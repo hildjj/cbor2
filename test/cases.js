@@ -892,6 +892,10 @@ export const decodeBadTags = [
   '0xd9524a820000', // RegExp invalid flags
   '0xd9524900', // I-regex not string
   '0xc1a1616100', // Time with bad obj
+  '0xd9011860', // Symbol with empty string
+  '0xd9011880', // Symbol array too short
+  '0xd901188261616162', // Symbol array too long
+  '0xd901188160', // Symbol array with empty string
 ];
 
 const HEX = /^0x(?<hex>[0-9a-f]+)/im;

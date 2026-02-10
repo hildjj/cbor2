@@ -502,12 +502,32 @@ function writeObject(
 }
 
 /**
+ * Write Symbol as String tagged with 280
+ *
+ * @param sym Symbol.
+ * @param w Writer.
+ * @param opts Options.
+ * @throws TypeError for private or empty symbols.
+ */
+export function writeSymbol(
+  sym: Symbol,
+  w: Writer,
+  opts: RequiredEncodeOptions
+): undefined {
+  if (!sym.description || sym !== Symbol.for(sym.description)) {
+    throw new TypeError(`Private or empty symbol: ${sym.toString()}`);
+  }
+  writeTag(280, w, opts);
+  writeString(sym.description, w, opts);
+}
+
+/**
  * Write a single value of unknown type to the given writer.
  *
  * @param val The value.
  * @param w The writer.
  * @param opts Encoding options.
- * @throws TypeError for Symbols or unknown JS typeof results.
+ * @throws TypeError for unknown JS typeof results.
  */
 export function writeUnknown(
   val: unknown,
@@ -526,8 +546,7 @@ export function writeUnknown(
       w.writeUint8(UNDEFINED);
       break;
     case 'object': writeObject(val, w, opts); break;
-    case 'symbol':
-      throw new TypeError(`Unknown symbol: ${val.toString()}`);
+    case 'symbol': writeSymbol(val, w, opts); break;
     default:
       throw new TypeError(
         `Unknown type: ${typeof val}, ${String(val)}`

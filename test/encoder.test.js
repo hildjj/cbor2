@@ -92,7 +92,6 @@ test('toJSON', () => {
 test('encoder edges', () => {
   const w = new Writer();
   assert.throws(() => writeInt(-1, w, MT.ARRAY));
-  assert.throws(() => encode(Symbol('UNKNOWN')));
   assert.throws(() => encode(() => {
     // Blank
   }));
@@ -380,4 +379,12 @@ test('dateTag', () => {
   failAll([
     [new Date()],
   ], {dateTag: -1});
+});
+
+test('Symbol', () => {
+  testAll([
+    [Symbol.for('key'), 'symbol', '0xd90118636b6579'],
+  ]);
+  assert.throws(() => encode(Symbol('private')));
+  assert.throws(() => encode(Symbol.for('')));
 });
