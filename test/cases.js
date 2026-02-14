@@ -518,6 +518,10 @@ a2     -- Map (Length: 2 pairs)
   81   --   [key 1] Array (Length: 1 item)
     00 --     [0] Unsigned: 0
   80   --   [val 1] Array (Length: 0 items)\n`],
+  [Symbol.for('key'), '280_1("key"_i)', `0xd90118636b6579
+d9 0118 -- Tag #280: (Symbol)
+  63    --   UTF8 (Length: 3): "key"
+    6b6579\n`],
 ];
 
 export const goodEndian = [
@@ -812,6 +816,15 @@ d9 5249 -- Tag #21065: (I-RegExp)
 d9 5249 -- Tag #21065: (I-RegExp)
   66    --   UTF8 (Length: 6): "\\\\[asdf"
     5c5b61736466\n`],
+  [Symbol.for('key'), '280("key")', `0xd90118636b6579
+d9 0118 -- Tag #280: (Symbol)
+  63    --   UTF8 (Length: 3): "key"
+    6b6579\n`],
+  [Symbol.for('key'), '280(["key"])', `0xd9011881636b6579
+d9 0118 -- Tag #280: (Symbol)
+  81    --   Array (Length: 1 item)
+    63  --     [0] UTF8 (Length: 3): "key"
+      6b6579\n`],
 ];
 
 export const encodeGood = [
@@ -892,6 +905,10 @@ export const decodeBadTags = [
   '0xd9524a820000', // RegExp invalid flags
   '0xd9524900', // I-regex not string
   '0xc1a1616100', // Time with bad obj
+  '0xd9011860', // Symbol with empty string
+  '0xd9011880', // Symbol array too short
+  '0xd901188261616162', // Symbol array too long
+  '0xd901188160', // Symbol array with empty string
 ];
 
 const HEX = /^0x(?<hex>[0-9a-f]+)/im;

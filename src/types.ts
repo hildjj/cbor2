@@ -594,6 +594,22 @@ Tag.registerDecoder(TAG.INVALID_64, () => {
   throw new Error(`Tag always invalid: ${TAG.INVALID_64}`);
 }, 'Invalid');
 
+// 280: Symbol
+Tag.registerDecoder(TAG.SYMBOL, (tag: ITag): Symbol => {
+  let key = tag.contents;
+  if (Array.isArray(tag.contents)) {
+    if (tag.contents.length !== 1) {
+      throw new Error(`Expected Array of size 1: ${tag.contents}`);
+    }
+    [key] = tag.contents;
+  }
+  assertString(key);
+  if (!key.length) {
+    throw new Error(`Expected non-empty string: ${tag.contents}`);
+  }
+  return Symbol.for(key);
+}, 'Symbol');
+
 function intentionallyUnimplemented(obj: unknown): undefined {
   throw new Error(`Encoding ${(obj as object).constructor.name} intentionally unimplmented.  It is not concrete enough to interoperate.  Convert to Uint8Array first.`);
 }
