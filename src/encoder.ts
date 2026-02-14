@@ -502,7 +502,7 @@ function writeObject(
 }
 
 /**
- * Write Symbol as String tagged with 280
+ * Write Symbol as a String tagged with 280.
  *
  * @param sym Symbol.
  * @param w Writer.

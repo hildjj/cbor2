@@ -43,6 +43,8 @@ export const TAG = {
   SET: 258,
   JSON: 262,
   WTF8: 273,
+  // https://github.com/mishoo/cbor.lisp/blob/e1428a5/clext-spec.txt
+  SYMBOL: 280,
   DATE_FULL: 1004,
   REGEXP: 21066,
   SELF_DESCRIBED: 55799,

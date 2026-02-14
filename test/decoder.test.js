@@ -115,8 +115,8 @@ test('types', () => {
   assert.deepEqual(decode('d9011143eda080'), '\ud800');
 
   // 280
-  assert.equal(decode('d90118636b6579'), Symbol.for('key')),
-  assert.equal(decode('d9011881636b6579'), Symbol.for('key')),
+  assert.equal(decode('d90118636b6579'), Symbol.for('key'));
+  assert.equal(decode('d9011881636b6579'), Symbol.for('key'));
 
   // Always invalid
   assert.throws(() => decode('d9ffff00'));

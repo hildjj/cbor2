@@ -595,13 +595,13 @@ Tag.registerDecoder(TAG.INVALID_64, () => {
 }, 'Invalid');
 
 // 280: Symbol
-Tag.registerDecoder(280, (tag: ITag): Symbol => {
+Tag.registerDecoder(TAG.SYMBOL, (tag: ITag): Symbol => {
   let key = tag.contents;
   if (Array.isArray(tag.contents)) {
     if (tag.contents.length !== 1) {
       throw new Error(`Expected Array of size 1: ${tag.contents}`);
     }
-    key = tag.contents[0];
+    [key] = tag.contents;
   }
   assertString(key);
   if (!key.length) {
