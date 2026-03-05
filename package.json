@@ -74,28 +74,28 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@cto.af/wtf8": "0.0.4"
+    "@cto.af/wtf8": "0.0.5"
   },
   "devDependencies": {
-    "@cto.af/eslint-config": "6.2.3",
+    "@cto.af/eslint-config": "6.2.5",
     "@eslint/markdown": "7.5.1",
-    "@types/node": "^25.0.10",
-    "c8": "10.1.3",
+    "@types/node": "^25.3.3",
     "cbor-edn": "0.2.2",
-    "eslint": "9.39.2",
-    "eslint-plugin-jsdoc": "62.4.1",
-    "package-extract": "3.1.3",
-    "rimraf": "^6.1.2",
+    "eslint": "10.0.2",
+    "eslint-plugin-jsdoc": "62.7.1",
+    "package-extract": "3.1.5",
+    "rimraf": "^6.1.3",
+    "superc8": "12.2.4",
     "tsup": "8.5.1",
-    "typedoc": "0.28.16",
-    "typescript-eslint": "8.53.1"
+    "typedoc": "0.28.17",
+    "typescript-eslint": "8.56.1"
   },
   "pnpm": {
     "overrides": {
       "cbor2": "link:."
     }
   },
-  "packageManager": "pnpm@10.28.1",
+  "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=20"
   }
