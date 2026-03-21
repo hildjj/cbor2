@@ -1,39 +1,13 @@
----
 name: Tests
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
   build:
-
-    strategy:
-      matrix:
-        node-version: [20, 22, 24, 25]
-        platform: [ubuntu-latest]
-
-    runs-on: ${{ matrix.platform }}
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          submodules: true
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: Dependencies
-        run: pnpm install -r
-      - name: Test ${{ matrix.node-version }} ${{ matrix.platform }}
-        run: npm run ci
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
+    uses: cto-af/workflows/.github/workflows/node-ci.yml@main
+    with:
+      script: ci
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
