@@ -163,9 +163,19 @@ function u8toBigInt(
     // leading zeroes
     throw new Error(`Decoding overly-large bigint: ${tag.tag}(h'${u8toHex(tag.contents)})`);
   }
-  let bi: number | bigint = tag.contents.reduce(
-    (t, v) => (t << 8n) | BigInt(v), 0n
-  );
+  const len = tag.contents.byteLength;
+  const fast = len - (len % 8);
+  const dv = new DataView(tag.contents.buffer, tag.contents.byteOffset, len);
+  let bi: number | bigint = 0n;
+  let i = 0;
+
+  for (; i < fast; i += 8) {
+    bi = (bi << 64n) | dv.getBigUint64(i, false);
+  }
+  for (; i < len; i++) {
+    bi = (bi << 8n) | BigInt(tag.contents[i]);
+  }
+
   if (neg) {
     bi = -1n - bi;
   }
