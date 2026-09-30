@@ -158,11 +158,11 @@ function u8toBigInt(
   const maxBigIntBytes = opts.maxBigIntBytes ?? 10_000;
   
   if (
-    !Number.isSafeInteger(maxBigIntBytes) ||
-    maxBigIntBytes < 0
+    maxBigIntBytes !== Infinity &&
+    (!Number.isSafeInteger(maxBigIntBytes) || maxBigIntBytes < 0)
   ) {
     throw new RangeError(
-      `maxBigIntBytes must be a non-negative safe integer`
+      `maxBigIntBytes must be Infinity or a non-negative safe integer`
     );
   }
   const bigIntBytes = tag.contents.byteLength;
