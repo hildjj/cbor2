@@ -155,13 +155,27 @@ function u8toBigInt(
   opts: RequiredDecodeOptions
 ): BigInt | Number | bigint | number {
   assertU8(tag.contents);
-  if (opts.rejectBigInts) {
-    throw new Error(`Decoding unwanted big integer: ${tag}(h'${u8toHex(tag.contents)}')`);
+  const maxBigIntBytes = 10_000;
+  const bigIntBytes = tag.contents.byteLength;
+
+  if (bigIntBytes > maxBigIntBytes) {
+    throw new RangeError(
+      `CBOR bignum exceeds maximum size: ` +
+      `${bigIntBytes} > ${maxBigIntBytes} bytes`
+    );
   }
+
+  if (opts.rejectBigInts) {
+    throw new Error(
+      `Decoding unwanted big integer: tag ${tag.tag} (${bigIntBytes} bytes)`
+    );
+  }
+
   if (opts.requirePreferred && tag.contents[0] === 0) {
-    // The preferred serialization of the byte string is to leave out any
-    // leading zeroes
-    throw new Error(`Decoding overly-large bigint: ${tag.tag}(h'${u8toHex(tag.contents)})`);
+    throw new Error(
+      `Decoding non-preferred bigint: tag ${tag.tag} ` +
+      `(${bigIntBytes} bytes, leading zero)`
+    );
   }
   const len = tag.contents.byteLength;
   const fast = len - (len % 8);
