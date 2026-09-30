@@ -265,7 +265,9 @@ export interface DecodeOptions extends DecodeStreamOptions {
   rejectBigInts?: boolean;
   
   /**
-   * Maximum byte length of a CBOR tag-2 or tag-3 bignum.
+   * Maximum byte length of the byte string contained in a CBOR tag 2 or 3.
+   * Set to Infinity to disable this limit. Decoding very large bignums can
+   * cause severe performance degradation.
    *
    * @default 10000
    */
