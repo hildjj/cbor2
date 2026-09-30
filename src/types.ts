@@ -155,7 +155,16 @@ function u8toBigInt(
   opts: RequiredDecodeOptions
 ): BigInt | Number | bigint | number {
   assertU8(tag.contents);
-  const maxBigIntBytes = 10_000;
+  const maxBigIntBytes = opts.maxBigIntBytes ?? 10_000;
+  
+  if (
+    !Number.isSafeInteger(maxBigIntBytes) ||
+    maxBigIntBytes < 0
+  ) {
+    throw new RangeError(
+      `maxBigIntBytes must be a non-negative safe integer`
+    );
+  }
   const bigIntBytes = tag.contents.byteLength;
 
   if (bigIntBytes > maxBigIntBytes) {
