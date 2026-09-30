@@ -1,5 +1,5 @@
 import '../lib/types.js';
-import {box, saveEncodedLength} from '../lib/box.js';
+import {box, getEncodedLength, saveEncodedLength} from '../lib/box.js';
 import {hexToU8, u8toHex} from '../lib/utils.js';
 import assert from 'node:assert/strict';
 import {encode} from '../lib/encoder.js';
@@ -19,4 +19,7 @@ test('encoded length', () => {
   const a = [1];
   saveEncodedLength(a, hexToU8('9a00000001'));
   assert.equal(eh(a), '9a0000000101');
+
+  assert.equal(getEncodedLength(null), undefined);
+  assert.equal(getEncodedLength(0), undefined);
 });

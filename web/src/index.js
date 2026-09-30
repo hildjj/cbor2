@@ -1,6 +1,5 @@
 import './style.css';
-// eslint-disable-next-line n/no-missing-import
-import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/+esm';
+import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/+esm';
 
 import {
   NAN,
@@ -33,9 +32,9 @@ import {inspect} from 'node-inspect-extracted';
 
 const proxy = URL.createObjectURL(new Blob([`
   self.MonacoEnvironment = {
-    baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min'
+    baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min'
   };
-  importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/base/worker/workerMain.js');
+  importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs/base/worker/workerMain.js');
 `], {type: 'text/javascript'}));
 window.MonacoEnvironment = {
   getWorkerUrl: () => proxy,
