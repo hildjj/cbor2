@@ -284,3 +284,14 @@ test('collapseBigInts', () => {
     [18446744073709551616n, '', '0xc249010000000000000000'],
   ], {collapseBigInts: true});
 });
+
+test('maxBigIntBytes', () => {
+  assert.throws(() => decode('c24101', {maxBigIntBytes: -1}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: -Infinity}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: "foo"}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: NaN}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: -0}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: 1.1}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: 1e300}));
+  assert.throws(() => decode('c24101', {maxBigIntBytes: 0}));
+});
