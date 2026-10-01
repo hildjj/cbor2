@@ -90,6 +90,12 @@ export function subarrayRanges(
  * @returns Array with contents decoded as hex from str.
  */
 export function hexToU8(str: string): Uint8Array {
+  // Use native Uint8Array.fromHex if available
+  if ((Uint8Array as any).fromHex) {
+    return (Uint8Array as any).fromHex(str);
+  }
+
+  // Fallback for when fromHex isn't available
   let len = Math.ceil(str.length / 2);
   const res = new Uint8Array(len);
   len--;
@@ -110,6 +116,12 @@ export function hexToU8(str: string): Uint8Array {
  * @returns Hex string.
  */
 export function u8toHex(u8: Uint8Array): string {
+  // Use native Uint8Array.prototype.toHex if available
+  if ((u8 as any).toHex) {
+    return (u8 as any).toHex();
+  }
+
+  // Fallback for when toHex isn't available
   return u8.reduce((t, v) => t + v.toString(16).padStart(2, '0'), '');
 }
 
