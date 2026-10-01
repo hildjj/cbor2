@@ -27,6 +27,16 @@ function normalizeOptions(
     opts.saveOriginal = true;
   }
 
+  const {maxBigIntBytes} = opts;
+  if (
+    maxBigIntBytes !== Infinity &&
+    (!Number.isSafeInteger(maxBigIntBytes) || maxBigIntBytes < 0)
+  ) {
+    throw new RangeError(
+      `maxBigIntBytes must be Infinity or a non-negative safe integer`
+    );
+  }
+
   return opts;
 }
 

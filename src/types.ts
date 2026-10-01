@@ -155,22 +155,12 @@ function u8toBigInt(
   opts: RequiredDecodeOptions
 ): BigInt | Number | bigint | number {
   assertU8(tag.contents);
-  const maxBigIntBytes = opts.maxBigIntBytes;
-  
-  if (
-    maxBigIntBytes !== Infinity &&
-    (!Number.isSafeInteger(maxBigIntBytes) || maxBigIntBytes < 0)
-  ) {
-    throw new RangeError(
-      `maxBigIntBytes must be Infinity or a non-negative safe integer`
-    );
-  }
   const bigIntBytes = tag.contents.byteLength;
 
-  if (bigIntBytes > maxBigIntBytes) {
+  if (bigIntBytes > opts.maxBigIntBytes) {
     throw new RangeError(
       `CBOR bignum exceeds maximum size: ` +
-      `${bigIntBytes} > ${maxBigIntBytes} bytes`
+      `${bigIntBytes} > ${opts.maxBigIntBytes} bytes`
     );
   }
 
