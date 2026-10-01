@@ -16,3 +16,18 @@ test('ranges', () => {
     utils.u8concat(['foo']);
   });
 });
+
+test('hexToU8fallback', () => {
+  const u8 = utils.hexToU8fallback('00010ab1');
+  assert.deepEqual(u8, new Uint8Array([0x00, 0x01, 0x0a, 0xb1]));
+});
+
+test('u8toHexFallback', () => {
+  const s = utils.u8toHexFallback(new Uint8Array([0x00, 0x01, 0x0a, 0xb1]));
+  assert.equal(s, '00010ab1');
+});
+
+test('base64ToBytesFallback', () => {
+  const u8 = utils.base64ToBytesFallback('AAEKsQ==');
+  assert.deepEqual(u8, new Uint8Array([0x00, 0x01, 0x0a, 0xb1]));
+});

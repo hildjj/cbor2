@@ -84,12 +84,22 @@ export function subarrayRanges(
 }
 
 /**
- * Convert hex string to Uint8Array.
+ * Convert hex string to Uint8Array, using native implementation.
  *
  * @param str Hex string.
  * @returns Array with contents decoded as hex from str.
  */
-export function hexToU8(str: string): Uint8Array {
+export function hexToU8native(str: string): Uint8Array {
+  return Uint8Array.fromHex(str);
+}
+
+/**
+ * Convert hex string to Uint8Array, using polyfill.
+ *
+ * @param str Hex string.
+ * @returns Array with contents decoded as hex from str.
+ */
+export function hexToU8fallback(str: string): Uint8Array {
   let len = Math.ceil(str.length / 2);
   const res = new Uint8Array(len);
   len--;
@@ -104,14 +114,45 @@ export function hexToU8(str: string): Uint8Array {
 }
 
 /**
+ * Convert hex string to Uint8Array.
+ *
+ * @param str Hex string.
+ * @returns Array with contents decoded as hex from str.
+ */
+export const hexToU8 = /* c8 ignore next */(typeof Uint8Array.fromHex === 'function') ?
+  /* c8 ignore next */ hexToU8native :
+  /* c8 ignore next */ hexToU8fallback;
+
+/**
+ * Convert a Uint8Array to a hex string, using native implementation.
+ *
+ * @param u8 Array to convert.
+ * @returns Hex string.
+ */
+export function u8toHexNative(u8: Uint8Array): string {
+  return u8.toHex();
+}
+
+/**
+ * Convert a Uint8Array to a hex string, using polyfill.
+ *
+ * @param u8 Array to convert.
+ * @returns Hex string.
+ */
+export function u8toHexFallback(u8: Uint8Array): string {
+  // Fallback for when toHex isn't available
+  return u8.reduce((t, v) => t + v.toString(16).padStart(2, '0'), '');
+}
+
+/**
  * Convert a Uint8Array to a hex string.
  *
  * @param u8 Array to convert.
  * @returns Hex string.
  */
-export function u8toHex(u8: Uint8Array): string {
-  return u8.reduce((t, v) => t + v.toString(16).padStart(2, '0'), '');
-}
+export const u8toHex = /* c8 ignore next */ (typeof Uint8Array.prototype.toHex === 'function') ?
+  /* c8 ignore next */ u8toHexNative :
+  /* c8 ignore next */ u8toHexFallback;
 
 /**
  * Concatenate multiple Uint8Arrays into a single buffer.
@@ -148,6 +189,18 @@ export function u8concat(u8s: Range8Array[]): Range8Array {
 }
 
 /**
+ * Convert from Base64 to bytes using native implementation.
+ *
+ * @param base64 Base64-encoded string.
+ * @returns String decoded into bytes.
+ */
+export function base64ToBytesNative(base64: string): Uint8Array {
+  return Uint8Array.fromBase64(base64);
+}
+
+declare function atob(encodedString: string): string;
+
+/**
  * Convert from Base64 to bytes in an unexciting way.
  * From https://developer.mozilla.org/en-US/docs/Glossary/Base64
  * which goes through an intermediate string form.  Bleh.
@@ -155,13 +208,23 @@ export function u8concat(u8s: Range8Array[]): Range8Array {
  * @param base64 Base64-encoded string.
  * @returns String decoded into bytes.
  */
-export function base64ToBytes(base64: string): Uint8Array {
+export function base64ToBytesFallback(base64: string): Uint8Array {
   const binString = atob(base64);
   return Uint8Array.from(
     binString,
     (m: string): number => m.codePointAt(0) as number
   );
 }
+
+/**
+ * Convert from Base64 to bytes.
+ *
+ * @param base64 Base64-encoded string.
+ * @returns String decoded into bytes.
+ */
+export const base64ToBytes = /* c8 ignore next */ (typeof Uint8Array.fromBase64 === 'function') ?
+  /* c8 ignore next */ base64ToBytesNative :
+  /* c8 ignore next */ base64ToBytesFallback;
 
 const urlToNotUrl: {
   [key: string]: string;
