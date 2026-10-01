@@ -58,6 +58,7 @@ export class CBORcontainer {
     convertUnsafeIntsToFloat: false,
     createObject,
     keepNanPayloads: false,
+    maxBigIntBytes: 10_000,
     pretty: false,
     preferBigInt: false,
     preferMap: false,

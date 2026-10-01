@@ -263,7 +263,16 @@ export interface DecodeOptions extends DecodeStreamOptions {
    * @default false
    */
   rejectBigInts?: boolean;
-
+  
+  /**
+   * Maximum byte length of the byte string contained in a CBOR tag 2 or 3.
+   * Set to Infinity to disable this limit. Decoding very large bignums can
+   * cause severe performance degradation.
+   *
+   * @default 10000
+   */
+  maxBigIntBytes?: number;
+  
   /**
    * If there are duplicate keys in a map, should we throw an exception?
    *
