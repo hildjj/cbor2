@@ -155,7 +155,7 @@ function u8toBigInt(
   opts: RequiredDecodeOptions
 ): BigInt | Number | bigint | number {
   assertU8(tag.contents);
-  const maxBigIntBytes = opts.maxBigIntBytes ?? 10_000;
+  const maxBigIntBytes = opts.maxBigIntBytes;
   
   if (
     maxBigIntBytes !== Infinity &&
