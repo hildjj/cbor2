@@ -159,8 +159,7 @@ function u8toBigInt(
 
   if (bigIntBytes > opts.maxBigIntBytes) {
     throw new RangeError(
-      `CBOR bignum exceeds maximum size: ` +
-      `${bigIntBytes} > ${opts.maxBigIntBytes} bytes`
+      `CBOR bignum exceeds maximum size: ${bigIntBytes} > ${opts.maxBigIntBytes} bytes`
     );
   }
 

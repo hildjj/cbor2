@@ -33,7 +33,7 @@ function normalizeOptions(
     (!Number.isSafeInteger(maxBigIntBytes) || maxBigIntBytes < 0)
   ) {
     throw new RangeError(
-      `maxBigIntBytes must be Infinity or a non-negative safe integer`
+      'maxBigIntBytes must be Infinity or a non-negative safe integer'
     );
   }
 
