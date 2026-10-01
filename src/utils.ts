@@ -89,22 +89,25 @@ export function subarrayRanges(
  * @param str Hex string.
  * @returns Array with contents decoded as hex from str.
  */
-export const hexToU8 =
-  typeof Uint8Array.fromHex === 'function' ?
-    (str: string): Uint8Array => (Uint8Array as any).fromHex(str) :
-    (str: string): Uint8Array => {
-      let len = Math.ceil(str.length / 2);
-      const res = new Uint8Array(len);
-      len--;
-      for (let end = str.length, start = end - 2;
-        end >= 0;
-        end = start, start -= 2, len--
-      ) {
-        res[len] = parseInt(str.substring(start, end), 16);
-      }
+export function hexToU8(str: string): Uint8Array {
+  // Use native Uint8Array.fromHex if available
+  if ((Uint8Array as any).fromHex) {
+    return (Uint8Array as any).fromHex(str);
+  }
 
-      return res;
-    };
+  // Fallback for when fromHex isn't available
+  let len = Math.ceil(str.length / 2);
+  const res = new Uint8Array(len);
+  len--;
+  for (let end = str.length, start = end - 2;
+    end >= 0;
+    end = start, start -= 2, len--
+  ) {
+    res[len] = parseInt(str.substring(start, end), 16);
+  }
+
+  return res;
+}
 
 /**
  * Convert a Uint8Array to a hex string.
@@ -112,10 +115,15 @@ export const hexToU8 =
  * @param u8 Array to convert.
  * @returns Hex string.
  */
-export const u8toHex =
-  typeof Uint8Array.prototype.toHex === 'function' ?
-    (u8: Uint8Array): string => (u8 as any).toHex() :
-    (u8: Uint8Array): string => u8.reduce((t, v) => t + v.toString(16).padStart(2, '0'), '');
+export function u8toHex(u8: Uint8Array): string {
+  // Use native Uint8Array.prototype.toHex if available
+  if ((u8 as any).toHex) {
+    return (u8 as any).toHex();
+  }
+
+  // Fallback for when toHex isn't available
+  return u8.reduce((t, v) => t + v.toString(16).padStart(2, '0'), '');
+}
 
 /**
  * Concatenate multiple Uint8Arrays into a single buffer.
