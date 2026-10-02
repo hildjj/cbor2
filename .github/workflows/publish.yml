@@ -11,3 +11,4 @@ jobs:
     with:
       docs: true
       script: ci
+      force_orphan: true
