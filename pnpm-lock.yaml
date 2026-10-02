@@ -194,9 +194,6 @@ importers:
       eslint-plugin-jsdoc:
         specifier: ^64.5.4
         version: 64.5.4(@typescript/typescript6@6.0.2)(eslint@10.11.0(supports-color@10.2.2))(supports-color@10.2.2)
-      package-extract:
-        specifier: ^4.0.1
-        version: 4.0.1
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3387,11 +3384,6 @@ packages:
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
-
-  package-extract@4.0.1:
-    resolution: {integrity: sha512-g8XyGplFEv0eWR4sFC01P5kBE4V2UAnoSqByLzuDHQNmHX1HvW2IhYQ+PTUVsSuuJ5XZlJaLKSXMzz4UKz7ZZQ==}
-    engines: {node: '>=22'}
-    hasBin: true
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -7659,11 +7651,6 @@ snapshots:
       p-limit: 4.0.0
 
   p-try@2.2.0: {}
-
-  package-extract@4.0.1:
-    dependencies:
-      commander: 15.0.0
-      semver: 7.8.5
 
   package-json-from-dist@1.0.1: {}
 
