@@ -4,8 +4,11 @@ packages:
   - web/
 allowBuilds:
   esbuild: set this to true or false
+auditConfig:
+  ignoreGhsas:
+    - GHSA-238p-pmpm-9mq7
 linkWorkspacePackages: true
 minimumReleaseAgeExclude:
-  - hostlocal@3.0.0
+  - '@cto.af/wtf8@1.0.0'
 overrides:
   cbor2: link:.

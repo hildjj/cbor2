@@ -18,7 +18,13 @@ import type {
 } from './options.js';
 import {MT, TAG} from './constants.js';
 import {type ValueOf, box, getEncoded} from './box.js';
-import {base64ToBytes, base64UrlToBytes, isBigEndian, u8toHex} from './utils.js';
+import {
+  base64ToBytes,
+  base64UrlToBytes,
+  isBigEndian,
+  u8toHex,
+  u8toUBigInt,
+} from './utils.js';
 import {
   encode,
   registerEncoder,
@@ -175,19 +181,8 @@ function u8toBigInt(
       `(${bigIntBytes} bytes, leading zero)`
     );
   }
-  const len = tag.contents.byteLength;
-  const fast = len - (len % 8);
-  const dv = new DataView(tag.contents.buffer, tag.contents.byteOffset, len);
-  let bi: number | bigint = 0n;
-  let i = 0;
 
-  for (; i < fast; i += 8) {
-    bi = (bi << 64n) | dv.getBigUint64(i, false);
-  }
-  for (; i < len; i++) {
-    bi = (bi << 8n) | BigInt(tag.contents[i]);
-  }
-
+  let bi: number | bigint = u8toUBigInt(tag.contents);
   if (neg) {
     bi = -1n - bi;
   }
