@@ -31,3 +31,18 @@ test('base64ToBytesFallback', () => {
   const u8 = utils.base64ToBytesFallback('AAEKsQ==');
   assert.deepEqual(u8, new Uint8Array([0x00, 0x01, 0x0a, 0xb1]));
 });
+
+test('u8toUBigInt', () => {
+  assert.equal(utils.u8toUBigIntDV(new Uint8Array([])), 0x0n);
+  assert.equal(utils.u8toUBigIntDV(new Uint8Array([1])), 0x1n);
+  assert.equal(utils.u8toUBigIntDV(new Uint8Array([1, 2])), 0x0102n);
+  assert.equal(
+    utils.u8toUBigIntDV(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8])),
+    0x0102030405060708n
+  );
+  assert.equal(
+    utils.u8toUBigIntDV(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9])),
+    0x010203040506070809n
+  );
+});
+

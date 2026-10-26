@@ -119,7 +119,7 @@ export function hexToU8fallback(str: string): Uint8Array {
  * @param str Hex string.
  * @returns Array with contents decoded as hex from str.
  */
-export const hexToU8 = /* c8 ignore next */(typeof Uint8Array.fromHex === 'function') ?
+export const hexToU8 = (typeof Uint8Array.fromHex === 'function') ?
   /* c8 ignore next */ hexToU8native :
   /* c8 ignore next */ hexToU8fallback;
 
@@ -150,7 +150,7 @@ export function u8toHexFallback(u8: Uint8Array): string {
  * @param u8 Array to convert.
  * @returns Hex string.
  */
-export const u8toHex = /* c8 ignore next */ (typeof Uint8Array.prototype.toHex === 'function') ?
+export const u8toHex = (typeof Uint8Array.prototype.toHex === 'function') ?
   /* c8 ignore next */ u8toHexNative :
   /* c8 ignore next */ u8toHexFallback;
 
@@ -222,7 +222,7 @@ export function base64ToBytesFallback(base64: string): Uint8Array {
  * @param base64 Base64-encoded string.
  * @returns String decoded into bytes.
  */
-export const base64ToBytes = /* c8 ignore next */ (typeof Uint8Array.fromBase64 === 'function') ?
+export const base64ToBytes = (typeof Uint8Array.fromBase64 === 'function') ?
   /* c8 ignore next */ base64ToBytesNative :
   /* c8 ignore next */ base64ToBytesFallback;
 
@@ -276,3 +276,52 @@ export function stringToHex(str: string): string {
   }
   return res;
 }
+
+/**
+ * Convert bigendian bytes to an unsigned bigint, using the surprisingly-fast
+ * approach of converting to hex first.
+ *
+ * @param buf Buffer to convert.
+ * @returns BigInt version of buf.
+ */
+export function u8toUBigIntHex(buf: Uint8Array): bigint {
+  if (buf.length === 0) {
+    return 0n;
+  }
+  // eslint-disable-next-line prefer-template
+  return BigInt('0x' + buf.toHex());
+}
+
+/**
+ * Convert bigendian bytes to a bigint, using a DataView, which is
+ * faster than going a byte at a time, but a lot slower than the toHex
+ * approach.
+ *
+ * @param buf Buffer to convert.
+ * @returns BigInt version of buf.
+ */
+export function u8toUBigIntDV(buf: Uint8Array): bigint {
+  const len = buf.byteLength;
+  const fast = len - (len % 8);
+  const dv = new DataView(buf.buffer, buf.byteOffset, len);
+  let bi: number | bigint = 0n;
+  let i = 0;
+
+  for (; i < fast; i += 8) {
+    bi = (bi << 64n) | dv.getBigUint64(i, false);
+  }
+  for (; i < len; i++) {
+    bi = (bi << 8n) | BigInt(buf[i]);
+  }
+  return bi;
+}
+
+/**
+ * Convert bigendian bytes to a bigint.
+ *
+ * @param buf Buffer to convert.
+ * @returns BigInt version of buf.
+ */
+export const u8toUBigInt = (typeof Uint8Array.prototype.toHex === 'function') ?
+  /* c8 ignore next */ u8toUBigIntHex :
+  /* c8 ignore next */ u8toUBigIntDV;
