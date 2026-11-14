@@ -142,6 +142,12 @@ f8 ff -- Simple: 255\n`],
   [new Date(1363896240000), '1_i(1363896240_2)', `0xc11a514b67b0
 c1            -- Tag #1: (Epoch Date) 2013-03-21T20:04:00.000Z
   1a 514b67b0 --   Unsigned: 1363896240\n`],
+  [new Date(271532189011), '1_i(271532189.011_3)', `0xc1fb41b02f409d02d0e5
+c1                    -- Tag #1: (Epoch Date) 1978-08-09T17:36:29.011Z
+  fb 41b02f409d02d0e5 --   Float: 271532189.011\n`],
+  [new Date(-271532189011), '1_i(-271532189.011_3)', `0xc1fbc1b02f409d02d0e5
+c1                    -- Tag #1: (Epoch Date) 1961-05-25T06:23:30.989Z
+  fb c1b02f409d02d0e5 --   Float: -271532189.011\n`],
 
   [new URL('http://www.example.com'), '32_0("http://www.example.com/"_i)', `0xd82077687474703a2f2f7777772e6578616d706c652e636f6d2f
 d8 20 -- Tag #32: (URI)
