@@ -83,20 +83,21 @@
     "@cto.af/wtf8": "1.0.0"
   },
   "devDependencies": {
-    "@cto.af/eslint-config": "7.0.3",
+    "@cto.af/eslint-config": "7.0.4",
+    "@cto.af/ncurc": "^0.0.3",
     "@eslint/markdown": "^8.0.3",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@typescript/native": "npm:typescript@^7.0.2",
     "cbor-edn": "^0.2.2",
-    "eslint-plugin-jsdoc": "^65.3.12",
-    "eslint": "^10.13.0",
-    "rimraf": "^6.1.3",
+    "eslint": "^10.14.0",
+    "eslint-plugin-jsdoc": "^65.4.5",
+    "rimraf": "^6.1.4",
     "superc8": "^12.7.0",
     "typedoc": "^0.28.20",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "typescript-eslint": "^8.71.2"
+    "typescript-eslint": "^8.72.1"
   },
-  "packageManager": "pnpm@12.14.0",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=22"
   }
