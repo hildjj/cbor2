@@ -8,6 +8,8 @@ auditConfig:
     - GHSA-gcqx-w48m-w2h4
     - GHSA-3g3m-2fjr-6pw4
 linkWorkspacePackages: true
+minimumReleaseAgeExclude:
+  - '@cto.af/wtf8@1.0.1'
 overrides:
   cbor2: link:.
   minimatch: 11.0.8
