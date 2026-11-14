@@ -171,8 +171,8 @@ importers:
   .:
     dependencies:
       '@cto.af/wtf8':
-        specifier: 1.0.0
-        version: 1.0.0
+        specifier: 1.0.1
+        version: 1.0.1
     devDependencies:
       '@cto.af/eslint-config':
         specifier: 7.0.4
@@ -241,8 +241,8 @@ importers:
         specifier: ^5.6.8
         version: 5.6.8(webpack@5.112.2)
       node-inspect-extracted:
-        specifier: ^3.3.4
-        version: 3.3.4
+        specifier: ^3.3.5
+        version: 3.3.5
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.112.2)
@@ -379,8 +379,8 @@ packages:
     resolution: {integrity: sha512-xJFFlExeyIiMiUuHYT+u9RGrdVy5IqdUZ0bFSPewS3oCf7E6pgauD3A8ss8XkwAV+izHk1Apac2Pand353hWTQ==}
     engines: {node: '>=22'}
 
-  '@cto.af/wtf8@1.0.0':
-    resolution: {integrity: sha512-qI0XnZxcj/FmASB8XXWqG49bSIzu0I/02deAjhnTni9IZ7KMRVlh8EFLE+mmJlMA169lET6rTCFhEsZSjOwlhA==}
+  '@cto.af/wtf8@1.0.1':
+    resolution: {integrity: sha512-kl6pH/D6SOCqArCVBcx7E45urbzBAPNr4xkMMaRAjrFSeI3y/s2+x78x5H0/UNr6F4GCgdxooTutPCNRymVzMg==}
     engines: {node: '>=22'}
 
   '@decimalturn/toml-patch@3.3.1':
@@ -3380,8 +3380,8 @@ packages:
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
 
-  node-inspect-extracted@3.3.4:
-    resolution: {integrity: sha512-u4Vfxdbk90CHXzAEgBxDFhS5NVkoHNc0CUs3wwm5tzz7UuKiB4KHGKhomn2ZknM1z24p/adxBdZ66/CmrnVrcQ==}
+  node-inspect-extracted@3.3.5:
+    resolution: {integrity: sha512-UcwNRi0gG4BbUCHqHcv2GdAHOXavDsAQJi4QQJF7H3cX3suTEqbcXrjuJDxbpSLd4rZzceagPQ1ehR6YME43fQ==}
     engines: {node: '>=14'}
 
   node-releases@2.0.60:
@@ -4510,7 +4510,7 @@ snapshots:
 
   '@cto.af/utils@2.0.1': {}
 
-  '@cto.af/wtf8@1.0.0': {}
+  '@cto.af/wtf8@1.0.1': {}
 
   '@decimalturn/toml-patch@3.3.1': {}
 
@@ -7774,7 +7774,7 @@ snapshots:
       lower-case: 2.0.2
       tslib: 2.8.1
 
-  node-inspect-extracted@3.3.4: {}
+  node-inspect-extracted@3.3.5: {}
 
   node-releases@2.0.60: {}
 
