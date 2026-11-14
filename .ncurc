@@ -1,4 +1,0 @@
-{
-  "dep": ["prod", "dev", "packageManager"],
-  "cooldown": 7
-}
