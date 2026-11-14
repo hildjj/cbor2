@@ -115,13 +115,20 @@ dateString.comment = (tag: ITag): string => {
 Tag.registerDecoder(TAG.DATE_STRING, dateString);
 Tag.registerDecoder(TAG.DATE_FULL, dateString);
 
+// Round to the nearest millisecond.  `seconds * 1000` can land just below
+// the integer (271532189.011 * 1000 = 271532189010.99997), and the Date
+// constructor would truncate that, losing a millisecond.
+function epochSecondsToDate(seconds: number): Date {
+  return new Date(Math.round(seconds * 1000));
+}
+
 function dateEpoch(tag: ITag): Date {
   assertNumber(tag.contents);
-  return new Date(tag.contents * 1000);
+  return epochSecondsToDate(tag.contents);
 }
 dateEpoch.comment = (tag: ITag): string => {
   assertNumber(tag.contents);
-  const decoded = new Date(tag.contents * 1000);
+  const decoded = epochSecondsToDate(tag.contents);
   return `(Epoch Date) ${(decoded as Date).toISOString()}`;
 };
 Tag.registerDecoder(TAG.DATE_EPOCH, dateEpoch);
