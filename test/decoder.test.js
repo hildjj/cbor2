@@ -66,6 +66,17 @@ test('decode with dCBOR', () => {
     '0x6345cc88',
     '0xFB7FF0000000000001', // Not shortest
   ], {dcbor: true});
+
+  // The bad key is shown as hex.
+  for (const [hex, key] of [
+    ['a201020103', '01'],
+    ['a2616101616102', '6161'],
+    ['a28201020082010200', '820102'],
+  ]) {
+    assert.throws(() => decode(hexToU8(hex), {dcbor: true}), {
+      message: `Duplicate or out of order key: "0x${key}"`,
+    });
+  }
 });
 
 test('goodEndian', () => {
