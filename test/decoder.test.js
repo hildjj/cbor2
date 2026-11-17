@@ -86,11 +86,11 @@ test('depth', () => {
   assert.doesNotThrow(() => decode('9f00ff', {maxDepth: 1}));
   assert.throws(() => decode('9f9f00ffff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
 
-  // Definite map, nesting in the key: {{}: 0} is allowed, {{{}: 0}: 0} is too deep.
+  // Definite map, nesting key: {{}: 0} is allowed, {{{}: 0}: 0} is too deep.
   assert.doesNotThrow(() => decode('a1a000', {maxDepth: 1}));
   assert.throws(() => decode('a1a1a00000', {maxDepth: 1}), /Maximum depth 1 exceeded/);
 
-  // Definite map, nesting in the value: {0: {}} is allowed, {0: {0: {}}} is too deep.
+  // Definite map, nesting value: {0: {}} is allowed, {0: {0: {}}} is too deep.
   assert.doesNotThrow(() => decode('a100a0', {maxDepth: 1}));
   assert.throws(() => decode('a100a100a0', {maxDepth: 1}), /Maximum depth 1 exceeded/);
 
