@@ -74,7 +74,47 @@ test('goodEndian', () => {
 });
 
 test('depth', () => {
-  assert.throws(() => decode('818180', {maxDepth: 1}));
+  // Definite array: [[]] is allowed, [[[]]] is too deep.
+  assert.doesNotThrow(() => decode('8180', {maxDepth: 1}));
+  assert.throws(() => decode('818180', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Definite array with leaf: [0] is allowed, [[0]] is too deep.
+  assert.doesNotThrow(() => decode('8100', {maxDepth: 1}));
+  assert.throws(() => decode('818100', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Indefinite array: [_ 0] is allowed, [_ [_ 0]] is too deep.
+  assert.doesNotThrow(() => decode('9f00ff', {maxDepth: 1}));
+  assert.throws(() => decode('9f9f00ffff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Definite map, nesting key: {{}: 0} is allowed, {{{}: 0}: 0} is too deep.
+  assert.doesNotThrow(() => decode('a1a000', {maxDepth: 1}));
+  assert.throws(() => decode('a1a1a00000', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Definite map, nesting value: {0: {}} is allowed, {0: {0: {}}} is too deep.
+  assert.doesNotThrow(() => decode('a100a0', {maxDepth: 1}));
+  assert.throws(() => decode('a100a100a0', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Indefinite map: {_ 0: 0} is allowed, {_ {_ 0: 0}: 0} is too deep.
+  assert.doesNotThrow(() => decode('bf0000ff', {maxDepth: 1}));
+  assert.throws(() => decode('bfbf0000ff00ff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Tag: 1(0) is allowed, 1(1(0)) is too deep.
+  assert.doesNotThrow(() => decode('c100', {maxDepth: 1}));
+  assert.throws(() => decode('c1c100', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Mixed containers.
+  assert.doesNotThrow(() => decode('81a10080', {maxDepth: 2}));
+  assert.throws(() => decode('81a1008100', {maxDepth: 2}), /Maximum depth/);
+
+  // A maxDepth of 0 only allows a top-level item.
+  assert.doesNotThrow(() => decode('80', {maxDepth: 0}));
+  assert.doesNotThrow(() => decode('00', {maxDepth: 0}));
+  assert.throws(() => decode('8100', {maxDepth: 0}), /Maximum depth 0/);
+
+  // Exactly maxDepth levels of nested arrays.
+  const nested = (n, leaf = '80') => '81'.repeat(n) + leaf;
+  assert.doesNotThrow(() => decode(nested(10), {maxDepth: 10}));
+  assert.throws(() => decode(nested(11), {maxDepth: 10}), /Maximum depth/);
 });
 
 test('types', () => {

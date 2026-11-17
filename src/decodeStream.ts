@@ -252,7 +252,7 @@ export class DecodeStream implements Sliceable {
           const nval = Number(val);
           yield [mt, ai, nval, prevOffset, len];
           for (let i = 0; i < nval; i++) {
-            yield *this.#nextVal(depth + 1);
+            yield *this.#nextVal(depth);
           }
         }
         break;
