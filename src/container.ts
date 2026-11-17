@@ -405,7 +405,9 @@ export class CBORcontainer {
           for (const kve of pu) {
             if (lastKey) {
               if (this.#opts.sortKeys(lastKey, kve) >= 0) {
-                throw new Error(`Duplicate or out of order key: "0x${kve[2]}"`);
+                throw new Error(
+                  `Duplicate or out of order key: "0x${u8toHex(kve[2])}"`
+                );
               }
             }
             lastKey = kve;
