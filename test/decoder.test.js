@@ -47,6 +47,65 @@ test('decode bad tags', () => {
   failAll(cases.decodeBadTags);
 });
 
+test('unexpected BREAK', () => {
+  // BREAK is only valid to close an indefinite-length byte string, text
+  // string, array or map.  Anywhere else, it must be rejected.
+
+  // BREAK on its own.
+  assert.throws(() => decode('ff'), /Unexpected BREAK/);
+
+  // BREAK in a definite-length array: [BREAK].
+  assert.throws(() => decode('81ff'), /Unexpected BREAK/);
+
+  // BREAK as a definite-length map key: {BREAK: 0}.
+  assert.throws(() => decode('a1ff00'), /Unexpected BREAK/);
+
+  // BREAK as a definite-length map value: {0: BREAK}.
+  assert.throws(() => decode('a100ff'), /Unexpected BREAK/);
+
+  // BREAK as tag content: 1(BREAK).
+  assert.throws(() => decode('c1ff'), /Unexpected BREAK/);
+
+  // BREAK in a definite-length array inside an indefinite-length array:
+  // [_ [BREAK]].
+  assert.throws(() => decode('9f81ffff'), /Unexpected BREAK/);
+
+  // BREAK in a definite-length map inside an indefinite-length array:
+  // [_ {BREAK: 0}].
+  assert.throws(() => decode('9fa1ff00ff'), /Unexpected BREAK/);
+
+  // BREAK as tag content inside an indefinite-length array: [_ 1(BREAK)].
+  assert.throws(() => decode('9fc1ffff'), /Unexpected BREAK/);
+
+  // BREAK in place of a value in an indefinite-length map: {_ 0: BREAK}.
+  assert.throws(() => decode('bf00ff'), /Missing map value/);
+  assert.throws(() => decode('bf000103ff'), /Missing map value/);
+
+  // Data after the BREAK that closes the top-level item.
+  assert.throws(() => decode('5f40ff00'), /Extra data in input/);
+});
+
+test('valid BREAK', () => {
+  // Empty indefinite-length byte string: (_ ).
+  assert.deepEqual(decode('5fff'), new Uint8Array(0));
+
+  // Empty indefinite-length text string: (_ ).
+  assert.equal(decode('7fff'), '');
+
+  // Empty indefinite-length array: [_ ].
+  assert.deepEqual(decode('9fff'), []);
+
+  // Empty indefinite-length map: {_ }.
+  assert.deepEqual(decode('bfff'), {});
+
+  // Nested empty indefinite-length arrays: [_ [_ ]].
+  assert.deepEqual(decode('9f9fffff'), [[]]);
+
+  // Empty indefinite-length map inside an indefinite-length map:
+  // {_ "a": {_ }}.
+  assert.deepEqual(decode('bf6161bfffff'), {a: {}});
+});
+
 test('decode with cde', () => {
   testAll(cases.goodNumbers, {cde: true});
   testAll(cases.good.filter(([o]) => o instanceof Map), {cde: true});

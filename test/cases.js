@@ -691,6 +691,9 @@ c1                    -- Tag #1: (Epoch Date) 2013-03-21T20:04:00.500Z
   [[], '[_ ]', `0x9fff
 9f   -- Array (Length: Indefinite)
   ff --   [0] BREAK\n`],
+  [{}, '{_ }', `0xbfff
+bf   -- Map (Length: Indefinite)
+  ff --   [key 0] BREAK\n`],
   [[1, [2, 3], [4, 5]], '[_ 1, [2, 3], [_ 4, 5]]', `0x9f018202039f0405ffff
 9f     -- Array (Length: Indefinite)
   01   --   [0] Unsigned: 1
@@ -903,6 +906,13 @@ export const decodeBad = [
   '0x62c0ae', // Invalid utf8
   '0xff', // Unexpected BREAK
   '0x81ff', // Unexpected BREAK
+  '0xa1ff00', // Unexpected BREAK as definite map key
+  '0xa100ff', // Unexpected BREAK as definite map value
+  '0xc1ff', // Unexpected BREAK as tag content
+  '0x9f81ffff', // Unexpected BREAK in definite array inside streamed array
+  '0x9fa1ff00ff', // Unexpected BREAK in definite map inside streamed array
+  '0x9fc1ffff', // Unexpected BREAK as tag content inside streamed array
+  '0xbf00ff', // Streaming map with BREAK instead of value
 ];
 
 export const decodeBadTags = [
