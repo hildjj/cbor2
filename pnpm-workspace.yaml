@@ -7,6 +7,7 @@ auditConfig:
     - GHSA-238p-pmpm-9mq7
     - GHSA-gcqx-w48m-w2h4
     - GHSA-3g3m-2fjr-6pw4
+    - GHSA-fc5q-39xc-vjpf
 linkWorkspacePackages: true
 minimumReleaseAgeExclude:
   - '@cto.af/wtf8@1.0.1'
