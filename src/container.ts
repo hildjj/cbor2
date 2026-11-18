@@ -109,7 +109,7 @@ export class CBORcontainer {
    * `cde` mode.
    */
   public static dcborDecodeOptions: DecodeOptions = {
-    ...this.cdeDecodeOptions,
+    ...CBORcontainer.cdeDecodeOptions,
     dcbor: true,
     convertUnsafeIntsToFloat: true,
     rejectDuplicateKeys: true,

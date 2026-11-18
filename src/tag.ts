@@ -56,8 +56,8 @@ export class Tag implements ToCBOR, Decodeable, ITag {
     decoder: TagDecoder,
     description?: string
   ): TagDecoder | undefined {
-    const old = this.#tags.get(tag);
-    this.#tags.set(tag, decoder);
+    const old = Tag.#tags.get(tag);
+    Tag.#tags.set(tag, decoder);
     if (old) {
       // Copy over old commenting attributes.
       if (!('comment' in decoder)) {
@@ -80,8 +80,8 @@ export class Tag implements ToCBOR, Decodeable, ITag {
    * @returns Old decoder, if there was one.
    */
   public static clearDecoder(tag: TagNumber): TagDecoder | undefined {
-    const old = this.#tags.get(tag);
-    this.#tags.delete(tag);
+    const old = Tag.#tags.get(tag);
+    Tag.#tags.delete(tag);
     return old;
   }
 
@@ -92,7 +92,7 @@ export class Tag implements ToCBOR, Decodeable, ITag {
    * @returns The decoder function, if there is one.
    */
   public static getDecoder(tag: TagNumber): TagDecoder | undefined {
-    return this.#tags.get(tag);
+    return Tag.#tags.get(tag);
   }
 
   /**
@@ -101,7 +101,7 @@ export class Tag implements ToCBOR, Decodeable, ITag {
    * @returns Map containing current decoders, as a copy.
    */
   public static getAllDecoders(): ReadonlyMap<TagNumber, TagDecoder> {
-    return new Map(this.#tags);
+    return new Map(Tag.#tags);
   }
 
   /**
