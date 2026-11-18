@@ -136,10 +136,6 @@ export class DecodeStream implements Sliceable {
    * @yields Information about every sub-item found in the input.
    */
   *#nextVal(depth: number): ValueGenerator {
-    if (depth++ > this.#opts.maxDepth) {
-      throw new Error(`Maximum depth ${this.#opts.maxDepth} exceeded`);
-    }
-
     const prevOffset = this.#offset;
     // Will throw when out of data
     const octet = this.#view.getUint8(this.#offset++);
@@ -222,6 +218,14 @@ export class DecodeStream implements Sliceable {
       default:
         simple = true;
     }
+
+    // Checked after the "break" stop code has returned above: it is not a
+    // data item (RFC 8949, section 3.2.1), so it does not count toward
+    // maxDepth.
+    if (depth++ > this.#opts.maxDepth) {
+      throw new Error(`Maximum depth ${this.#opts.maxDepth} exceeded`);
+    }
+
     this.#offset += len;
 
     switch (mt) {

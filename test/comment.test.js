@@ -31,7 +31,14 @@ test('comment good', () => {
 
 test('comment bad', () => {
   failAll([
-    '0xff',
+    '0xff', // Unexpected BREAK
+    '0x81ff', // Unexpected BREAK
+    '0xa1ff00', // Unexpected BREAK as definite map key
+    '0xa100ff', // Unexpected BREAK as definite map value
+    '0xc1ff', // Unexpected BREAK as tag content
+    '0x9f81ffff', // Unexpected BREAK in definite array inside streamed array
+    '0x9fa1ff00ff', // Unexpected BREAK in definite map inside streamed array
+    '0x9fc1ffff', // Unexpected BREAK as tag content inside streamed array
   ]);
 });
 
