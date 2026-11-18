@@ -176,6 +176,59 @@ test('depth', () => {
   assert.throws(() => decode(nested(11), {maxDepth: 10}), /Maximum depth/);
 });
 
+test('BREAK does not count toward maxDepth', () => {
+  // The BREAK that closes an indefinite-length item is not a data item
+  // (RFC 8949, section 3.2.1), so it must not count toward maxDepth.  An
+  // empty indefinite-length item is allowed wherever its definite-length
+  // equivalent is.
+
+  // Empty indefinite byte string: (_ ).
+  assert.doesNotThrow(() => decode('5fff', {maxDepth: 0}));
+
+  // Empty indefinite text string: (_ ).
+  assert.doesNotThrow(() => decode('7fff', {maxDepth: 0}));
+
+  // Empty indefinite array: [_ ] is allowed, [_ 0] is too deep.
+  assert.doesNotThrow(() => decode('9fff', {maxDepth: 0}));
+  assert.throws(() => decode('9f00ff', {maxDepth: 0}), /Maximum depth 0 exceeded/);
+
+  // Empty indefinite map: {_ } is allowed, {_ 0: 0} is too deep.
+  assert.doesNotThrow(() => decode('bfff', {maxDepth: 0}));
+  assert.throws(() => decode('bf0000ff', {maxDepth: 0}), /Maximum depth 0 exceeded/);
+
+  // Indefinite items with a leaf: [_ 0] and {_ 0: 0}.
+  assert.doesNotThrow(() => decode('9f00ff', {maxDepth: 1}));
+  assert.doesNotThrow(() => decode('bf0000ff', {maxDepth: 1}));
+
+  // Inside a definite array: [[_ ]] is allowed, [[_ 0]] is too deep.
+  assert.doesNotThrow(() => decode('819fff', {maxDepth: 1}));
+  assert.throws(() => decode('819f00ff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Inside an indefinite array: [_ [_ ]] is allowed, [_ [_ 0]] is too deep.
+  assert.doesNotThrow(() => decode('9f9fffff', {maxDepth: 1}));
+  assert.throws(() => decode('9f9fffff', {maxDepth: 0}), /Maximum depth 0 exceeded/);
+  assert.throws(() => decode('9f9f00ffff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // As a definite map key and value: {[_ ]: 0} and {0: [_ ]}.
+  assert.doesNotThrow(() => decode('a19fff00', {maxDepth: 1}));
+  assert.doesNotThrow(() => decode('a1009fff', {maxDepth: 1}));
+
+  // As an indefinite map key and value: {_ [_ ]: 0} and {_ 0: {_ }}.
+  // {_ 0: {_ 0: 0}} is too deep.
+  assert.doesNotThrow(() => decode('bf9fff00ff', {maxDepth: 1}));
+  assert.doesNotThrow(() => decode('bf00bfffff', {maxDepth: 1}));
+  assert.throws(() => decode('bf00bf0000ffff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // As content of an unregistered tag: 9999([_ ]) is allowed,
+  // 9999([_ 0]) is too deep.
+  assert.doesNotThrow(() => decode('d9270f9fff', {maxDepth: 1}));
+  assert.throws(() => decode('d9270f9f00ff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+
+  // Three nested empty indefinite arrays: [_ [_ [_ ]]].
+  assert.doesNotThrow(() => decode('9f9f9fffffff', {maxDepth: 2}));
+  assert.throws(() => decode('9f9f9fffffff', {maxDepth: 1}), /Maximum depth 1 exceeded/);
+});
+
 test('types', () => {
   // Expects number
   assert.throws(() => decode('c16161'));
