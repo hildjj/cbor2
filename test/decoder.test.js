@@ -54,6 +54,10 @@ test('decode with cde', () => {
     '0x1817',
     '0xc24101',
     '0xc2420001',
+    '0xc24720000000000000', // 2^53 fits in major type 0
+    '0xc248ffffffffffffffff', // 2^64 - 1 fits in major type 0
+    '0xc3487fffffffffffffff', // -2^63 fits in major type 1
+    '0xc348ffffffffffffffff', // -2^64 fits in major type 1
   ], {cde: true});
 });
 
@@ -65,7 +69,15 @@ test('decode with dCBOR', () => {
     '0xa200010002',
     '0x6345cc88',
     '0xFB7FF0000000000001', // Not shortest
+    '0xc248ffffffffffffffff', // 2^64 - 1 fits in major type 0
+    '0xc3487fffffffffffffff', // -2^63 fits in major type 1
   ], {dcbor: true});
+
+  // With dCBOR, 65bit negative ints are not allowed, so -2^64 stays a bignum.
+  assert.equal(
+    decode('c348ffffffffffffffff', {dcbor: true}),
+    -18446744073709551616n
+  );
 
   // The bad key is shown as hex.
   for (const [hex, key] of [

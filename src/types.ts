@@ -196,7 +196,12 @@ function u8toBigInt(
   const safeInt = (bi >= Number.MIN_SAFE_INTEGER) &&
     (bi <= Number.MAX_SAFE_INTEGER);
 
-  if (opts.requirePreferred && safeInt) {
+  // Major type 0 or 1 holds up to 8 bytes, but only down to -2^63 when
+  // 65bit negative numbers are rejected.
+  const fitsInt = (bigIntBytes <= 8) &&
+    !(opts.rejectLargeNegatives && (bi < -0x8000000000000000n));
+
+  if (opts.requirePreferred && fitsInt) {
     // The preferred serialization of an integer that can be represented using
     // major type 0 or 1 is to encode it this way instead of as a bignum
     throw new Error(`Decoding bigint that could have been int: ${bi}n`);
